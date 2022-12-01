@@ -9,7 +9,7 @@ services:
     envVars:
       - key: CELERY_BROKER_URL
         fromService:
-          name: celery-redis
+          name: rekt-redis
           type: redis
           property: connectionString
   - type: web
@@ -18,11 +18,11 @@ services:
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: CELERY_BROKER_URL
         fromService:
-          name: celery-redis
+          name: rekt-redis
           type: redis
           property: connectionString
   - type: web
@@ -37,11 +37,11 @@ services:
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: celery-redis
+          name: rekt-redis
           property: connectionString
   - type: redis
-    name: celery-redis
+    name: rekt-redis
     region: ohio
-    plan: starter # we choose a plan with persistence to ensure tasks are not lost upon restart
+    plan: free # we choose a plan with persistence to ensure tasks are not lost upon restart
     maxmemoryPolicy: noeviction # recommended policy for queues
     ipAllowList: [] # only allow internal connections
