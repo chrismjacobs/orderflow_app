@@ -25,20 +25,6 @@ services:
           name: rekt-redis
           type: redis
           property: connectionString
-  - type: web
-    name: flower
-    region: ohio
-    plan: free
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "celery flower --app tasks --loglevel info"
-    autoDeploy: false
-    envVars:
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: rekt-redis
-          property: connectionString
   - type: redis
     name: rekt-redis
     region: ohio
