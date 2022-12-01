@@ -1,6 +1,6 @@
 import os
 from flask import Flask, flash, render_template, redirect, request
-from tasks import add
+from tasks import add, bbws
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', "super-secret")
@@ -16,6 +16,7 @@ def add_inputs():
     x = int(request.form['x'] or 0)
     y = int(request.form['y'] or 0)
     add.delay(x, y)
+    bbws.delay()
     flash("Your addition job has been submitted.")
     return redirect('/')
 
