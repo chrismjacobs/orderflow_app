@@ -22,6 +22,7 @@ def handle_info_message(msg):
 
 @app.task
 def bbws():
+    print('BBWS start')
 
     openWhile =  'true'
     ws_inverseP = inverse_perpetual.WebSocket(
@@ -38,7 +39,10 @@ def bbws():
     ws_inverseP.instrument_info_stream(
         handle_info_message, "BTCUSD"
     )
-    while openWhile == 'true':
+
+    print('SOCKETS OPEN')
+
+    while openWhile == 'false':
         sleep(1)
 
     return True
