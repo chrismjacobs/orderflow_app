@@ -7,6 +7,9 @@ import json
 from pybit import inverse_perpetual
 import redis
 
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+print('REDIS', REDIS_PASSWORD)
+
 r = redis.Redis(
         host = 'redis-12011.c54.ap-northeast-1-2.ec2.cloud.redislabs.com',
         port = 12011,
@@ -128,6 +131,8 @@ def handle_info_message(msg):
 
 
 def webSockets():
+    print('WEB_SOCKETS')
+
     openWhile =  r.get('while')
     ws_inverseP = inverse_perpetual.WebSocket(
         test=False,
@@ -150,6 +155,7 @@ def webSockets():
 
 @app.task
 def runStream():
+    print('RUN_STREAM')
     rDict = {
         'volDaily': 153532012,
         'volOpen': 2902783986517,
