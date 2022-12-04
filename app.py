@@ -18,10 +18,7 @@ def main():
 def add_inputs():
     x = int(request.form['x'] or 0)
 
-    if x == 1:
-        bbws()
-    else:
-        bbws()
+    bbws.delay()
 
     flash("Your command has been submitted: " + str(x))
     return redirect('/')
