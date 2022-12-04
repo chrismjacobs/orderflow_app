@@ -10,9 +10,6 @@ logger = get_task_logger(__name__)
 
 
 @app.task
-def add(x, y):
-    logger.info(f'Adding {x} + {y}')
-    return x + y
 
 def handle_trade_message(msg):
     print(msg['data'])
@@ -42,7 +39,7 @@ def bbws():
 
     print('SOCKETS OPEN')
 
-    while openWhile == 'false':
+    while openWhile == 'true':
         sleep(1)
 
     return True
