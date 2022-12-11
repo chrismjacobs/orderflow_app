@@ -3,7 +3,7 @@ from celery import Celery
 from celery.utils.log import get_task_logger
 from time import sleep
 from pybit import inverse_perpetual
-from message import sendMessage
+# from message import sendMessage
 from datetime import datetime
 
 import redis
@@ -159,7 +159,7 @@ def logTimeCandle(unit):
 def handle_trade_message(msg):
     current_time = datetime.now()
     print(current_time.hour, current_time.minute)
-    if current_time.hour == 8 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 10:
+    if current_time.hour == 8 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 3:
         r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
         r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
         r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
