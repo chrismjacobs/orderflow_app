@@ -13,13 +13,12 @@ try:
     import config
     LOCAL = True
     REDIS_URL = config.REDIS_URL
+    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    r = redis.from_url(REDIS_URL, decode_responses=True)
 
 print('URL', REDIS_URL)
-
-r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
-
 print('REDIS', r)
 
 app = Celery('tasks', broker=os.getenv("CELERY_BROKER_URL"))
