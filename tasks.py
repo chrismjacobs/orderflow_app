@@ -157,8 +157,8 @@ def logTimeCandle(unit):
 
 def handle_trade_message(msg):
     current_time = datetime.now()
-    print(current_time.hour, current_time.minute)
-    if current_time.hour == 9 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 3:
+    print('Current Time', current_time.hour, current_time.minute)
+    if current_time.hour == 10 and current_time.minute == 10 and len(json.loads(r.get('timeblocks'))) > 3:
         r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
         r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
         r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
