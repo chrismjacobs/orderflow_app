@@ -128,7 +128,7 @@ def logTimeCandle(unit):
         r.set('timeflow', json.dumps(timeflow))
     else:
         blockStart = timeflow[0]['time']
-        interval = (60000*5) # 5Min
+        interval = (60000*1) # 5Min
         blockFinish = blockStart + interval
 
         print('TIME 1', blockStart, blockFinish, len(timeflow))
@@ -159,7 +159,7 @@ def logTimeCandle(unit):
 def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
-    if current_time.hour == 5 and current_time.minute == 30 and len(json.loads(r.get('timeblocks'))) > 3:
+    if current_time.hour == 6 and current_time.minute == 00 and len(json.loads(r.get('timeblocks'))) > 3:
         r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
         r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
         r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
