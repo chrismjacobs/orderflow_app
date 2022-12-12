@@ -159,7 +159,7 @@ def logTimeCandle(unit):
 def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
-    if current_time.hour == 5 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 3:
+    if current_time.hour == 5 and current_time.minute == 30 and len(json.loads(r.get('timeblocks'))) > 3:
         r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
         r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
         r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
@@ -196,18 +196,22 @@ def handle_trade_message(msg):
 
             blockflow = json.loads(r.get('blockflow'))
             newCandle = addBlock(tradeList, blockflow)
-
-            blockflow[len(blockflow) + 1] = newCandle
+            timestamp = x['timestamp']
+            t = datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S")
+            blockflow[str(t)] = newCandle
             r.set('blockflow', json.dumps(blockflow))
 
 
             # Need to add multiple blocks
             for y in range(carryOver//block):
-                blockflow = json.loads(r.get('blockflow'))
-                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
-                newCandle = addBlock(fullTradeList, blockflow)
 
-                blockflow[len(blockflow) + 1] = newCandle
+                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
+
+                blockflow = json.loads(r.get('blockflow'))
+                newCandle = addBlock(fullTradeList, blockflow)
+                timestamp = x['timestamp']
+                t = datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S")
+                blockflow[str(t)] = newCandle
                 r.set('blockflow', json.dumps(blockflow))
 
                 print('Add Block', y)
