@@ -127,7 +127,7 @@ def logTimeCandle(unit):
         r.set('timeflow', json.dumps(timeflow))
     else:
         blockStart = timeflow[0]['time']
-        interval = (60000*1) # 5Min
+        interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
         print('TIME 1', blockStart, blockFinish, len(timeflow))
@@ -166,7 +166,7 @@ def handle_trade_message(msg):
 
     print('handle_trade_message')
     # print(msg['data'])
-    block = 100000
+    block = 1000000
 
     tradeList = json.loads(r.get('tradeList')) ## reset after each volume block
 
