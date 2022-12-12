@@ -1,6 +1,5 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify
 from tasks import runStream
-from celery.contrib.abortable import AbortableTask
 import os, json
 import redis
 
@@ -61,15 +60,15 @@ def add_inputs():
 
     if x == 825:
         task = runStream.delay()
-        r.set('task_id', task)
-        print('task_id', task)
-        flash("Your command has been submitted: " + str(x))
+        r.set('task_id', str(task))
+        print('task_id', str(task))
+        flash("Your command has been submitted: " + str(task))
     elif x == 212:
-        task_id = r.set('task_id')
+        task_id = r.get('task_id')
         task = runStream.AsyncResult(task_id)
         print('abort task', task)
         task.abort()
-        flash("Your command has been submitted: " + str(x))
+        flash("Your command has been submitted: " + task_id)
     else:
         flash("Your command has failed: " + str(x))
 
