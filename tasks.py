@@ -12,7 +12,7 @@ LOCAL = False
 
 try:
     import config
-    LOCAL = True
+    # LOCAL = True
     REDIS_URL = config.REDIS_URL
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
@@ -159,7 +159,8 @@ def logTimeCandle(unit):
 def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
-    if current_time.hour == 6 and current_time.minute == 00 and len(json.loads(r.get('timeblocks'))) > 3:
+    if current_time.hour == 0 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 3:
+        print('REDIS RESET')
         r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
         r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
         r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle

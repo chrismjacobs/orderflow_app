@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{{headLogo}}">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+
+
+</head >
+
+<main role="main" class="container-md">
+
+    <div id="vue-app">
+
+
+        <div class="content-section m-5" style="background: darkgrey">
+            <h1> Order Flow </h1>
+
+                <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
+
+        </div>
+
+        <div class="content-section m-5" style="background: darkgrey">
+            Vol: [[ stream['lastVol'] ]] <br>
+            OI: [[  stream['lastOI'] ]] <br>
+            Price: [[  stream['lastPrice'] ]] <br>
+
+        </div>
+
+        <div class="content-section m-5" style="background: darkgrey">
+            <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th>
+                    <th scope="col">Duration</th>
+                    <th scope="col">Volume</th>
+                    <th scope="col">Delta</th>
+                    <th scope="col">DeltaCum</th>
+                    <th scope="col">OI</th>
+                    <th scope="col">Open</th>
+                    <th scope="col">High</th>
+                    <th scope="col">Low</th>
+                    <th scope="col">Close</th>
+                  </tr>
+                </thead>
+                <tbody>
+                <template v-for="(item, key) in volumeblocks" :key="key" >
+                  <tr>
+                    <th scope="row"><span>[[key]]</span> </th>
+                    <td>[[calculateTime(item.time_delta)]]</td>
+                    <td style="display:none">[[item.vol_cumulative]]</td>
+                    <td :style="getVolumeStyle(item.vol_delta)">[[item.total]]</td>
+                    <td :style="getDeltaStyle(item.delta)">[[item.delta]]</td>
+                    <td>[[item.delta_cumulative]]</td>
+                    <td style="display:none">[[item.oi_cumulative]]</td>
+                    <td :style="getOIStyle(item.oi_delta)">[[item.oi_delta]]</td>
+                    <td :style="getTimeBlockStyle(item.open, item.close)">[[item.open]]</td>
+                    <td :style="getTimeBlockStyle(item.open, item.close)">[[item.high]]</td>
+                    <td :style="getTimeBlockStyle(item.open, item.close)">[[item.low]]</td>
+                    <td :style="getTimeBlockStyle(item.open, item.close)">[[item.close]]</td>
+                  </tr>
+                </template>
+                </tbody>
+              </table>
+            <div style="display:none">
+              <span v-for="(item, key) in volumeblocks" :key="key" > [[item]] <br> </span>
+            </div>
+
+        </div>
+
+        <div class="content-section m-5" style="background: darkgrey">
+            <br>
+            <br>
+                <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Duration</th>
+                        <th scope="col">Volume</th>
+                        <th scope="col">Delta</th>
+                        <th scope="col">DeltaCum</th>
+                        <th scope="col">OI</th>
+                        <th scope="col">Open</th>
+                        <th scope="col">High</th>
+                        <th scope="col">Low</th>
+                        <th scope="col">Close</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    <template v-for="(item, key) in timeblocks" :key="key" >
+                      <tr>
+                        <th scope="row"><span>[[key]]</span> </th>
+                        <td>[[calculateTime(item.time_delta)]]</td>
+                        <td style="display:none">[[item.vol_cumulative]]</td>
+                        <td :style="getVolumeStyle(item.vol_delta)">[[item.vol_delta]]</td>
+                        <td :style="getDeltaStyle(item.delta)">[[item.delta]]</td>
+                        <td>[[item.delta_cumulative]]</td>
+                        <td style="display:none">[[item.oi_cumulative]]</td>
+                        <td :style="getOIStyle(item.oi_delta)">[[item.oi_delta]]</td>
+                        <td :style="getTimeBlockStyle(item.open, item.close)">[[item.open]]</td>
+                        <td :style="getTimeBlockStyle(item.open, item.close)">[[item.high]]</td>
+                        <td :style="getTimeBlockStyle(item.open, item.close)">[[item.low]]</td>
+                        <td :style="getTimeBlockStyle(item.open, item.close)">[[item.close]]</td>
+                      </tr>
+                    </template>
+                    </tbody>
+                  </table>
+        </div>
+
+        <div class="content-section m-5" style="background: darkgrey">
+            [[ getCurrentDelta()]]
+            <br>
+            <br>
+            <span v-for="(item, key) in reverseTrades" :key="key" > [[item]] <br> </span>
+        </div>
+
+
+
+
+
+    </div> <!-- end vue app-->
+
+</main>
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+
+
+<script type="text/javascript">
+
+
+let pw = window.location.href.split('/').pop()
+
+let tradeList = []
+let stream = {}
+let volumeblocks = {}
+let timeblocks = {}
+
+
+startVue()
+
+
+function startVue(){
+
+let vue = new Vue({
+
+    el: '#vue-app',
+    delimiters: ['[[', ']]'],
+    mounted: function() {
+        this.ofTimer()
+        this.getOFData()
+    },
+    data: {
+        pw : pw,
+        volumeblocks : volumeblocks,
+        tradeList : tradeList,
+        timeblocks : timeblocks,
+        stream : stream,
+        of_timer : '',
+        ofAlert : 0
+    },
+    methods: {
+        calculateTime: function (ms) {
+            return Math.round((ms/1000000))
+
+        },
+        getTimeBlockStyle: function(open, close) {
+            let style = {background : 'red'}
+            if (open < close) {
+                style = {background : 'green'}
+            }
+            return style
+        },
+        getOIStyle: function(oi) {
+            let style = {background : 'blue'}
+            if (oi < 0) {
+                style = {background : 'purple'}
+            }
+            return style
+        },
+        getDeltaStyle: function(delta) {
+            let style = {background : 'aqua'}
+            if (delta < 0) {
+                style = {background : 'orange'}
+            }
+            return style
+        },
+        getVolumeStyle: function(volume) {
+            let style = {background : 'brown'}
+            if (volume < 0) {
+                style = {background : 'brown'}
+            }
+            return style
+        },
+        ofTimer: function () {
+            this.of_timer = setInterval(this.getOFData, 3000)
+            console.log('timer', this.of_timer)
+        },
+        clearOF: function () {
+            clearInterval(this.of_timer)
+        },
+        clearLimitPrice: function () {
+            this.limitData.price = 0
+        },
+        getCurrentDelta: function () {
+            let dDict = {
+                'Buy' : 0,
+                'Sell' : 0,
+                'Delta' : 0,
+                'Total' : 0,
+            }
+
+            for(let t in this.tradeList) {
+                trade = this.tradeList[t]
+
+                dDict[trade['side']] += trade['size']
+                dDict['Total'] += trade['size']
+
+            }
+
+            dDict['Delta'] = dDict['Buy'] - dDict['Sell']
+
+            return dDict
+        },
+        getOFData: function (mode) {
+            console.log('getOFData')
+
+            $.ajax({
+                data : {
+
+                },
+                type : 'POST',
+                url : '/getOF'
+
+            })
+            .done(function(data) {
+                console.log('OF data recieved')
+                vue.tradeList = JSON.parse(data.tradeList)
+                vue.volumeblocks = JSON.parse(data.volumeblocks)
+                vue.stream = JSON.parse(data.stream)
+
+                console.log(data.timeblocks)
+
+                vue.timeblocks = JSON.parse(data.timeblocks)
+            })
+            .fail(function(){
+                  alert('error has occurred gData');
+            });
+        },
+
+
+    },
+    computed: {
+        reverseTrades() {
+            return this.tradeList.slice().reverse();
+      }
+    },
+    watch: {
+        delta: function () {
+
+        },
+        ofAlert: function () {
+            if(this.ofAlert < -800){
+                if (this.audioToggle) {
+                    document.getElementById('xyz').play();
+                }
+                //alert("Thank you!");
+            }
+        }
+    }
+
+})// end NEW VUE
+
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+
+
