@@ -12,21 +12,24 @@ LOCAL = False
 
 try:
     import config
-    # LOCAL = True
+    LOCAL = True
     REDIS_URL = config.REDIS_URL
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
+    from celery.contrib.abortable import AbortableTask
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 print('URL', REDIS_URL)
 print('REDIS', r)
 
-app = Celery('tasks', broker=os.getenv("CELERY_BROKER_URL"))
+app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 logger = get_task_logger(__name__)
 
 
-def addBlock(units, blocks):
+def addBlock(units, blocks, type):
+
+    ts = str(units[0]['timestamp'])
 
     print('UNITS', len(units), len(blocks))
     previousOI = 0
@@ -37,8 +40,12 @@ def addBlock(units, blocks):
 
     lastIndex = len(blocks) - 1
     if len(blocks) > 0:
-        last = list(blocks.keys())[lastIndex]
-        lastUnit = blocks[last]
+        if type == 'time':
+            last = list(blocks.keys())[lastIndex]
+            lastUnit = blocks[last]
+        else:
+            lastUnit = blocks[lastIndex - 1] # ignore last unit which is the current one
+
         print(lastUnit)
 
         newOpen = lastUnit['close']
@@ -90,6 +97,7 @@ def addBlock(units, blocks):
 
     newCandle = {
         'time' : time,
+        'timestamp' : ts,
         'time_delta' : timeDelta,
         'close' : price,
         'open' : newOpen,
@@ -128,7 +136,7 @@ def logTimeCandle(unit):
         r.set('timeflow', json.dumps(timeflow))
     else:
         blockStart = timeflow[0]['time']
-        interval = (60000*1) # 5Min
+        interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
         print('TIME 1', blockStart, blockFinish, len(timeflow))
@@ -138,7 +146,7 @@ def logTimeCandle(unit):
             example = '2022-12-09T08:20:22.000Z'
             t = datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S")
             print('STRP TIME', t)
-            newCandle = addBlock(timeflow, timeblocks)
+            newCandle = addBlock(timeflow, timeblocks, 'time')
 
             timeblocks[str(t)] = newCandle
             r.set('timeblocks', json.dumps(timeblocks))
@@ -180,45 +188,69 @@ def handle_trade_message(msg):
     for x in msg['data']:
         print('msg', x)
 
+        timestamp = x['timestamp']
+        ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
+        print('msg Ts', ts)
+
         # send message to time candle log
         logTimeCandle(x)
 
         if tradeListTotal + x['size'] <= block:
             # Normal addition of Trade
             print(tradeListTotal, '< Block')
-            tradeList.append( { 'side' : x['side'] , 'size' : x['size'] , 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']} )
+
+            tradeList.append( { 'side' : x['side'] , 'size' : x['size'] , 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']} )
             tradeListTotal += x['size']
+
+            blockflow = json.loads(r.get('blockflow'))
+            currentCandle = addBlock(tradeList, blockflow, 'vol')
+            bfLastIndex = len(blockflow) -1
+            if bfLastIndex < 0:
+                blockflow.append(currentCandle)
+            else:
+                blockflow[bfLastIndex] = currentCandle
+
+            r.set('blockflow', json.dumps(blockflow))
         else:
             # Need to add a new block
             print('carryOver')
             lefttoFill = block - tradeListTotal
             carryOver = x['size'] - lefttoFill
-            tradeList.append({ 'side' : x['side'] , 'size' : lefttoFill, 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']})
+            tradeList.append({ 'side' : x['side'] , 'size' : lefttoFill, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']})
 
             blockflow = json.loads(r.get('blockflow'))
-            newCandle = addBlock(tradeList, blockflow)
-            timestamp = x['timestamp']
-            t = datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S")
-            blockflow[str(t)] = newCandle
+            bfLastIndex = len(blockflow) -1
+
+            newCandle = addBlock(tradeList, blockflow, 'vol')
+            blockflow[bfLastIndex] = newCandle  # replace last candle (current) with completed
             r.set('blockflow', json.dumps(blockflow))
 
 
-            # Need to add multiple blocks
+            # Need to add multiple blocks if there are any
             for y in range(carryOver//block):
 
-                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
+                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
 
                 blockflow = json.loads(r.get('blockflow'))
-                newCandle = addBlock(fullTradeList, blockflow)
-                timestamp = x['timestamp']
-                t = datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S")
-                blockflow[str(t)] = newCandle
+                newCandle = addBlock(fullTradeList, blockflow, 'vol')
+
+                blockflow = json.loads(r.get('blockflow'))
+                newCandle = addBlock(tradeList, blockflow, 'vol')
+                blockflow.append(newCandle)
                 r.set('blockflow', json.dumps(blockflow))
 
                 print('Add Block', y)
 
             # Reset Current Block
-            tradeList = [{ 'side' : x['side'] , 'size' : carryOver%block, 'time' : x['trade_time_ms'], 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
+
+            tradeList = [{ 'side' : x['side'] , 'size' : carryOver%block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
+
+            blockflow = json.loads(r.get('blockflow'))
+            bfLastIndex = len(blockflow) -1
+            currentCandle = addBlock(tradeList, blockflow, 'vol')
+            blockflow.append(currentCandle)
+            r.set('blockflow', json.dumps(blockflow))
+
             tradeListTotal = carryOver%block
 
 
@@ -242,10 +274,27 @@ def handle_info_message(msg):
 
 
 
-def webSockets():
+@app.task(bind=True, base=AbortableTask) #bind=True, base=AbortableTask
+def runStream(self):
+
+    print('RUN_STREAM')
+    rDict = {
+        'lastPrice' : 0,
+        'lastTime' : 0,
+        'lastOI' : 0,
+        'lastVol' : 0,
+    }
+
+    r.set('stream', json.dumps(rDict) )
+    r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
+    r.set('blockflow', json.dumps([]) )  #  this is the store of volume based candles
+    r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
+    r.set('timeblocks', json.dumps({}) ) # this is the store of new time based candles
+
+    # sendMessage('started')
+
     print('WEB_SOCKETS')
 
-    # openWhile =  r.get('while')
     ws_inverseP = inverse_perpetual.WebSocket(
         test=False,
         ping_interval=30,  # the default is 30
@@ -260,35 +309,13 @@ def webSockets():
     ws_inverseP.instrument_info_stream(
         handle_info_message, "BTCUSD"
     )
+
     while True:
+        if self.is_aborted():
+            return 'Task stopped!'
         sleep(0.1)
 
 
-@app.task
-def runStream():
-    print('RUN_STREAM')
-    rDict = {
-        # 'volRec' : 0,   ### volume check at last package
-        # 'volCount' : 0,  ### cumulative volume from stream start
-        # 'blockCount' : 0,
-        # 'OIRec' : 0,
-        # 'OICount' : 0,
-        'lastPrice' : 0,
-        'lastTime' : 0,
-        'lastOI' : 0,
-        'lastVol' : 0,
-    }
-
-
-    r.set('stream', json.dumps(rDict) )
-    r.set('tradeList', json.dumps([]) )  # this the flow of message data for volume candles
-    r.set('blockflow', json.dumps({}) )  #  this is the store of volume based candles
-    r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
-    r.set('timeblocks', json.dumps({}) ) # this is the store of new time based candles
-
-    # sendMessage('started')
-
-    webSockets()
 
 if LOCAL:
     runStream()
