@@ -178,23 +178,23 @@ def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
 
-    if current_time.hour == 23 and current_time.minute == 59 and len(json.loads(r.get('timeblocks'))) > 3:
-        dt_string = current_time.strftime("%d/%m/%Y")
-        print('REDIS STORE')
-        vf = r.get('volumeflow')  # this the flow of message data for volume candles
-        vb = r.get('volumeblocks')  #  this is the store of volume based candles
-        tf = r.get('timeflow' )  # this the flow of message data to create next candle
-        tb = r.get('timeblocks')
-        history = json.loads(r.get('history'))
-        history.append({
-            'date' : dt_string,
-            'volumeflow' : vf,
-            'volumeblocks' : vb,
-            'timeflow' : tf,
-            'timeblocks' : tb
-        })
+    # if current_time.hour == 23 and current_time.minute == 59 and len(json.loads(r.get('timeblocks'))) > 3:
+    #     dt_string = current_time.strftime("%d/%m/%Y")
+    #     print('REDIS STORE')
+    #     vf = r.get('volumeflow')  # this the flow of message data for volume candles
+    #     vb = r.get('volumeblocks')  #  this is the store of volume based candles
+    #     tf = r.get('timeflow' )  # this the flow of message data to create next candle
+    #     tb = r.get('timeblocks')
+    #     history = json.loads(r.get('history'))
+    #     history.append({
+    #         'date' : dt_string,
+    #         'volumeflow' : vf,
+    #         'volumeblocks' : vb,
+    #         'timeflow' : tf,
+    #         'timeblocks' : tb
+    #     })
 
-    if current_time.hour == 0 and current_time.minute == 0 and len(json.loads(r.get('timeblocks'))) > 3:
+    if current_time.hour == 0 and current_time.minute == 0: #and len(json.loads(r.get('timeblocks'))) > 3:
 
         print('REDIS RESET')
         r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles

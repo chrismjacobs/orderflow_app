@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify
 import os, json
 import redis
-from tasks import runStream
+#from tasks import runStream
 LOCAL = False
 
 try:
@@ -38,19 +38,26 @@ def getOF():
 
     stream = r.get('stream')
 
+
     timeBlocks = r.get('timeblocks')
     timeFlow = r.get('timeflow')
 
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
 
-    return jsonify({
+    jDict = {
         'volumeBlocks' : volumeBlocks,
         'stream' : stream,
         'volumeFlow' : volumeFlow,
         'timeBlocks' : timeBlocks,
         'timeFlow' : timeFlow
-    })
+    }
+
+    jx = jsonify(jDict)
+
+    print('JSONIFY X', jDict)
+
+    return jx
 
 @app.route('/start')
 def start():
