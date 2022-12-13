@@ -277,6 +277,7 @@ def handle_info_message(msg):
 @app.task(bind=True, base=AbortableTask) #bind=True, base=AbortableTask
 def runStream(self):
 
+
     print('RUN_STREAM')
     rDict = {
         'lastPrice' : 0,
@@ -310,11 +311,11 @@ def runStream(self):
         handle_info_message, "BTCUSD"
     )
 
-    while True:
-        if self.is_aborted():
-            return 'Task stopped!'
-        sleep(0.1)
+    if self.is_aborted():
+        return 'Task stopped!'
 
+    while True:
+        sleep(0.1)
 
 
 if LOCAL:
