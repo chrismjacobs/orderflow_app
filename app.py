@@ -1,10 +1,12 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify
-from tasks import runStream
 import os, json
 import redis
+from tasks import runStream
+LOCAL = False
 
 try:
     import config
+
     LOCAL = True
     REDIS_URL = config.REDIS_URL
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
@@ -34,17 +36,18 @@ def getOF():
     volumeBlockSize = int(request.form ['volumeBlockSize'])
     timeBlockSize = int(request.form ['timeBlockSize'])
 
-    volumeBlocks = r.get('blockflow')
+    stream = r.get('stream')
+
     timeBlocks = r.get('timeblocks')
     timeFlow = r.get('timeflow')
-    stream = r.get('stream')
-    tradeList = r.get('tradeList')
 
+    volumeBlocks = r.get('volumeblocks')
+    volumeFlow = r.get('volumeflow')
 
     return jsonify({
         'volumeBlocks' : volumeBlocks,
         'stream' : stream,
-        'tradeList' : tradeList,
+        'volumeFlow' : volumeFlow,
         'timeBlocks' : timeBlocks,
         'timeFlow' : timeFlow
     })
@@ -59,16 +62,11 @@ def add_inputs():
     x = int(request.form['x'] or 0)
 
     if x == 825:
-        task = runStream.delay()
-        r.set('task_id', str(task))
-        print('task_id', str(task))
+        if LOCAL:
+            task = runStream.delay()
+            r.set('task_id', str(task))
+            print('task_id', str(task))
         flash("Your command has been submitted: " + str(task))
-    elif x == 212:
-        task_id = r.get('task_id')
-        task = runStream.AsyncResult(task_id)
-        print('abort task', task)
-        task.abort()
-        flash("Your command has been submitted: " + task_id)
     else:
         flash("Your command has failed: " + str(x))
 
