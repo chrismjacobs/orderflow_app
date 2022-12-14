@@ -1,4 +1,5 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify
+from analysis import getVolumeBlock
 import os, json
 import redis
 LOCAL = False
@@ -30,20 +31,28 @@ def main():
 
 
 
+
+
 @app.route('/getOF', methods=['POST'])
 def getOF():
 
     volumeBlockSize = int(request.form ['volumeBlockSize'])
     timeBlockSize = int(request.form ['timeBlockSize'])
 
-    stream = r.get('stream')
 
+
+
+
+    stream = r.get('stream')
 
     timeBlocks = r.get('timeblocks')
     timeFlow = r.get('timeflow')
 
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
+
+    if volumeBlockSize > 1:
+        volumeBlocks = getVolumeBlock(volumeBlockSize)
 
     jDict = {
         'volumeBlocks' : volumeBlocks,
