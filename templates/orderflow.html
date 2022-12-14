@@ -29,11 +29,22 @@
             <h3> Volume Blocks </h3>
             Size (1mil) <input type="number" v-model="volumeBlockSize">
             List Length <input type="number" v-model="volumeBlockList">
+
+            <div class="row align-items-start m-2">
+                <div class="col-6" display="background:darkgreen">
+                    <h3> Buys </h3>
+                    <span v-for="(item, key) in reverseTrades" :key="key" > <span v-if="item.side == 'Buy'"> [[item.size]] <br> </span> </span>
+
+                </div>
+                <div class="col-6" display="background:firebrick">
+                    <h3> Sells </h3>
+                    <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] <br> </span></span>
+
+                </div>
+            </div>
             <div class="content-section m-5" style="background: darkgrey">
 
-                <span v-for="(item, key) in reverseTrades" :key="key" > <span v-if="item.side == 'Buy'"> [[item.size]] <br> </span> </span>
-                <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] <br> </span></span>
-            </div>
+                </div>
             <table class="table">
                 <thead>
                   <tr>
@@ -297,10 +308,9 @@ let vue = new Vue({
     },
     computed: {
         reverseTrades() {
-
             let newList = []
             for (let x in this.volumeFlow) {
-                if (this.volumeFlow[x]['size'] > 1) {
+                if (this.volumeFlow[x]['size'] > 100) {
                     newList.push(this.volumeFlow[x])
                 }
             }
