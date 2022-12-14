@@ -39,7 +39,6 @@
                   <tr>
                     <th scope="col">Time</th>
                     <th scope="col">Duration</th>
-                    <th scope="col">EPOCH</th>
                     <th scope="col">Volume</th>
                     <th scope="col">Delta</th>
                     <th scope="col">DeltaCum</th>
@@ -57,7 +56,7 @@
                   <tr>
                     <th scope="row"><span>[[item.timestamp]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
-                    <td>[[calculateTime(item.time)]]</td>
+                    <td style="display:none">[[calculateTime(item.time)]]</td>
                     <td style="display:none">[[item.vol_cumulative]]</td>
                     <td :style="getVolumeStyle(item.vol_delta)">[[item.total]]</td>
                     <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
@@ -103,7 +102,7 @@
                     <tbody>
                     <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                       <tr>
-                        <th scope="row"><span>[[key]]</span> </th>
+                        <th scope="row"><span>[[item.timestamp]]</span> </th>
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
                         <td :style="getVolumeStyle(item.vol_delta)">[[item.vol_delta]]</td>
@@ -140,11 +139,11 @@
 
 <script type="text/javascript">
 
-let tradeList = []
+let volumeFlow = []
 let timeFlow = []
 let stream = {}
-let volumeBlocks = {}
-let timeBlocks = {}
+let volumeBlocks = []
+let timeBlocks = []
 
 
 startVue()
@@ -162,7 +161,7 @@ let vue = new Vue({
     },
     data: {
         volumeBlocks : volumeBlocks,
-        tradeList : tradeList,
+        volumeFlow : volumeFlow,
         timeBlocks : timeBlocks,
         timeFlow : timeFlow,
         stream : stream,
@@ -252,8 +251,8 @@ let vue = new Vue({
                 'Total' : 0,
             }
 
-            for(let t in this.tradeList) {
-                trade = this.tradeList[t]
+            for(let t in this.volumeFlow) {
+                trade = this.volumeFlow[t]
 
                 dDict[trade['side']] += trade['size']
                 dDict['Total'] += trade['size']
@@ -278,13 +277,16 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log('OF data received')
-                vue.tradeList = JSON.parse(data.tradeList)
+                vue.volumeFlow = JSON.parse(data.volumeFlow)
+                console.log('vf')
                 vue.volumeBlocks = JSON.parse(data.volumeBlocks)
+                console.log('vb')
                 vue.stream = JSON.parse(data.stream)
+                console.log('st')
                 vue.timeBlocks = JSON.parse(data.timeBlocks)
-                console.log(data.volumeBlocks)
-
-
+                console.log('tb')
+                vue.timeFlow = JSON.parse(data.timeFlow)
+                console.log('tf')
             })
             .fail(function(){
                   alert('error has occurred gData');
@@ -297,9 +299,9 @@ let vue = new Vue({
         reverseTrades() {
 
             let newList = []
-            for (let x in this.tradeList) {
-                if (this.tradeList[x]['size'] > 1) {
-                    newList.push(this.tradeList[x])
+            for (let x in this.volumeFlow) {
+                if (this.volumeFlow[x]['size'] > 1) {
+                    newList.push(this.volumeFlow[x])
                 }
             }
             return newList.slice(-7).reverse()
@@ -308,18 +310,8 @@ let vue = new Vue({
             return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
         },
         getReverseTimeBlocks() {
-            let lastKeys = Object.keys(this.timeBlocks)
-            let rev = lastKeys.slice().reverse()
-            //console.log(rev)
-            let count = 0
-            let newOBJ = {}
-            for (let x in rev){
-                if (count < this.timeBlockList) {
-                    newOBJ[rev[x]] = this.timeBlocks[rev[x]]
-                    count += 1
-                }
-            }
-            return newOBJ
+            return this.volumeBlocks.slice(-this.timeBlockList).reverse()
+
         },
     },
     watch: {
