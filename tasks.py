@@ -343,7 +343,7 @@ def runStream():
         handle_info_message, "BTCUSD"
     )
 
-    while r.get('task_id') != 'stop':
+    while True:
         sleep(0.1)
 
     return print('Task Closed')
