@@ -31,14 +31,23 @@
             List Length <input type="number" v-model="volumeBlockList">
 
             <div class="row align-items-start m-2">
-                <div class="col-6" display="background:darkgreen">
+                <div class="col-2" display="background:darkgreen">
                     <h3> Buys </h3>
-                    <span v-for="(item, key) in reverseTrades" :key="key" > <span v-if="item.side == 'Buy'"> [[item.size]] <br> </span> </span>
+                </div>
+                <div class="col-2" display="background:firebrick">
+
+                    <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] <br> </span></span>
 
                 </div>
-                <div class="col-6" display="background:firebrick">
+                <div class="col-2" display="background:darkgreen">
                     <h3> Sells </h3>
+
+                </div>
+                <div class="col-2" display="background:firebrick">
                     <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] <br> </span></span>
+
+                </div>
+                <div class="col-4" display="background:firebrick">
 
                 </div>
             </div>
@@ -56,6 +65,7 @@
                     <th scope="col">Buys</th>
                     <th scope="col">Sells</th>
                     <th scope="col">OI</th>
+                    <th scope="col">Candle</th>
                     <th scope="col">Open</th>
                     <th scope="col">Close</th>
                     <th scope="col">High</th>
@@ -76,8 +86,9 @@
                     <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
                     <td style="display:none">[[item.oi_cumulative]]</td>
                     <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                    <td :style="getCandleStyle(item.open, item.close)">[[item.open]]</td>
-                    <td :style="getCandleStyle(item.open, item.close)">[[item.close]]</td>
+                    <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
+                    <td >[[item.open]]</td>
+                    <td >[[item.close]]</td>
                     <td>[[item.high]]</td>
                     <td>[[item.low]]</td>
 
@@ -104,6 +115,7 @@
                         <th scope="col">Delta</th>
                         <th scope="col">DeltaCum</th>
                         <th scope="col">OI</th>
+                        <th scope="col">Candle</th>
                         <th scope="col">Open</th>
                         <th scope="col">High</th>
                         <th scope="col">Low</th>
@@ -121,8 +133,9 @@
                         <td>[[item.delta_cumulative]]</td>
                         <td style="display:none">[[item.oi_cumulative]]</td>
                         <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                        <td :style="getCandleStyle(item.open, item.close)">[[item.open]]</td>
-                        <td :style="getCandleStyle(item.open, item.close)">[[item.close]]</td>
+                        <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
+                        <td >[[item.open]]</td>
+                        <td >[[item.close]]</td>
                         <td >[[item.high]]</td>
                         <td >[[item.low]]</td>
 
@@ -320,8 +333,7 @@ let vue = new Vue({
             return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
         },
         getReverseTimeBlocks() {
-            return this.volumeBlocks.slice(-this.timeBlockList).reverse()
-
+            return this.timeBlocks.slice(-this.timeBlockList).reverse()
         },
     },
     watch: {
