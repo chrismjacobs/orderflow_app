@@ -30,7 +30,7 @@ def addBlock(units, blocks):
 
     ts = str(units[0]['timestamp'])
 
-    print('UNITS', len(units), len(blocks))
+    # print('UNITS', len(units), len(blocks))
     previousOI = 0
     previousVol = 0
     previousDelta = 0
@@ -96,6 +96,7 @@ def addBlock(units, blocks):
         'time_delta' : timeDelta,
         'close' : price,
         'open' : newOpen,
+        'price_delta' : price - newOpen,
         'high' : highPrice,
         'low' : lowPrice,
         'buys' : buyCount,
@@ -140,7 +141,7 @@ def logTimeUnit(unit, ts):
         interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
-        print('TIME 1', blockStart, blockFinish, len(timeflow))
+        print('TIME 1', blockStart, blockFinish, unit['trade_time_ms'], unit['trade_time_ms'] >= blockFinish, len(timeflow))
         if unit['trade_time_ms'] >= blockFinish: # store current candle and start a new Candle
             print('ADD TIME CANDLE')
 
@@ -157,7 +158,7 @@ def logTimeUnit(unit, ts):
             # add fresh current candle to timeblock
             currentCandle = addBlock(timeflow, timeblocks)
             timeblocks.append(currentCandle)
-            # print('TIME FLOW RESET', len(timeflow))
+            print('TIME FLOW RESET', len(timeflow), len(timeblocks))
             r.set('timeblocks', json.dumps(timeblocks))
             r.set('timeflow', json.dumps(timeflow))
 
@@ -218,7 +219,7 @@ def handle_trade_message(msg):
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
-        print('msg Ts', ts)
+        # print('msg Ts', ts)
 
         # send message to time candle log
         logTimeUnit(x, ts)
@@ -226,7 +227,7 @@ def handle_trade_message(msg):
 
         if volumeflowTotal + x['size'] <= block:
             # Normal addition of trade to volume flow
-            print(volumeflowTotal, '< Block')
+            # print(volumeflowTotal, '< Block')
 
             volumeflow.append( { 'side' : x['side'] , 'size' : x['size'] , 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']} )
             volumeflowTotal += x['size']
@@ -245,7 +246,7 @@ def handle_trade_message(msg):
             r.set('volumeblocks', json.dumps(volumeblocks))
         else:
             # Need to add a new block
-            print('carryOver')
+            # print('carryOver')
             lefttoFill = block - volumeflowTotal
             carryOver = x['size'] - lefttoFill
             volumeflow.append({ 'side' : x['side'] , 'size' : lefttoFill, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']})
@@ -308,7 +309,6 @@ def handle_info_message(msg):
 @app.task() #bind=True, base=AbortableTask  // (self)
 def runStream():
 
-
     print('RUN_STREAM')
     rDict = {
         'lastPrice' : 0,
@@ -343,10 +343,10 @@ def runStream():
         handle_info_message, "BTCUSD"
     )
 
-    task = r.get('task_id')
-
-    while task != 'stop':
+    while r.get('task_id') != 'stop':
         sleep(0.1)
+
+    return print('Task Closed')
 
 
 if LOCAL:
