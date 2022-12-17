@@ -1,5 +1,5 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify
-from analysis import getVolumeBlock
+from analysis import getBlocks
 import os, json
 import redis
 LOCAL = False
@@ -16,6 +16,8 @@ except:
     from tasks import runStream
 
 
+# r.set('discord', 'last one')
+
 print('URL', REDIS_URL)
 print('REDIS', r)
 
@@ -23,15 +25,10 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 app.secret_key = os.getenv('FLASK_SECRET_KEY', "super-secret")
 
-
 @app.route('/')
 def main():
 
     return render_template('orderflow.html')
-
-
-
-
 
 @app.route('/getOF', methods=['POST'])
 def getOF():
@@ -39,8 +36,7 @@ def getOF():
     volumeBlockSize = int(request.form ['volumeBlockSize'])
     timeBlockSize = int(request.form ['timeBlockSize'])
 
-
-
+    print('BLOCK SIZES', volumeBlockSize, timeBlockSize)
 
 
     stream = r.get('stream')
@@ -52,7 +48,9 @@ def getOF():
     volumeFlow = r.get('volumeflow')
 
     if volumeBlockSize > 1:
-        volumeBlocks = getVolumeBlock(volumeBlockSize)
+        volumeBlocks = getBlocks(volumeBlockSize, volumeBlocks)
+    if timeBlockSize > 5:
+        timeBlocks = getBlocks(timeBlockSize, timeBlocks)
 
     jDict = {
         'volumeBlocks' : volumeBlocks,

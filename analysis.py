@@ -11,6 +11,8 @@ except:
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 
+print(r.get('history'))
+
 def createCandle():
 
     newCandle = {
@@ -36,10 +38,10 @@ def createCandle():
 
 
 
-def getVolumeBlock(size):
+def getBlocks(size, blocksString):
+    blocks = json.loads(blocksString)
 
-    volumeBlocks = json.loads(r.get('volumeblocks'))
-    print(len(volumeBlocks))
+    print(len(blocks))
 
     newCandle = None
 
@@ -47,7 +49,7 @@ def getVolumeBlock(size):
 
     count = 1
 
-    for unit in volumeBlocks:
+    for unit in blocks:
         # print(count)
 
         if count == 1:
@@ -73,7 +75,6 @@ def getVolumeBlock(size):
             if len(newList) > 0:
                 lastUnit = newList[len(newList)-1]
                 previousDelta = lastUnit['delta_cumulative']
-                previousTime = lastUnit['delta_cumulative']
                 previousOI = lastUnit['oi_cumulative']
                 previousVol = lastUnit['vol_cumulative']
 

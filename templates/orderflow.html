@@ -61,15 +61,15 @@
                     <th scope="col">Duration</th>
                     <th scope="col">Volume</th>
                     <th scope="col">Delta</th>
-                    <th scope="col">DeltaCum</th>
+                    <th scope="col">CVD</th>
                     <th scope="col">Buys</th>
                     <th scope="col">Sells</th>
                     <th scope="col">OI</th>
                     <th scope="col">Candle</th>
-                    <th scope="col">Open</th>
-                    <th scope="col">Close</th>
-                    <th scope="col">High</th>
-                    <th scope="col">Low</th>
+                    <th scope="col" style="width:2%">Open</th>
+                    <th scope="col" style="width:2%">High</th>
+                    <th scope="col" style="width:2%">Low</th>
+                    <th scope="col" style="width:2%">Close</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -88,8 +88,8 @@
                     <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                     <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
                     <td >[[item.open]]</td>
-                    <td >[[item.close]]</td>
                     <td>[[item.high]]</td>
+                    <td >[[item.close]]</td>
                     <td>[[item.low]]</td>
 
                   </tr>
@@ -113,13 +113,15 @@
                         <th scope="col">Duration</th>
                         <th scope="col">Volume</th>
                         <th scope="col">Delta</th>
-                        <th scope="col">DeltaCum</th>
+                        <th scope="col">CVD</th>
+                        <th scope="col">Buys</th>
+                        <th scope="col">Sells</th>
                         <th scope="col">OI</th>
                         <th scope="col">Candle</th>
-                        <th scope="col">Open</th>
-                        <th scope="col">High</th>
-                        <th scope="col">Low</th>
-                        <th scope="col">Close</th>
+                        <th scope="col" style="width:2%">Open</th>
+                        <th scope="col" style="width:2%">High</th>
+                        <th scope="col" style="width:2%">Low</th>
+                        <th scope="col" style="width:2%">Close</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -131,13 +133,15 @@
                         <td :style="getVolumeStyle(item.vol_delta)">[[item.vol_delta]]</td>
                         <td :style="getDeltaStyle(item.delta)">[[item.delta]]</td>
                         <td>[[item.delta_cumulative]]</td>
+                        <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
+                        <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
                         <td style="display:none">[[item.oi_cumulative]]</td>
                         <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                         <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
                         <td >[[item.open]]</td>
-                        <td >[[item.close]]</td>
                         <td >[[item.high]]</td>
                         <td >[[item.low]]</td>
+                        <td >[[item.close]]</td>
 
                       </tr>
                     </template>

@@ -6,8 +6,9 @@ from pybit import inverse_perpetual
 # from message import sendMessage
 import datetime as dt
 from datetime import datetime
-
 import redis
+from bot import run_discord_bot
+
 LOCAL = False
 
 try:
@@ -33,21 +34,9 @@ def addBlock(units, blocks):
     # print('UNITS', len(units), len(blocks))
     previousOI = 0
     previousVol = 0
-    previousDelta = 0
+    previousDeltaCum = 0
     previousTime = 0
     newOpen = 0
-
-    lastIndex = len(blocks) - 1
-    if len(blocks) > 0:
-        lastUnit = blocks[lastIndex - 1] # ignore last unit which is the current one
-
-        print(lastUnit)
-
-        newOpen = lastUnit['close']
-        previousOI = lastUnit['oi_cumulative']
-        previousTime = lastUnit['time']
-        previousDelta = lastUnit['delta']
-        previousVol = lastUnit['vol_cumulative']
 
     stream = json.loads(r.get('stream'))
 
@@ -58,9 +47,24 @@ def addBlock(units, blocks):
     oi = stream['lastOI']
     vol = stream['lastVol']
 
-    volDelta = vol - previousVol
-    timeDelta = time - previousTime
-    oiDelta = oi - previousOI
+
+    if len(blocks) > 1:
+        lastIndex = len(blocks) - 1
+        lastUnit = blocks[lastIndex - 1] # ignore last unit which is the current one
+        newOpen = lastUnit['close']
+        previousOI = lastUnit['oi_cumulative']
+        previousTime = lastUnit['time']
+        previousDeltaCum = lastUnit['delta_cumulative']
+        previousVol = lastUnit['vol_cumulative']
+        volDelta = vol - previousVol
+        timeDelta = time - previousTime
+        oiDelta = oi - previousOI
+    else:
+        volDelta = 0
+        timeDelta = 0
+        oiDelta = 0
+        previousDeltaCum = 0
+
 
     buyCount = 0
     sellCount = 0
@@ -102,7 +106,7 @@ def addBlock(units, blocks):
         'buys' : buyCount,
         'sells' : sellCount,
         'delta' : delta,
-        'delta_cumulative' : previousDelta + delta,
+        'delta_cumulative' : previousDeltaCum + delta,
         'total' : buyCount + sellCount,
         'oi_cumulative': oi,
         'oi_delta': oiDelta,
@@ -141,7 +145,7 @@ def logTimeUnit(unit, ts):
         interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
-        print('TIME 1', blockStart, blockFinish, unit['trade_time_ms'], unit['trade_time_ms'] >= blockFinish, len(timeflow))
+        print('TIME 1', blockStart, blockFinish)
         if unit['trade_time_ms'] >= blockFinish: # store current candle and start a new Candle
             print('ADD TIME CANDLE')
 
@@ -179,23 +183,23 @@ def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
 
-    if current_time.hour == 23 and current_time.minute == 59 and len(json.loads(r.get('timeblocks'))) > 3:
-        dt_string = current_time.strftime("%d/%m/%Y")
-        print('REDIS STORE')
-        vf = r.get('volumeflow')  # this the flow of message data for volume candles
-        vb = r.get('volumeblocks')  #  this is the store of volume based candles
-        tf = r.get('timeflow' )  # this the flow of message data to create next candle
-        tb = r.get('timeblocks')
-        history = json.loads(r.get('history'))
-        history.append({
-            'date' : dt_string,
-            'volumeflow' : vf,
-            'volumeblocks' : vb,
-            'timeflow' : tf,
-            'timeblocks' : tb
-        })
 
-    if current_time.hour == 0 and current_time.minute == 0: #and len(json.loads(r.get('timeblocks'))) > 3:
+    if current_time.hour == 23 and current_time.minute == 59 and current_time.seconds > 50:
+        history = json.loads(r.get('history'))
+        lastHistory = json.loads(r.get('history'))[len(history)-1]
+        dt_string = current_time.strftime("%d/%m/%Y")
+        if lastHistory['date'] != dt_string:
+            print('REDIS STORE')
+            vb = r.get('volumeblocks')  #  this is the store of volume based candles
+            tb = r.get('timeblocks')
+            history.append({
+                'date' : dt_string,
+                'volumeblocks' : vb,
+                'timeblocks' : tb
+            })
+            r.set('history', json.dumps(history))
+
+    if current_time.hour == 0 and current_time.minute == 0 and current_time.seconds < 2:
 
         print('REDIS RESET')
         r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
@@ -342,6 +346,8 @@ def runStream():
     ws_inverseP.instrument_info_stream(
         handle_info_message, "BTCUSD"
     )
+
+    run_discord_bot()
 
     while True:
         sleep(0.1)
