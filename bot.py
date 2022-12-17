@@ -40,7 +40,7 @@ def run_discord_bot():
         channel = client.get_channel(DISCORD_CHANNEL)
 
         while True:
-            time.sleep(1)
+            time.sleep(60)
 
             if r.get('discord') != 'blank':
                 await channel.send(r.get('discord'))
