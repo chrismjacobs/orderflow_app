@@ -1,6 +1,6 @@
 import discord
 import time
-import responses
+# import responses
 import redis
 import os
 
