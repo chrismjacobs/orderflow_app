@@ -1,5 +1,6 @@
 amqp==5.1.0
 async-timeout==4.0.2
+attrs==22.1.0
 billiard==3.6.4.0
 cached-property==1.5.2
 celery==5.2.6
@@ -8,6 +9,8 @@ click-didyoumean==0.3.0
 click-plugins==1.1.1
 click-repl==0.2.0
 Deprecated==1.2.13
+discord==2.1.0
+discord.py==2.1.0
 Flask==2.1.1
 flower==1.0.0
 gunicorn==20.1.0
@@ -17,6 +20,7 @@ itsdangerous==2.1.2
 Jinja2==3.1.1
 kombu==5.2.4
 MarkupSafe==2.1.1
+multidict==6.0.3
 packaging==21.3
 prometheus-client==0.14.1
 prompt-toolkit==3.0.29
@@ -31,5 +35,6 @@ wcwidth==0.2.5
 Werkzeug==2.1.1
 wrapt==1.14.0
 zipp==3.8.0
+yarl==1.8.2
 pybit==2.3.0
 websockets==10.3
