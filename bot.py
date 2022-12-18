@@ -81,4 +81,4 @@ def runBot():
 
     client.run(DISCORD_TOKEN)
 
-runBot()
+#runBot()
