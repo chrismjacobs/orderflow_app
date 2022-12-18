@@ -7,8 +7,11 @@ from celery import Celery
 from celery.utils.log import get_task_logger
 
 
+LOCAL = False
+
 try:
     import config
+    LOCAL = True
     REDIS_URL = config.REDIS_URL
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
@@ -82,4 +85,5 @@ def runBot():
 
     client.run(DISCORD_TOKEN)
 
-runBot()
+if LOCAL:
+    runBot()
