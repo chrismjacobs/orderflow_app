@@ -2,6 +2,7 @@ from flask import Flask, flash, render_template, redirect, request, jsonify
 from analysis import getBlocks
 import os, json
 import redis
+
 LOCAL = False
 
 try:
@@ -14,9 +15,11 @@ except:
     START_CODE = int(os.getenv('START_CODE'))
     r = redis.from_url(REDIS_URL, decode_responses=True)
     from tasks import runStream
+    from bot import runBot
 
 
-# r.set('discord', 'last one')
+r.set('discord', 'last one')
+print(r.get('discord'))
 
 print('URL', REDIS_URL)
 print('REDIS', r)
@@ -79,6 +82,7 @@ def add_inputs():
         task = runStream.delay()
         r.set('task_id', str(task))
         print('task_id', str(task))
+        bot = runBot.delay()
         flash("Your command has been submitted: " + str(task))
     else:
         flash("Your command has failed: " + str(x))

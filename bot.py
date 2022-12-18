@@ -1,8 +1,10 @@
 import discord
 import time
-# import responses
+
 import redis
 import os
+from celery import Celery
+from celery.utils.log import get_task_logger
 
 
 try:
@@ -10,12 +12,17 @@ try:
     REDIS_URL = config.REDIS_URL
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
+    DISCORD_USER = config.DISCORD_USER
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    DISCORD_USER = os.getenv('DISCORD_USER')
     r = redis.from_url(REDIS_URL, decode_responses=True)
+
+app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
+logger = get_task_logger(__name__)
 
 # async def send_message(message, user_message, is_private):
 #     try:
@@ -25,8 +32,8 @@ except:
 #     except Exception as e:
 #         print(e)
 
-
-def run_discord_bot():
+@app.task()
+def runBot():
     ## intents controls what the bot can do; in this case read message content
     intents = discord.Intents.default()
     intents.message_content = True
@@ -38,12 +45,15 @@ def run_discord_bot():
     async def on_ready():
         print(f'{client.user} is now running!')
         channel = client.get_channel(DISCORD_CHANNEL)
+        user = client.get_user(DISCORD_USER)
+        print(user)
 
         while True:
-            time.sleep(60)
+            print('DISCORD BOT RUNNING')
+            time.sleep(10)
 
             if r.get('discord') != 'blank':
-                await channel.send(r.get('discord'))
+                await user.send(r.get('discord'))
                 r.set('discord', 'blank')
 
 
@@ -71,4 +81,4 @@ def run_discord_bot():
 
     client.run(DISCORD_TOKEN)
 
-# run_discord_bot()
+runBot()

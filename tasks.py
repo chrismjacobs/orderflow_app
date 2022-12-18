@@ -7,7 +7,6 @@ from pybit import inverse_perpetual
 import datetime as dt
 from datetime import datetime
 import redis
-from bot import run_discord_bot
 
 LOCAL = False
 
@@ -184,16 +183,27 @@ def handle_trade_message(msg):
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
 
 
-    if current_time.hour == 23 and current_time.minute == 59 and current_time.seconds > 50:
+    if current_time.hour == 23 and current_time.minute == 59:
         history = json.loads(r.get('history'))
-        lastHistory = json.loads(r.get('history'))[len(history)-1]
-        dt_string = current_time.strftime("%d/%m/%Y")
-        if lastHistory['date'] != dt_string:
-            print('REDIS STORE')
+        if len(history) > 0:
+            lastHistory = json.loads(r.get('history'))[len(history)-1]
+            dt_string = current_time.strftime("%d/%m/%Y")
+            if lastHistory['date'] != dt_string:
+                print('REDIS STORE', dt_string)
+                vb = r.get('volumeblocks')
+                tb = r.get('timeblocks')
+                history.append({
+                    'date' : dt_string,
+                    'volumeblocks' : vb,
+                    'timeblocks' : tb
+                })
+                r.set('history', json.dumps(history))
+        else:
+            print('REDIS STORE INITIAL')
             vb = r.get('volumeblocks')  #  this is the store of volume based candles
             tb = r.get('timeblocks')
             history.append({
-                'date' : dt_string,
+                'date' : current_time.strftime("%d/%m/%Y"),
                 'volumeblocks' : vb,
                 'timeblocks' : tb
             })
@@ -346,8 +356,6 @@ def runStream():
     ws_inverseP.instrument_info_stream(
         handle_info_message, "BTCUSD"
     )
-
-    run_discord_bot()
 
     while True:
         sleep(0.1)
