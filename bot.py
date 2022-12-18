@@ -1,6 +1,6 @@
 import discord
 import time
-
+from discord.ext import tasks
 import redis
 import os
 from celery import Celery
@@ -44,17 +44,18 @@ def runBot():
     @client.event
     async def on_ready():
         print(f'{client.user} is now running!')
+        checkRedis.start()
+
+    @tasks.loop(seconds=10)
+    async def checkRedis():
+        print('DISCORD REDIS')
         channel = client.get_channel(DISCORD_CHANNEL)
         user = client.get_user(DISCORD_USER)
         print(user)
 
-        while True:
-            print('DISCORD BOT RUNNING')
-            time.sleep(1)
-
-            if r.get('discord') != 'blank':
-                await user.send(r.get('discord'))
-                r.set('discord', 'blank')
+        if r.get('discord') != 'blank':
+            await user.send(r.get('discord'))
+            r.set('discord', 'blank')
 
 
     # @client.event
@@ -81,4 +82,4 @@ def runBot():
 
     client.run(DISCORD_TOKEN)
 
-#runBot()
+runBot()
