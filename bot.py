@@ -50,7 +50,7 @@ def runBot():
 
         while True:
             print('DISCORD BOT RUNNING')
-            time.sleep(10)
+            time.sleep(1)
 
             if r.get('discord') != 'blank':
                 await user.send(r.get('discord'))
