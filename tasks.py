@@ -7,6 +7,8 @@ from pybit import inverse_perpetual
 import datetime as dt
 from datetime import datetime
 import redis
+import discord
+from discord.ext import tasks, commands
 
 LOCAL = False
 
@@ -14,9 +16,15 @@ try:
     import config
     LOCAL = True
     REDIS_URL = config.REDIS_URL
+    DISCORD_CHANNEL = config.DISCORD_CHANNEL
+    DISCORD_TOKEN = config.DISCORD_TOKEN
+    DISCORD_USER = config.DISCORD_USER
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
+    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    DISCORD_USER = os.getenv('DISCORD_USER')
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 print('URL', REDIS_URL)
@@ -181,13 +189,13 @@ def logTimeUnit(unit, ts):
 def handle_trade_message(msg):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC', current_time, current_time.hour, current_time.minute)
-
+    dt_string = current_time.strftime("%d/%m/%Y")
 
     if current_time.hour == 23 and current_time.minute == 59:
         history = json.loads(r.get('history'))
         if len(history) > 0:
             lastHistory = json.loads(r.get('history'))[len(history)-1]
-            dt_string = current_time.strftime("%d/%m/%Y")
+
             if lastHistory['date'] != dt_string:
                 print('REDIS STORE', dt_string)
                 vb = r.get('volumeblocks')
@@ -198,24 +206,26 @@ def handle_trade_message(msg):
                     'timeblocks' : tb
                 })
                 r.set('history', json.dumps(history))
-        else:
-            print('REDIS STORE INITIAL')
-            vb = r.get('volumeblocks')  #  this is the store of volume based candles
-            tb = r.get('timeblocks')
-            history.append({
-                'date' : current_time.strftime("%d/%m/%Y"),
-                'volumeblocks' : vb,
-                'timeblocks' : tb
-            })
-            r.set('history', json.dumps(history))
+        # else:
+        #     print('REDIS STORE INITIAL')
+        #     vb = r.get('volumeblocks')  #  this is the store of volume based candles
+        #     tb = r.get('timeblocks')
+        #     history.append({
+        #         'date' : current_time.strftime("%d/%m/%Y"),
+        #         'volumeblocks' : vb,
+        #         'timeblocks' : tb
+        #     })
+        #     r.set('history', json.dumps(history))
 
-    if current_time.hour == 0 and current_time.minute == 0 and current_time.seconds < 2:
+    if current_time.hour == 0 and current_time.minute == 0:
+        if r.get('newDay') != dt_string:
+            print('REDIS RESET')
+            r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
+            r.set('volumeblocks', json.dumps([]) )  #  this is the store of volume based candles
+            r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
+            r.set('timeblocks', json.dumps([]) ) # this is the store of new time based candles
+            r.set('newDay', dt_string)
 
-        print('REDIS RESET')
-        r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
-        r.set('volumeblocks', json.dumps([]) )  #  this is the store of volume based candles
-        r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
-        r.set('timeblocks', json.dumps([]) ) # this is the store of new time based candles
 
     print('handle_trade_message')
     # print(msg['data'])
@@ -319,7 +329,6 @@ def handle_info_message(msg):
     r.set('stream', json.dumps(stream) )
 
 
-
 @app.task() #bind=True, base=AbortableTask  // (self)
 def runStream():
 
@@ -340,6 +349,7 @@ def runStream():
 
     # sendMessage('started')
 
+
     print('WEB_SOCKETS')
 
     ws_inverseP = inverse_perpetual.WebSocket(
@@ -356,6 +366,33 @@ def runStream():
     ws_inverseP.instrument_info_stream(
         handle_info_message, "BTCUSD"
     )
+
+    ## intents controls what the bot can do; in this case read message content
+    intents = discord.Intents.default()
+    intents.message_content = True
+    intents.members = True
+    bot = commands.Bot(command_prefix="!", intents=intents)
+
+    @bot.event
+    async def on_ready():
+        print(f'{bot.user} is now running!')
+        checkRedis.start()
+
+    @tasks.loop(seconds=10)
+    async def checkRedis():
+        print('DISCORD REDIS')
+        # channel = bot.get_channel(DISCORD_CHANNEL)
+        user = bot.get_user(DISCORD_USER)
+        print('DISCORD_GET USER', user)
+
+        if r.get('discord') != 'blank':
+            await user.send(r.get('discord'))
+            r.set('discord', 'blank')
+        else:
+            await user.send('running')
+
+    bot.run(DISCORD_TOKEN)
+
 
     while True:
         sleep(0.1)
