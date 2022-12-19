@@ -79,7 +79,7 @@
                     <td>[[calculateTime(item.time_delta)]]</td>
                     <td style="display:none">[[calculateTime(item.time)]]</td>
                     <td style="display:none">[[item.vol_cumulative]]</td>
-                    <td :style="getVolumeStyle(item.vol_delta)">[[item.total]]</td>
+                    <td>[[item.total/1000000]]m</td>
                     <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
                     <td>[[item.delta_cumulative]]</td>
                     <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
@@ -89,8 +89,9 @@
                     <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
                     <td >[[item.open]]</td>
                     <td>[[item.high]]</td>
-                    <td >[[item.close]]</td>
                     <td>[[item.low]]</td>
+                    <td >[[item.close]]</td>
+
 
                   </tr>
                 </template>
@@ -104,7 +105,7 @@
 
         <div class="content-section m-5" style="background: darkgrey">
             <h3> Time Blocks </h3>
-            Size (minutes) <input type="number" v-model="timeBlockSize">
+            Size (5 minutes) <input type="number" v-model="timeBlockSize">
             List Length <input type="number" v-model="timeBlockList">
                 <table class="table">
                     <thead>
@@ -126,12 +127,12 @@
                     </thead>
                     <tbody>
                     <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
-                      <tr>
+                      <tr v-if="key < timeBlockList">
                         <th scope="row"><span>[[item.timestamp]]</span> </th>
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
-                        <td :style="getVolumeStyle(item.vol_delta)">[[item.vol_delta]]</td>
-                        <td :style="getDeltaStyle(item.delta)">[[item.delta]]</td>
+                        <td :style="getVolumeStyle(item.vol_delta, key)">[[roundData(item.vol_delta)]]K</td>
+                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K</td>
                         <td>[[item.delta_cumulative]]</td>
                         <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
                         <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
@@ -193,9 +194,9 @@ let vue = new Vue({
         timeBlocks : timeBlocks,
         timeFlow : timeFlow,
         stream : stream,
-        volumeBlockList: 10,
+        volumeBlockList: 20,
         volumeBlockSize: 1,
-        timeBlockList: 10,
+        timeBlockList: 100,
         timeBlockSize: 1,
         of_timer : '',
         ofAlert : 0
@@ -240,11 +241,33 @@ let vue = new Vue({
             }
             return style
         },
-        getVolumeStyle: function(volume) {
-            let style = {background : 'brown'}
-            if (volume < 0) {
+        getVolumeStyle: function(volume, key) {
+            console.log(key, volume)
+            let volCumulative = 0
+            let count = 1
+            let timeblocks = this.getReverseTimeBlocks
+            let length = timeblocks.length
+            for (let x in timeblocks ) {
+                if (x > key && count < 11) {
+                    volCumulative += timeblocks[x]['vol_delta']
+                    count += 1
+                }
+
+            }
+
+            let style = {background : 'grey'}
+            let initialCandles = 10/this.timeBlockSize
+
+            let volAverage = (volCumulative/10)
+            if (key > length - initialCandles) {
+                style = {background : 'white'}
+            } else if (volume > volAverage*2) {
+                console.log('PVA', volume, volAverage)
+                style = {background : 'blue'}
+            } else if (volume > volAverage*1.5) {
                 style = {background : 'brown'}
             }
+
             return style
         },
         ofTimer: function () {
@@ -337,7 +360,7 @@ let vue = new Vue({
             return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
         },
         getReverseTimeBlocks() {
-            return this.timeBlocks.slice(-this.timeBlockList).reverse()
+            return this.timeBlocks.slice().reverse()
         },
     },
     watch: {

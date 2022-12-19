@@ -11,8 +11,6 @@ except:
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 
-print(r.get('history'))
-
 def createCandle():
 
     newCandle = {
@@ -35,7 +33,6 @@ def createCandle():
     }
 
     return newCandle
-
 
 
 def getBlocks(size, blocksString):

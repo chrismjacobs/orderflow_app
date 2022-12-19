@@ -18,9 +18,6 @@ except:
     # from bot import runBot
 
 
-r.set('discord', 'last one')
-print(r.get('discord'))
-
 print('URL', REDIS_URL)
 print('REDIS', r)
 
@@ -52,7 +49,7 @@ def getOF():
 
     if volumeBlockSize > 1:
         volumeBlocks = getBlocks(volumeBlockSize, volumeBlocks)
-    if timeBlockSize > 5:
+    if timeBlockSize > 1:
         timeBlocks = getBlocks(timeBlockSize, timeBlocks)
 
     jDict = {

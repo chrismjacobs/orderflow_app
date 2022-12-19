@@ -206,6 +206,7 @@ def handle_trade_message(msg):
                     'timeblocks' : tb
                 })
                 r.set('history', json.dumps(history))
+                r.set('discord', 'history log')
         # else:
         #     print('REDIS STORE INITIAL')
         #     vb = r.get('volumeblocks')  #  this is the store of volume based candles
@@ -217,7 +218,7 @@ def handle_trade_message(msg):
         #     })
         #     r.set('history', json.dumps(history))
 
-    if current_time.hour == 6 and current_time.minute == 0:
+    if current_time.hour == 0 and current_time.minute == 0:
         print('REDIS RESET', current_time)
         if r.get('newDay') != dt_string:
             print('REDIS RESET')
@@ -226,6 +227,7 @@ def handle_trade_message(msg):
             r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
             r.set('timeblocks', json.dumps([]) ) # this is the store of new time based candles
             r.set('newDay', dt_string)
+            r.set('discord', 'new day')
 
 
     print('handle_trade_message')
