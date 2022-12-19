@@ -217,7 +217,7 @@ def handle_trade_message(msg):
         #     })
         #     r.set('history', json.dumps(history))
 
-    if current_time.hour == 0 and current_time.minute == 0:
+    if current_time.hour == 6 and current_time.minute == 0:
         if r.get('newDay') != dt_string:
             print('REDIS RESET')
             r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
@@ -329,6 +329,32 @@ def handle_info_message(msg):
     r.set('stream', json.dumps(stream) )
 
 
+def startDiscord():
+    ## intents controls what the bot can do; in this case read message content
+    intents = discord.Intents.default()
+    intents.message_content = True
+    intents.members = True
+    bot = commands.Bot(command_prefix="!", intents=discord.Intents().all())
+
+    @bot.event
+    async def on_ready():
+        print(f'{bot.user} is now running!')
+        user = bot.get_user(int(DISCORD_USER))
+        print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
+        await user.send(r.get('Running'))
+        checkRedis.start(user)
+
+    @tasks.loop(seconds=10)
+    async def checkRedis(user):
+        print('DISCORD REDIS CHECK')
+
+        if r.get('discord') != 'blank':
+            await user.send(r.get('discord'))
+            r.set('discord', 'blank')
+
+    bot.run(DISCORD_TOKEN)
+
+
 @app.task() #bind=True, base=AbortableTask  // (self)
 def runStream():
 
@@ -367,34 +393,7 @@ def runStream():
         handle_info_message, "BTCUSD"
     )
 
-    ## intents controls what the bot can do; in this case read message content
-    intents = discord.Intents.default()
-    intents.message_content = True
-    intents.members = True
-    bot = commands.Bot(command_prefix="!", intents=discord.Intents().all())
-
-    @bot.event
-    async def on_ready():
-        print(f'{bot.user} is now running!')
-        user = bot.get_user(int(DISCORD_USER))
-        print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
-        checkRedis.start(user)
-
-    @tasks.loop(seconds=10)
-    async def checkRedis(user):
-        print('DISCORD REDIS')
-        # channel = bot.get_channel(DISCORD_CHANNEL)
-        # user = bot.get_user(DISCORD_USER)
-        # print('DISCORD_GET USER', user)
-
-        if r.get('discord') != 'blank':
-            await user.send(r.get('discord'))
-            r.set('discord', 'blank')
-        else:
-            await user.send('running')
-
-    bot.run(DISCORD_TOKEN)
-
+    startDiscord()
 
     while True:
         sleep(0.1)
