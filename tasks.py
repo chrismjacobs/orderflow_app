@@ -218,6 +218,7 @@ def handle_trade_message(msg):
         #     r.set('history', json.dumps(history))
 
     if current_time.hour == 6 and current_time.minute == 0:
+        print('REDIS RESET', current_time)
         if r.get('newDay') != dt_string:
             print('REDIS RESET')
             r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
