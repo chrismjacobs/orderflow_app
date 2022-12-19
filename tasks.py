@@ -342,7 +342,7 @@ def startDiscord():
         print(f'{bot.user} is now running!')
         user = bot.get_user(int(DISCORD_USER))
         print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
-        await user.send(r.get('Running'))
+        await user.send('Running')
         checkRedis.start(user)
 
     @tasks.loop(seconds=10)
