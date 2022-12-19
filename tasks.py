@@ -376,14 +376,16 @@ def runStream():
     @bot.event
     async def on_ready():
         print(f'{bot.user} is now running!')
-        checkRedis.start()
+        user = bot.get_user(int(DISCORD_USER))
+        print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
+        checkRedis.start(user)
 
     @tasks.loop(seconds=10)
-    async def checkRedis():
+    async def checkRedis(user):
         print('DISCORD REDIS')
         # channel = bot.get_channel(DISCORD_CHANNEL)
-        user = bot.get_user(DISCORD_USER)
-        print('DISCORD_GET USER', user)
+        # user = bot.get_user(DISCORD_USER)
+        # print('DISCORD_GET USER', user)
 
         if r.get('discord') != 'blank':
             await user.send(r.get('discord'))
