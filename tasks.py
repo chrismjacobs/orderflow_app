@@ -280,29 +280,27 @@ def handle_trade_message(msg):
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             LastIndex = len(volumeblocks) -1
-
             newCandle = addBlock(volumeflow, volumeblocks)
             volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
             r.set('volumeblocks', json.dumps(volumeblocks))
 
+            ## volume flow has been added as  full candle and should be reset
+            volumeflow = []
 
             # Need to add multiple blocks if there are any
             for y in range(carryOver//block):
 
+                ## this is volume flow list - just one block
                 fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
 
+                ## keep appending large blocks
                 volumeblocks = json.loads(r.get('volumeblocks'))
                 newCandle = addBlock(fullTradeList, volumeblocks)
-
-                volumeblocks = json.loads(r.get('volumeblocks'))
-                newCandle = addBlock(volumeflow, volumeblocks)
-                volumeblocks.append(newCandle)
                 r.set('volumeblocks', json.dumps(volumeblocks))
 
                 print('Add Block', y)
 
-            # Reset Current Block
-
+            # Creat new flow block with left over contracts
             volumeflow = [{ 'side' : x['side'] , 'size' : carryOver%block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
 
             volumeblocks = json.loads(r.get('volumeblocks'))
