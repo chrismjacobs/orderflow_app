@@ -75,6 +75,7 @@ def getBlocks(size, blocksString):
             newCandle['sells'] += unit['sells']
             newCandle['delta'] += unit['buys'] - unit['sells']
             newCandle['total'] += unit['total']
+            newCandle['vol_delta'] += unit['vol_delta']
 
             count += 1
 
@@ -91,6 +92,7 @@ def getBlocks(size, blocksString):
             newCandle['sells'] += unit['sells']
             newCandle['delta'] += unit['buys'] - unit['sells']
             newCandle['total'] += unit['total']
+            newCandle['vol_delta'] += unit['vol_delta']
 
             newCandle['close'] = unit['close']
             newCandle['price_delta'] = newCandle['close'] - newCandle['open']
@@ -106,7 +108,6 @@ def getBlocks(size, blocksString):
                 newCandle['delta_cumulative'] = previousDelta + newCandle['delta']
                 newCandle['oi_cumulative'] = previousOI + newCandle['oi_delta']
                 newCandle['vol_cumulative'] = previousVol + newCandle['total']
-                newCandle['vol_delta'] = unit['vol_cumulative'] - previousVol
 
             newList.append(newCandle)
 
