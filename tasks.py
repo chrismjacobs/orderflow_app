@@ -119,11 +119,83 @@ def addBlock(units, blocks):
         'oi_delta': oiDelta,
         'vol_cumulative' : vol,
         'vol_delta': volDelta,
+        'pva_status': []
     }
 
     print('NEW CANDLE', newCandle['timestamp'])
 
     return newCandle
+
+def getPVAstatus(timeblocks):
+    lastblocks = []
+    if len(timeblocks) < 10:
+        history = json.loads(r.get('history'))[-1]['timeblocks']
+
+        try:
+            print(len(timeblocks), len(history), type(history))
+            getoldTimeblocks = (11-len(timeblocks))
+            print(getoldTimeblocks, history[-getoldTimeblocks])
+            lastblocks = history[-getoldTimeblocks] + timeblocks
+            print(lastblocks)
+
+        except:
+            r.set('discord', 'History PVA error')
+            print('HISTORY ERROR')
+            return {}
+        ## if one time block - get last 10 from history
+        ## if 4 time blocks - get last 7 from history
+
+    else:
+        if len(timeblocks) > 10:
+            lastblocks = timeblocks[-11]
+        else:
+            return {}
+
+    sumVolume = 0
+    lastVolume = 0
+    lastDelta = 0
+    lastPriceDelta = 0
+
+    count = 0
+    for x in lastblocks:
+        if count < 11:
+            sumVolume += x['vol_delta']
+            count += 1
+        else:
+            lastVolume = x['vol_delta']
+            lastDelta = x['delta']
+            lastPriceDelta = x['price_delta']
+            lastPriceDelta = x['price_delta']
+            lastOIDelta = x['oi_delta']
+
+    pva = False
+    divergence = False
+    changinghands = False
+    percentage = lastVolume/(sumVolume/10)
+    deltapercentage = round((lastDelta/lastVolume)*100, 2)
+
+    if percentage > 1.5:
+        pva = True
+        if lastOIDelta < 100000:
+            changinghands = True
+
+    if lastDelta > 0 and lastPriceDelta < 0:
+        divergence = True
+    elif lastDelta < 0 and lastPriceDelta > 0:
+        divergence = True
+
+
+
+    returnPVA = {'pva' : pva, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'changinghands' : changinghands}
+
+    if pva and changinghands:
+        r.set('discord', 'changing hands: ' + json.dumps(returnPVA))
+
+    if pva and divergence:
+        r.set('discord', 'divergence: ' + json.dumps(returnPVA))
+
+    return returnPVA
+
 
 def logTimeUnit(unit, ts):
     print('ADD TIME FLOW')
@@ -140,7 +212,7 @@ def logTimeUnit(unit, ts):
     if len(timeflow) == 0:
         print('TIME 0')
 
-        ## start new time flow and initial current candle
+        ## start the initial time flow and initial current candle
         timeflow.append(newUnit)
         currentCandle = addBlock(timeflow, timeblocks)
         timeblocks.append(currentCandle)
@@ -160,6 +232,8 @@ def logTimeUnit(unit, ts):
             newCandle = addBlock(timeflow, timeblocks)
             LastIndex = len(timeblocks) -1
             timeblocks[LastIndex] = newCandle
+
+            timeblocks[LastIndex]['pva_status'] = getPVAstatus(timeblocks)
 
             # reset timeflow and add new unit
             timeflow = []
@@ -290,8 +364,10 @@ def handle_trade_message(msg):
             # Need to add multiple blocks if there are any
             for y in range(carryOver//block):
 
+                r.set('discord', 'Carry Over: ' + str(carryOver//block))
+
                 ## this is volume flow list - just one block
-                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
+                fullTradeList =  [{ 'side' : x['side'] , 'size' : block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : 'CARRY OVER'}]
 
                 ## keep appending large blocks
                 volumeblocks = json.loads(r.get('volumeblocks'))

@@ -11,49 +11,32 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
 
 
-</head >
+</head>
 
-<main role="main" class="container-md">
+<main role="main" class="container-md" style="background:darkgrey">
 
     <div id="vue-app">
 
 
-        <div class="content-section m-5" style="background: darkgrey">
-            <h1> Order Flow:  [[ stream['lastPrice']  ]]</h1>
+        <div class="content-section m-5" style="background:darkgrey" align="center">
+            <h1> Order Flow:  <br>[[ stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
-        </div>
 
-        <div class="content-section m-5" style="background: darkgrey">
             <h3> Volume Blocks </h3>
             Size (1mil) <input type="number" v-model="volumeBlockSize">
             List Length <input type="number" v-model="volumeBlockList">
 
             <div class="row align-items-start m-2">
-                <div class="col-2" display="background:darkgreen">
-                    <h3> Buys </h3>
+                <div class="col-6" style="background:darkgreen;color:white">
+                    <span> Buys: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] / </span></span>
                 </div>
-                <div class="col-2" display="background:firebrick">
+                <div class="col-6" style="background:firebrick;color:white">
+                    <span> Sells </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] / </span></span>
 
-                    <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] <br> </span></span>
-
-                </div>
-                <div class="col-2" display="background:darkgreen">
-                    <h3> Sells </h3>
-
-                </div>
-                <div class="col-2" display="background:firebrick">
-                    <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] <br> </span></span>
-
-                </div>
-                <div class="col-4" display="background:firebrick">
-
-                </div>
             </div>
-            <div class="content-section m-5" style="background: darkgrey">
 
-                </div>
             <table class="table table-dark table-sm">
                 <thead>
                   <tr>
@@ -97,13 +80,9 @@
                 </template>
                 </tbody>
               </table>
-            <div style="display:none">
-              <span v-for="(item, key) in volumeBlocks" :key="key" > [[item]] <br> </span>
-            </div>
 
-        </div>
 
-        <div class="content-section m-5" style="background: darkgrey">
+
             <h3> Time Blocks </h3>
             Size (5 minutes) <input type="number" v-model="timeBlockSize">
             List Length <input type="number" v-model="timeBlockList">
@@ -132,7 +111,7 @@
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
                         <td :style="getVolumeStyle(item.vol_delta, key)">[[roundData(item.vol_delta)]]K</td>
-                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K</td>
+                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K [[getPercent(item.delta, item.total)]]%</td>
                         <td>[[item.delta_cumulative]]</td>
                         <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
                         <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
@@ -221,9 +200,9 @@ let vue = new Vue({
 
         },
         getCandleStyle: function(open, close) {
-            let style = {background : 'lightcoral'}
+            let style = {background : 'firebrick'}
             if (open < close) {
-                style = {background : 'palegreen'}
+                style = {background : 'darkgreen'}
             }
             return style
         },
@@ -235,7 +214,7 @@ let vue = new Vue({
             return style
         },
         getDeltaStyle: function(delta) {
-            let style = {background : 'aqua'}
+            let style = {background : 'darkcyan'}
             if (delta < 0) {
                 style = {background : 'orange'}
             }
@@ -354,7 +333,7 @@ let vue = new Vue({
                     newList.push(this.volumeFlow[x])
                 }
             }
-            return newList.slice(-7).reverse()
+            return newList.slice(-10).reverse()
         },
         getReverseVolumeBlocks() {
             return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
