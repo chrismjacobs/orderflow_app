@@ -61,8 +61,8 @@ def getOF():
 
     if volumeBlockSize > 1:
         volumeBlocks = getBlocks(volumeBlockSize, volumeBlocks)
-    if timeBlockSize > 1:
-        timeBlocks = getBlocks(timeBlockSize, timeBlocks)
+    if timeBlockSize > 5:
+        timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
     jDict = {
         'volumeBlocks' : volumeBlocks,

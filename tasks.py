@@ -10,6 +10,7 @@ import redis
 import discord
 from discord.ext import tasks, commands
 
+
 LOCAL = False
 
 try:
@@ -119,7 +120,7 @@ def addBlock(units, blocks):
         'oi_delta': oiDelta,
         'vol_cumulative' : vol,
         'vol_delta': volDelta,
-        'pva_status': []
+        'pva_status': {}
     }
 
     print('NEW CANDLE', newCandle['timestamp'])
@@ -127,74 +128,81 @@ def addBlock(units, blocks):
     return newCandle
 
 def getPVAstatus(timeblocks):
-    lastblocks = []
-    if len(timeblocks) < 10:
-        history = json.loads(r.get('history'))[-1]['timeblocks']
-
+    last11blocks = []
+    if len(timeblocks) < 11:
+        history = json.loads(r.get('history'))
         try:
-            print(len(timeblocks), len(history), type(history))
-            getoldTimeblocks = (11-len(timeblocks))
-            print(getoldTimeblocks, history[-getoldTimeblocks])
-            lastblocks = history[-getoldTimeblocks] + timeblocks
-            print(lastblocks)
-
+            if len(history) > 0:
+                lastHistory = history[-1]['timeblocks']
+                howManyOldTimeblocks = (11-len(timeblocks))
+                last11blocks = lastHistory[-howManyOldTimeblocks:] + timeblocks
+                print('LASTBLOCKS HISOTRY', last11blocks)
+                ## if one time block - get last 10 from history
+                ## if 4 time blocks - get last 7 from history
+            else:
+                return {}
         except:
-            r.set('discord', 'History PVA error')
-            print('HISTORY ERROR')
+            # r.set('discord', 'History PVA error')
+            print('PVA HISTORY ERROR')
             return {}
-        ## if one time block - get last 10 from history
-        ## if 4 time blocks - get last 7 from history
-
     else:
-        if len(timeblocks) > 10:
-            lastblocks = timeblocks[-11]
+        if len(timeblocks) >= 11:
+            try:
+                last11blocks = timeblocks[-11:]
+            except:
+                return {}
+
         else:
             return {}
+
+    print('PVA Calculate')
 
     sumVolume = 0
     lastVolume = 0
     lastDelta = 0
     lastPriceDelta = 0
 
-    count = 0
-    for x in lastblocks:
-        if count < 11:
-            sumVolume += x['vol_delta']
-            count += 1
-        else:
-            lastVolume = x['vol_delta']
-            lastDelta = x['delta']
-            lastPriceDelta = x['price_delta']
-            lastPriceDelta = x['price_delta']
-            lastOIDelta = x['oi_delta']
+    try:
+        count = 1
+        for x in last11blocks:
+            if count < 11:
+                sumVolume += x['vol_delta']
+                count += 1
+            else:
+                lastVolume = x['vol_delta']
+                lastDelta = x['delta']
+                lastPriceDelta = x['price_delta']
+                lastPriceDelta = x['price_delta']
+                lastOIDelta = x['oi_delta']
 
-    pva = False
-    divergence = False
-    changinghands = False
-    percentage = lastVolume/(sumVolume/10)
-    deltapercentage = round((lastDelta/lastVolume)*100, 2)
+        pva = False
+        divergence = False
+        flatOI = False
 
-    if percentage > 1.5:
-        pva = True
-        if lastOIDelta < 100000:
-            changinghands = True
+        percentage = round((lastVolume/(sumVolume/10)), 2)
+        deltapercentage = round((lastDelta/lastVolume)*100, 2)
 
-    if lastDelta > 0 and lastPriceDelta < 0:
-        divergence = True
-    elif lastDelta < 0 and lastPriceDelta > 0:
-        divergence = True
+        if percentage > 1.5:
+            pva = True
+            if lastOIDelta < 100000:
+                flatOI = True
 
+        if lastDelta > 0 and lastPriceDelta < 0:
+            divergence = True
+        elif lastDelta < 0 and lastPriceDelta > 0:
+            divergence = True
 
+        returnPVA = {'pva' : pva, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'flatOI' : flatOI}
 
-    returnPVA = {'pva' : pva, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'changinghands' : changinghands}
+        if pva and flatOI:
+            r.set('discord', 'changing hands: ' + json.dumps(returnPVA))
+        elif pva and divergence:
+            r.set('discord', 'divergence: ' + json.dumps(returnPVA))
 
-    if pva and changinghands:
-        r.set('discord', 'changing hands: ' + json.dumps(returnPVA))
+        return returnPVA
 
-    if pva and divergence:
-        r.set('discord', 'divergence: ' + json.dumps(returnPVA))
-
-    return returnPVA
+    except:
+        return {}
 
 
 def logTimeUnit(unit, ts):
@@ -221,7 +229,10 @@ def logTimeUnit(unit, ts):
         r.set('timeflow', json.dumps(timeflow))
     else:
         blockStart = timeflow[0]['time']
-        interval = (60000*5) # 5Min
+        if LOCAL:
+            interval = (60000*1) # 1Min
+        else:
+            interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
         print('TIME 1', blockStart, blockFinish)
@@ -272,8 +283,8 @@ def handle_trade_message(msg):
 
             if lastHistory['date'] != dt_string:
                 print('REDIS STORE', dt_string)
-                vb = r.get('volumeblocks')
-                tb = r.get('timeblocks')
+                vb = json.loads(r.get('volumeblocks'))
+                tb = json.loads(r.get('timeblocks'))
                 history.append({
                     'date' : dt_string,
                     'volumeblocks' : vb,
@@ -281,16 +292,16 @@ def handle_trade_message(msg):
                 })
                 r.set('history', json.dumps(history))
                 r.set('discord', 'history log')
-        # else:
-        #     print('REDIS STORE INITIAL')
-        #     vb = r.get('volumeblocks')  #  this is the store of volume based candles
-        #     tb = r.get('timeblocks')
-        #     history.append({
-        #         'date' : current_time.strftime("%d/%m/%Y"),
-        #         'volumeblocks' : vb,
-        #         'timeblocks' : tb
-        #     })
-        #     r.set('history', json.dumps(history))
+        else:
+            print('REDIS STORE INITIAL')
+            vb = json.loads(r.get('volumeblocks'))
+            tb = json.loads(r.get('timeblocks'))
+            history.append({
+                'date' : current_time.strftime("%d/%m/%Y"),
+                'volumeblocks' : vb,
+                'timeblocks' : tb
+            })
+            r.set('history', json.dumps(history))
 
     if current_time.hour == 0 and current_time.minute == 0:
         print('REDIS RESET', current_time)
@@ -316,7 +327,11 @@ def handle_trade_message(msg):
 
 
     for x in msg['data']:
-        print('msg', x)
+        if x['size'] > 100:
+            print('msg', x['side'], x['size'])
+
+        if x['size'] > 1000000:
+            r.set('discord', '1000000')
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))

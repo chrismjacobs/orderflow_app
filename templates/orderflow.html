@@ -23,10 +23,11 @@
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
-
+            <br>
             <h3> Volume Blocks </h3>
             Size (1mil) <input type="number" v-model="volumeBlockSize">
             List Length <input type="number" v-model="volumeBlockList">
+            <br>
 
             <div class="row align-items-start m-2">
                 <div class="col-6" style="background:darkgreen;color:white">
@@ -34,7 +35,7 @@
                 </div>
                 <div class="col-6" style="background:firebrick;color:white">
                     <span> Sells </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] / </span></span>
-
+                </div>
             </div>
 
             <table class="table table-dark table-sm">
@@ -84,8 +85,10 @@
 
 
             <h3> Time Blocks </h3>
-            Size (5 minutes) <input type="number" v-model="timeBlockSize">
+
+            Size (5 minutes) <input type="number" v-model="timeBlockSize" step="5">
             List Length <input type="number" v-model="timeBlockList">
+
                 <table class="table table table-dark table-sm">
                     <thead>
                       <tr>
@@ -111,7 +114,7 @@
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
                         <td :style="getVolumeStyle(item.vol_delta, key)">[[roundData(item.vol_delta)]]K</td>
-                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K [[getPercent(item.delta, item.total)]]%</td>
+                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
                         <td>[[item.delta_cumulative]]</td>
                         <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
                         <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
@@ -127,6 +130,8 @@
                     </template>
                     </tbody>
                   </table>
+
+
         </div>
 
 
@@ -176,7 +181,7 @@ let vue = new Vue({
         volumeBlockList: 20,
         volumeBlockSize: 1,
         timeBlockList: 100,
-        timeBlockSize: 1,
+        timeBlockSize: 5,
         of_timer : '',
         ofAlert : 0
     },
@@ -239,7 +244,7 @@ let vue = new Vue({
 
             let volAverage = (volCumulative/10)
             if (key > length - initialCandles) {
-                style = {background : 'white'}
+                style = {background : 'black'}
             } else if (volume > volAverage*2) {
                 console.log('PVA', volume, volAverage)
                 style = {background : 'blue'}
