@@ -184,7 +184,7 @@ def getPVAstatus(timeblocks):
 
         if percentage > 1.5:
             pva = True
-            if lastOIDelta < 100000:
+            if lastOIDelta < 100000  and lastOIDelta > -100000:
                 flatOI = True
 
         if lastDelta > 0 and lastPriceDelta < 0:
@@ -192,7 +192,7 @@ def getPVAstatus(timeblocks):
         elif lastDelta < 0 and lastPriceDelta > 0:
             divergence = True
 
-        returnPVA = {'pva' : pva, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'flatOI' : flatOI}
+        returnPVA = {'pva' : pva, 'vol': lastVolume, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'flatOI' : flatOI}
 
         if pva and flatOI:
             r.set('discord', 'changing hands: ' + json.dumps(returnPVA))
