@@ -19,7 +19,7 @@
 
 
         <div class="content-section m-5" style="background:darkgrey" align="center">
-            <h1> Order Flow:  <br>[[ stream['lastPrice']  ]]</h1>
+            <h1 @click="start()"> Order Flow:  <br>[[ stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
@@ -322,6 +322,24 @@ let vue = new Vue({
                 console.log('tb')
                 vue.timeFlow = JSON.parse(data.timeFlow)
                 console.log('tf')
+            })
+            .fail(function(){
+                  alert('error has occurred gData');
+            });
+        },
+        start: function (mode) {
+            console.log('start')
+
+            $.ajax({
+                data : {
+                    volumeBlockSize: this.volumeBlockSize,
+                },
+                type : 'POST',
+                url : '/startOF'
+
+            })
+            .done(function(data) {
+                console.log(data)
             })
             .fail(function(){
                   alert('error has occurred gData');

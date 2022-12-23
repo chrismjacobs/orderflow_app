@@ -78,6 +78,18 @@ def getOF():
 
     return jx
 
+
+@app.route('/startOF', methods=['POST'])
+def startOF():
+    volumeBlockSize = int(request.form ['volumeBlockSize'])
+    if volumeBlockSize == START_CODE:
+        task = runStream.delay()
+        r.set('task_id', str(task))
+        print('task_id', str(task))
+        return jsonify({'task_id': str(task)})
+    else:
+        return jsonify({'task_id': 'fail'})
+
 @app.route('/start')
 def start():
     return render_template('start.html')
