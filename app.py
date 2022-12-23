@@ -82,7 +82,7 @@ def getOF():
 @app.route('/startOF', methods=['POST'])
 def startOF():
     volumeBlockSize = int(request.form ['volumeBlockSize'])
-    if volumeBlockSize == START_CODE:
+    if volumeBlockSize == int(START_CODE):
         task = runStream.delay()
         r.set('task_id', str(task))
         print('task_id', str(task))
