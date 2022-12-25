@@ -99,6 +99,8 @@ def getHiLow(blocks):
             elif tb['delta_cumulative'] < lowInfo['delta'] and count == tbs and tb['close'] > mLow and lowInfo['open']:
                 r.set('discord', 'CVD bull divergence')
 
+        count += 1
+
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
 
 
@@ -263,10 +265,10 @@ def getPVAstatus(timeblocks):
         count = 1
         for x in last11blocks:
             if count < 11:
-                sumVolume += x['vol_delta']
+                sumVolume += x['total']
                 count += 1
             else:
-                lastVolume = x['vol_delta']
+                lastVolume = x['total']
                 lastDelta = x['delta']
                 lastPriceDelta = x['price_delta']
                 lastPriceDelta = x['price_delta']
@@ -290,6 +292,8 @@ def getPVAstatus(timeblocks):
             divergence = True
 
         returnPVA = {'pva' : pva, 'vol': lastVolume, 'percentage' : percentage, 'deltapercentge' : deltapercentage, 'divergence' : divergence, 'flatOI' : flatOI}
+
+        print('RETURN PVA')
 
         if pva and flatOI:
             r.set('discord', 'changing hands: ' + json.dumps(returnPVA))
@@ -477,7 +481,7 @@ def handle_trade_message(msg):
             ## volume flow has been added as  full candle and should be reset
             volumeflow = []
 
-            if r.get('discord_fiter') == 'on':
+            if r.get('discord_filter') == 'off':
                 r.set('discord', 'Carry Over: ' + str(carryOver) + ' / ' + str(carryOver//block))
 
             # Need to add multiple blocks if there are any
@@ -556,7 +560,7 @@ def runStream():
         'oiMarker' : 1000000
     }
 
-    r.set('discord_filter',  'on')
+    r.set('discord_filter',  'off')
     r.set('stream', json.dumps(rDict) )
     # r.set('history', json.dumps([]) )
     r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles

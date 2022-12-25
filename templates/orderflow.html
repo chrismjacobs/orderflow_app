@@ -61,7 +61,7 @@
                   <tr>
                     <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
-                    <td style="display:none">[[calculateTime(item.time)]]</td>
+                    <td style="display:none">[[item]]</td>
                     <td style="display:none">[[item.vol_cumulative]]</td>
                     <td>[[item.total/1000000]]m</td>
                     <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
@@ -85,6 +85,8 @@
 
 
             <h3> Time Blocks </h3>
+
+            [[ stream ]]
 
             Size (5 minutes) <input type="number" v-model="timeBlockSize" step="5">
             List Length <input type="number" v-model="timeBlockList">
@@ -189,6 +191,9 @@ let vue = new Vue({
         getTime: function (t) {
             let time = t.split(' ')
             let hours = parseInt(time[1].split(':')[0]) + 8
+            if (hours > 23) {
+                hours = hours - 24
+            }
             return time[0] + ' ' + time[1] + ' (' + hours + ')'
         },
         roundData: function (data) {
@@ -206,8 +211,7 @@ let vue = new Vue({
             return r
         },
         calculateTime: function (ms) {
-            return Math.round((ms/1000000))
-
+            return Math.round((ms))
         },
         getCandleStyle: function(open, close) {
             let style = {background : 'firebrick'}
