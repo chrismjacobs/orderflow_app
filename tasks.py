@@ -39,7 +39,7 @@ print('REDIS', r)
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 logger = get_task_logger(__name__)
 
-def getHiLow():
+def getHiLow(blocks):
 
     minutes = 60
 
@@ -49,7 +49,6 @@ def getHiLow():
     data = session.query_kline(symbol="BTCUSD", interval="1", from_time=str(timestamp))['result']
 
     print('GET HI LOW ', len(data))
-
 
     hAry = []
     lAry = []
@@ -61,8 +60,6 @@ def getHiLow():
 
     mHi = max(hAry)
     mLow = min(lAry)
-
-    timeblocks = json.loads(r.get('timeblocks'))
 
     highInfo = {
         'price' : mHi,
@@ -79,8 +76,10 @@ def getHiLow():
     }
 
     count = 0
-    tbs = len(timeblocks) - 1
-    for tb in timeblocks:
+
+    tbs = len(blocks) - 1
+
+    for tb in blocks:
         if tb['high'] == mHi:
             highInfo['index'] = count
             highInfo['delta'] = tb['delta_cumulative']
@@ -103,7 +102,7 @@ def getHiLow():
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
 
 
-def addBlock(units, blocks):
+def addBlock(units, blocks, mode):
 
     ts = str(units[0]['timestamp'])
 
@@ -134,22 +133,22 @@ def addBlock(units, blocks):
     oi = sess['result'][0]['open_interest']
     stream['lastOI'] = oi
     # vol = sess['lastVol']
-    print('ADD BLOCK')
+    print('ADD BLOCK: ' + mode)
 
-    print('TEST', stream['1mOI'])
+    if mode == 'time':
 
-    if len(stream['1mOI']) < 2:
-        print('INITIAL')
-        stream['1mOI'] = [float(timeNow), oi]
-    elif stream['1mOI'][0] - float(timeNow) > 60:
+        if len(stream['1mOI']) < 2:
+            print('INITIAL')
+            stream['1mOI'] = [float(timeNow), oi]
+        elif stream['1mOI'][0] - float(timeNow) > 60:
 
-        deltaOI =  oi - stream['1mOI'][1]
-        if deltaOI > stream['oiMarker']:
-            r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI}))
+            deltaOI =  oi - stream['1mOI'][1]
+            if deltaOI > stream['oiMarker']:
+                r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI}))
 
-        stream['1mOI'] = [time, oi]
+            stream['1mOI'] = [time, oi]
 
-    stream['Divs'] = getHiLow()
+        stream['Divs'] = getHiLow(blocks)
 
     print(stream)
     r.set('stream', json.dumps(stream) )
@@ -221,7 +220,7 @@ def addBlock(units, blocks):
         'pva_status': {}
     }
 
-    print('NEW CANDLE', newCandle['timestamp'])
+    print('NEW CANDLE: ' + mode, newCandle['timestamp'])
 
     return newCandle
 
@@ -320,7 +319,7 @@ def logTimeUnit(unit, ts):
 
         ## start the initial time flow and initial current candle
         timeflow.append(newUnit)
-        currentCandle = addBlock(timeflow, timeblocks)
+        currentCandle = addBlock(timeflow, timeblocks, 'time')
         timeblocks.append(currentCandle)
 
         r.set('timeblocks', json.dumps(timeblocks))
@@ -338,7 +337,7 @@ def logTimeUnit(unit, ts):
             print('ADD TIME CANDLE')
 
             # replace current candle with completed candle
-            newCandle = addBlock(timeflow, timeblocks)
+            newCandle = addBlock(timeflow, timeblocks, 'time')
             LastIndex = len(timeblocks) -1
             timeblocks[LastIndex] = newCandle
 
@@ -350,7 +349,7 @@ def logTimeUnit(unit, ts):
             timeflow.append(newUnit)
 
             # add fresh current candle to timeblock
-            currentCandle = addBlock(timeflow, timeblocks)
+            currentCandle = addBlock(timeflow, timeblocks, 'time')
             timeblocks.append(currentCandle)
             print('TIME FLOW RESET', len(timeflow), len(timeblocks))
             r.set('timeblocks', json.dumps(timeblocks))
@@ -362,7 +361,7 @@ def logTimeUnit(unit, ts):
             timeflow.append(newUnit)
 
             # update current candle with new unit data
-            currentCandle = addBlock(timeflow, timeblocks)
+            currentCandle = addBlock(timeflow, timeblocks, 'time')
             LastIndex = len(timeblocks) -1
             timeblocks[LastIndex] = currentCandle
             r.set('timeblocks', json.dumps(timeblocks))
@@ -451,7 +450,7 @@ def handle_trade_message(msg):
             volumeflowTotal += x['size']
 
             volumeblocks = json.loads(r.get('volumeblocks'))
-            currentCandle = addBlock(volumeflow, volumeblocks)
+            currentCandle = addBlock(volumeflow, volumeblocks, 'vol')
 
             ''' need to standardize this code logic '''
 
@@ -471,7 +470,7 @@ def handle_trade_message(msg):
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             LastIndex = len(volumeblocks) -1
-            newCandle = addBlock(volumeflow, volumeblocks)
+            newCandle = addBlock(volumeflow, volumeblocks, 'vol')
             volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
             r.set('volumeblocks', json.dumps(volumeblocks))
 
@@ -491,7 +490,7 @@ def handle_trade_message(msg):
 
                 ## keep appending large blocks
                 volumeblocks = json.loads(r.get('volumeblocks'))
-                newCandle = addBlock(fullTradeList, volumeblocks)
+                newCandle = addBlock(fullTradeList, volumeblocks, 'vol')
                 r.set('volumeblocks', json.dumps(volumeblocks))
 
                 print('Add Block', y)
@@ -500,7 +499,7 @@ def handle_trade_message(msg):
             volumeflow = [{ 'side' : x['side'] , 'size' : carryOver%block, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']}]
 
             volumeblocks = json.loads(r.get('volumeblocks'))
-            currentCandle = addBlock(volumeflow, volumeblocks)
+            currentCandle = addBlock(volumeflow, volumeblocks, 'vol')
             volumeblocks.append(currentCandle)
             r.set('volumeblocks', json.dumps(volumeblocks))
 
