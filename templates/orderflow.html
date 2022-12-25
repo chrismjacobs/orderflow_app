@@ -59,7 +59,7 @@
                 <tbody>
                 <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
                   <tr>
-                    <th scope="row"><span>[[item.timestamp]]</span> </th>
+                    <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
                     <td style="display:none">[[calculateTime(item.time)]]</td>
                     <td style="display:none">[[item.vol_cumulative]]</td>
@@ -110,10 +110,10 @@
                     <tbody>
                     <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                       <tr v-if="key < timeBlockList">
-                        <th scope="row"><span>[[item.timestamp]]</span> </th>
+                        <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
-                        <td :style="getVolumeStyle(item.vol_delta, key)">[[roundData(item.vol_delta)]]K</td>
+                        <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]K</td>
                         <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
                         <td>[[item.delta_cumulative]]</td>
                         <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
@@ -186,6 +186,11 @@ let vue = new Vue({
         ofAlert : 0
     },
     methods: {
+        getTime: function (t) {
+            let time = t.split(' ')
+            let hours = parseInt(time[1].split(':')[0]) + 8
+            return time[0] + ' ' + time[1] + ' (' + hours + ')'
+        },
         roundData: function (data) {
             //deal with K
             let x = data/1000
@@ -225,31 +230,12 @@ let vue = new Vue({
             }
             return style
         },
-        getVolumeStyle: function(volume, key) {
-            console.log(key, volume)
-            let volCumulative = 0
-            let count = 1
-            let timeblocks = this.getReverseTimeBlocks
-            let length = timeblocks.length
-            for (let x in timeblocks ) {
-                if (x > key && count < 11) {
-                    volCumulative += timeblocks[x]['vol_delta']
-                    count += 1
-                }
-
-            }
+        getVolumeStyle: function(pva_status, key) {
 
             let style = {background : 'grey'}
-            let initialCandles = 10/this.timeBlockSize
 
-            let volAverage = (volCumulative/10)
-            if (key > length - initialCandles) {
-                style = {background : 'black'}
-            } else if (volume > volAverage*2) {
-                console.log('PVA', volume, volAverage)
+            if (pva_status['pva']) {
                 style = {background : 'blue'}
-            } else if (volume > volAverage*1.5) {
-                style = {background : 'brown'}
             }
 
             return style

@@ -8,8 +8,13 @@ import datetime as dt
 from datetime import datetime
 import redis
 import discord
+import time
 from discord.ext import tasks, commands
 
+
+session = inverse_perpetual.HTTP(
+    endpoint='https://api.bybit.com'
+)
 
 LOCAL = False
 
@@ -34,6 +39,69 @@ print('REDIS', r)
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 logger = get_task_logger(__name__)
 
+def getHiLow():
+
+    minutes = 60
+
+    now = dt.datetime.utcnow()
+    timestamp = int(dt.datetime.timestamp(now)) - int(minutes)*60
+
+    data = session.query_kline(symbol="BTCUSD", interval="1", from_time=str(timestamp))['result']
+
+    print('GET HI LOW ', len(data))
+
+
+    hAry = []
+    lAry = []
+
+    for i in range(0, len(data)):
+
+        hAry.append(int(data[i]['high'].split('.')[0]))
+        lAry.append(int(data[i]['low'].split('.')[0]))
+
+    mHi = max(hAry)
+    mLow = min(lAry)
+
+    timeblocks = json.loads(r.get('timeblocks'))
+
+    highInfo = {
+        'price' : mHi,
+        'index' : 0,
+        'delta' : 0,
+        'open' : True
+    }
+
+    lowInfo = {
+        'price' : mLow,
+        'index' : 0,
+        'delta' : 0,
+        'open' : True
+    }
+
+    count = 0
+    tbs = len(timeblocks) - 1
+    for tb in timeblocks:
+        if tb['high'] == mHi:
+            highInfo['index'] = count
+            highInfo['delta'] = tb['delta_cumulative']
+        if tb['low'] == mLow:
+            lowInfo['index'] = count
+            lowInfo['delta'] = tb['delta_cumulative']
+
+        if highInfo['index'] != 0:
+            if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
+                highInfo['open'] = False
+            elif tb['delta_cumulative'] > highInfo['delta'] and count == tbs and tb['close'] < mHi and highInfo['open']:
+                r.set('discord', 'CVD bear divergence')
+
+        if lowInfo['index'] != 0:
+            if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
+                lowInfo['open'] = False
+            elif tb['delta_cumulative'] < lowInfo['delta'] and count == tbs and tb['close'] > mLow and lowInfo['open']:
+                r.set('discord', 'CVD bull divergence')
+
+    return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
+
 
 def addBlock(units, blocks):
 
@@ -41,7 +109,7 @@ def addBlock(units, blocks):
 
     # print('UNITS', len(units), len(blocks))
     previousOI = 0
-    previousVol = 0
+    # previousVol = 0
     previousDeltaCum = 0
     previousTime = 0
     newOpen = 0
@@ -50,11 +118,41 @@ def addBlock(units, blocks):
 
     # print('Flow New Block', block)
 
-    time = stream['lastTime']
-    price = stream['lastPrice']
-    oi = stream['lastOI']
-    vol = stream['lastVol']
+    # time = stream['lastTime']
+    # price = stream['lastPrice']
+    # oi = stream['lastOI']
+    # vol = stream['lastVol']
 
+    sess = session.latest_information_for_symbol(symbol="BTCUSD")
+    # print(sess)
+    timeNow = sess['time_now']
+    stream['lastTime'] = float(timeNow)
+
+    price = sess['result'][0]['last_price']
+    stream['lastPrice'] = price
+
+    oi = sess['result'][0]['open_interest']
+    stream['lastOI'] = oi
+    # vol = sess['lastVol']
+    print('ADD BLOCK')
+
+    print('TEST', stream['1mOI'])
+
+    if len(stream['1mOI']) < 2:
+        print('INITIAL')
+        stream['1mOI'] = [float(timeNow), oi]
+    elif stream['1mOI'][0] - float(timeNow) > 60:
+
+        deltaOI =  oi - stream['1mOI'][1]
+        if deltaOI > stream['oiMarker']:
+            r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI}))
+
+        stream['1mOI'] = [time, oi]
+
+    stream['Divs'] = getHiLow()
+
+    print(stream)
+    r.set('stream', json.dumps(stream) )
 
     if len(blocks) > 1:
         lastIndex = len(blocks) - 1
@@ -63,12 +161,12 @@ def addBlock(units, blocks):
         previousOI = lastUnit['oi_cumulative']
         previousTime = lastUnit['time']
         previousDeltaCum = lastUnit['delta_cumulative']
-        previousVol = lastUnit['vol_cumulative']
-        volDelta = vol - previousVol
-        timeDelta = time - previousTime
+        # previousVol = lastUnit['vol_cumulative']
+        # volDelta = vol - previousVol
+        timeDelta = timeNow - previousTime
         oiDelta = oi - previousOI
     else:
-        volDelta = 0
+        # volDelta = 0
         timeDelta = 0
         oiDelta = 0
         previousDeltaCum = 0
@@ -103,7 +201,7 @@ def addBlock(units, blocks):
     delta = buyCount - sellCount
 
     newCandle = {
-        'time' : time,
+        'time' : timeNow,
         'timestamp' : ts,
         'time_delta' : timeDelta,
         'close' : price,
@@ -118,8 +216,8 @@ def addBlock(units, blocks):
         'total' : buyCount + sellCount,
         'oi_cumulative': oi,
         'oi_delta': oiDelta,
-        'vol_cumulative' : vol,
-        'vol_delta': volDelta,
+        # 'vol_cumulative' : vol,
+        # 'vol_delta': volDelta,
         'pva_status': {}
     }
 
@@ -136,7 +234,7 @@ def getPVAstatus(timeblocks):
                 lastHistory = history[-1]['timeblocks']
                 howManyOldTimeblocks = (11-len(timeblocks))
                 last11blocks = lastHistory[-howManyOldTimeblocks:] + timeblocks
-                print('LASTBLOCKS HISOTRY', last11blocks)
+                print('LASTBLOCKS HISTORY', last11blocks)
                 ## if one time block - get last 10 from history
                 ## if 4 time blocks - get last 7 from history
             else:
@@ -317,7 +415,11 @@ def handle_trade_message(msg):
 
     print('handle_trade_message')
     # print(msg['data'])
-    block = 1000000
+
+    if LOCAL:
+        block = 100000
+    else:
+        block = 1000000
 
     volumeflow = json.loads(r.get('volumeflow')) ## reset after each volume block
 
@@ -330,7 +432,7 @@ def handle_trade_message(msg):
         if x['size'] > 100:
             print('msg', x['side'], x['size'])
 
-        if x['size'] > 1000000:
+        if x['size'] > block:
             r.set('discord', '1000000')
 
         timestamp = x['timestamp']
@@ -376,6 +478,9 @@ def handle_trade_message(msg):
             ## volume flow has been added as  full candle and should be reset
             volumeflow = []
 
+            if LOCAL:
+                r.set('discord', 'Carry Over: ' + str(carryOver) + ' / ' + str(carryOver//block))
+
             # Need to add multiple blocks if there are any
             for y in range(carryOver//block):
 
@@ -417,6 +522,17 @@ def handle_info_message(msg):
     stream['lastPrice'] = price
     stream['lastOI'] = oi
     stream['lastVol'] = vol
+
+    if len(stream['1mOI']) < 2:
+        stream['1mOI'] = [time, oi, vol]
+    elif stream['1mOI'][0] - time.time() > 60:
+        deltaOI =  oi - stream['1mOI'][1]
+        deltaVOL = vol - stream['1mOI'][2]
+        if deltaOI > 1000000 and  deltaOI > deltaVOL:
+            r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI, 'delta vol' : deltaVOL} ))
+
+        stream['1mOI'] = [time, oi, vol]
+
     # print(stream)
     r.set('stream', json.dumps(stream) )
 
@@ -451,11 +567,20 @@ def startDiscord():
 def runStream():
 
     print('RUN_STREAM')
+    # rDict = {
+    #     'lastPrice' : 0,
+    #     'lastTime' : 0,
+    #     'lastOI' : 0,
+    #     'lastVol' : 0,
+    #     '1mOI' : []
+    # }
+
     rDict = {
         'lastPrice' : 0,
         'lastTime' : 0,
         'lastOI' : 0,
-        'lastVol' : 0,
+        '1mOI' : [],
+        'oiMarker' : 1000000
     }
 
     r.set('stream', json.dumps(rDict) )
@@ -481,9 +606,9 @@ def runStream():
         handle_trade_message, "BTCUSD"
     )
 
-    ws_inverseP.instrument_info_stream(
-        handle_info_message, "BTCUSD"
-    )
+    # ws_inverseP.instrument_info_stream(
+    #     handle_info_message, "BTCUSD"
+    # )
 
     startDiscord()
 
