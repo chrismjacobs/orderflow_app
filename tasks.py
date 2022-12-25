@@ -200,7 +200,7 @@ def addBlock(units, blocks, mode):
     delta = buyCount - sellCount
 
     newCandle = {
-        'time' : timeNow,
+        'time' : float(timeNow),
         'timestamp' : ts,
         'time_delta' : timeDelta,
         'close' : price,
@@ -281,7 +281,7 @@ def getPVAstatus(timeblocks):
 
         if percentage > 1.5:
             pva = True
-            if lastOIDelta < 100000  and lastOIDelta > -100000:
+            if lastOIDelta < 100000  and lastOIDelta > - 100000:
                 flatOI = True
 
         if lastDelta > 0 and lastPriceDelta < 0:
@@ -338,7 +338,7 @@ def logTimeUnit(unit, ts):
 
             # replace current candle with completed candle
             newCandle = addBlock(timeflow, timeblocks, 'time')
-            LastIndex = len(timeblocks) -1
+            LastIndex = len(timeblocks) - 1
             timeblocks[LastIndex] = newCandle
 
             timeblocks[LastIndex]['pva_status'] = getPVAstatus(timeblocks)
@@ -362,7 +362,7 @@ def logTimeUnit(unit, ts):
 
             # update current candle with new unit data
             currentCandle = addBlock(timeflow, timeblocks, 'time')
-            LastIndex = len(timeblocks) -1
+            LastIndex = len(timeblocks) - 1
             timeblocks[LastIndex] = currentCandle
             r.set('timeblocks', json.dumps(timeblocks))
             r.set('timeflow', json.dumps(timeflow))
@@ -454,7 +454,7 @@ def handle_trade_message(msg):
 
             ''' need to standardize this code logic '''
 
-            LastIndex = len(volumeblocks) -1
+            LastIndex = len(volumeblocks) - 1
             if LastIndex < 0:
                 volumeblocks.append(currentCandle)
             else:
@@ -469,7 +469,7 @@ def handle_trade_message(msg):
             volumeflow.append({ 'side' : x['side'] , 'size' : lefttoFill, 'time' : x['trade_time_ms'], 'timestamp' : ts, 'price' : x['price'], 'blocktrade' : x['is_block_trade']})
 
             volumeblocks = json.loads(r.get('volumeblocks'))
-            LastIndex = len(volumeblocks) -1
+            LastIndex = len(volumeblocks) - 1
             newCandle = addBlock(volumeflow, volumeblocks, 'vol')
             volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
             r.set('volumeblocks', json.dumps(volumeblocks))
@@ -508,32 +508,6 @@ def handle_trade_message(msg):
 
     r.set('volumeflow', json.dumps(volumeflow))
 
-
-def handle_info_message(msg):
-    # print('handle_info_message')
-    vol = msg['data']['total_volume']
-    oi = msg['data']['open_interest']
-    price = msg['data']['last_price']
-    time = msg['timestamp_e6']
-
-    stream = json.loads(r.get('stream'))
-    stream['lastTime'] = time
-    stream['lastPrice'] = price
-    stream['lastOI'] = oi
-    stream['lastVol'] = vol
-
-    if len(stream['1mOI']) < 2:
-        stream['1mOI'] = [time, oi, vol]
-    elif stream['1mOI'][0] - time.time() > 60:
-        deltaOI =  oi - stream['1mOI'][1]
-        deltaVOL = vol - stream['1mOI'][2]
-        if deltaOI > 1000000 and  deltaOI > deltaVOL:
-            r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI, 'delta vol' : deltaVOL} ))
-
-        stream['1mOI'] = [time, oi, vol]
-
-    # print(stream)
-    r.set('stream', json.dumps(stream) )
 
 
 def startDiscord():
