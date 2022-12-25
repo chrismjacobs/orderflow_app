@@ -124,8 +124,8 @@ def addBlock(units, blocks, mode):
 
     sess = session.latest_information_for_symbol(symbol="BTCUSD")
     # print(sess)
-    timeNow = sess['time_now']
-    stream['lastTime'] = float(timeNow)
+    timeNow = float(sess['time_now'])
+    stream['lastTime'] = timeNow
 
     price = sess['result'][0]['last_price']
     stream['lastPrice'] = price
@@ -139,8 +139,8 @@ def addBlock(units, blocks, mode):
 
         if len(stream['1mOI']) < 2:
             print('INITIAL')
-            stream['1mOI'] = [float(timeNow), oi]
-        elif stream['1mOI'][0] - float(timeNow) > 60:
+            stream['1mOI'] = [timeNow, oi]
+        elif stream['1mOI'][0] - timeNow >= 60:
 
             deltaOI =  oi - stream['1mOI'][1]
             if deltaOI > stream['oiMarker']:
@@ -200,7 +200,7 @@ def addBlock(units, blocks, mode):
     delta = buyCount - sellCount
 
     newCandle = {
-        'time' : float(timeNow),
+        'time' : timeNow,
         'timestamp' : ts,
         'time_delta' : timeDelta,
         'close' : price,
@@ -477,7 +477,7 @@ def handle_trade_message(msg):
             ## volume flow has been added as  full candle and should be reset
             volumeflow = []
 
-            if LOCAL:
+            if r.get('discord_fiter') == 'on':
                 r.set('discord', 'Carry Over: ' + str(carryOver) + ' / ' + str(carryOver//block))
 
             # Need to add multiple blocks if there are any
@@ -556,6 +556,7 @@ def runStream():
         'oiMarker' : 1000000
     }
 
+    r.set('discord_filter',  'on')
     r.set('stream', json.dumps(rDict) )
     # r.set('history', json.dumps([]) )
     r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
