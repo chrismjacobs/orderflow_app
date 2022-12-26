@@ -55,8 +55,8 @@ def getHiLow(blocks):
 
     for i in range(0, len(data)):
 
-        hAry.append(int(data[i]['high'].split('.')[0]))
-        lAry.append(int(data[i]['low'].split('.')[0]))
+        hAry.append(float(data[i]['high']))
+        lAry.append(float(data[i]['low']))
 
     mHi = max(hAry)
     mLow = min(lAry)
@@ -90,14 +90,16 @@ def getHiLow(blocks):
         if highInfo['index'] != 0:
             if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
                 highInfo['open'] = False
-            elif tb['delta_cumulative'] > highInfo['delta'] and count == tbs and tb['close'] < mHi and highInfo['open']:
-                r.set('discord', 'CVD bear divergence')
+            elif tb['delta_cumulative'] > highInfo['delta'] and count == tbs and tb['high'] < mHi and highInfo['open']:
+                if r.get('discord_filter') == 'off':
+                    r.set('discord', 'CVD bear divergence: ' + json.dumps(highInfo))
 
         if lowInfo['index'] != 0:
             if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
                 lowInfo['open'] = False
-            elif tb['delta_cumulative'] < lowInfo['delta'] and count == tbs and tb['close'] > mLow and lowInfo['open']:
-                r.set('discord', 'CVD bull divergence')
+            elif tb['delta_cumulative'] < lowInfo['delta'] and count == tbs and tb['low'] > mLow and lowInfo['open']:
+                if r.get('discord_filter') == 'off':
+                    r.set('discord', 'CVD bull divergence: ' + json.dumps(lowInfo))
 
         count += 1
 
@@ -142,15 +144,21 @@ def addBlock(units, blocks, mode):
         if len(stream['1mOI']) < 2:
             print('INITIAL')
             stream['1mOI'] = [timeNow, oi]
-        elif stream['1mOI'][0] - timeNow >= 60:
+        elif timeNow - stream['1mOI'][0] >= 60:
 
             deltaOI =  oi - stream['1mOI'][1]
             if deltaOI > stream['oiMarker']:
                 r.set('discord', 'sudden OI change: ' + json.dumps({'delta oi' : deltaOI}))
 
-            stream['1mOI'] = [time, oi]
+            stream['1mOI'] = [timeNow, oi]
 
-        stream['Divs'] = getHiLow(blocks)
+            stream['Divs'] = getHiLow(blocks)
+        else:
+            stream['delta'] = [timeNow - stream['1mOI'][0], oi - stream['1mOI'][1] ]
+
+
+
+
 
     print(stream)
     r.set('stream', json.dumps(stream) )
@@ -171,7 +179,6 @@ def addBlock(units, blocks, mode):
         timeDelta = 0
         oiDelta = 0
         previousDeltaCum = 0
-
 
     buyCount = 0
     sellCount = 0
