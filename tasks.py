@@ -55,8 +55,8 @@ def getHiLow(blocks):
 
     for i in range(0, len(data)):
 
-        hAry.append(float(data[i]['high']))
-        lAry.append(float(data[i]['low']))
+        hAry.append(round(  float(data[i]['high'])  *2)/2)  # this formula rounds to the nearest 0.5
+        lAry.append(round(  float(data[i]['low'])  *2)/2)
 
     mHi = max(hAry)
     mLow = min(lAry)
@@ -65,16 +65,14 @@ def getHiLow(blocks):
         'price' : mHi,
         'index' : 0,
         'delta' : 0,
-        'local' : False,
-        'distance' : 0
+        'local' : False
     }
 
     lowInfo = {
         'price' : mLow,
         'index' : 0,
         'delta' : 0,
-        'local' : False,
-        'distance' : 0
+        'local' : False
     }
 
     count = 0
@@ -83,32 +81,38 @@ def getHiLow(blocks):
 
     for tb in blocks:
         if tb['high'] == mHi:
-            highInfo['index'] = count
+            highInfo['index'] = tbs - count
             highInfo['delta'] = tb['delta_cumulative']
+            if count == tbs - 1:
+                highInfo['local'] = True
         if tb['low'] == mLow:
-            lowInfo['index'] = count
+            lowInfo['index'] = tbs - count
             lowInfo['delta'] = tb['delta_cumulative']
+            if count == tbs - 1:
+                highInfo['local'] = True
 
-        if highInfo['index'] != 0:
-            # if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
-            #     highInfo['open'] = False
+        if highInfo['index'] != 0 and highInfo['local'] == False:
+
             cvdExcessHi = tb['delta_cumulative'] > highInfo['delta']
             cvdIntactHi = tb['high'] < mHi
-            highInfo['distance'] = tbs - count
-            # cvdLocal = False
-            if count == tbs - 1 or count == tbs - 2:
-                highInfo['local'] = True
+
+            if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
+                highInfo['delta'] = tb['delta_cumulative']
+
+
             ## last candle
             if count == tbs:
                 if cvdExcessHi and cvdIntactHi:
                     if r.get('discord_filter') == 'off':
                         r.set('discord', 'CVD bear divergence: ' + json.dumps(highInfo))
 
-        if lowInfo['index'] != 0:
+        if lowInfo['index'] != 0 and lowInfo['local'] == False:
             cvdExcessLo = tb['delta_cumulative'] < lowInfo['delta']
             cvdIntactLo = tb['low'] > mLow
-            lowInfo['distance'] = tbs - count
-            # cvdLocal = False
+
+            if tb['delta_cumulative'] < lowInfo['delta'] and count < tbs:
+                lowInfo['delta'] = tb['delta_cumulative']
+
             if count == tbs - 1 or count == tbs - 2:
                 lowInfo['local'] = True
             ## last candle
@@ -120,6 +124,45 @@ def getHiLow(blocks):
         count += 1
 
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
+
+
+def addBlockBlock(blocks, newCandle, timeNow):
+
+    if len(blocks) > 1:
+        lastCandle = blocks[-2]
+        previousDeltaCum = lastCandle['delta_cumulative']
+        previousOICum = lastCandle['oi_cumulative']
+        previousTime = lastCandle['time']
+    else:
+        previousDeltaCum = 0
+        previousOICum = 0
+        previousTime = 0
+
+    currentCandle = blocks[-1]
+
+    if newCandle['low'] < currentCandle['low']:
+        currentCandle['low'] = newCandle['low']
+    if newCandle['high'] < currentCandle['high']:
+        currentCandle['high'] = newCandle['high']
+
+    currentCandle['buys'] += newCandle['buys']
+    currentCandle['sells'] += newCandle['sells']
+    currentCandle['delta'] = currentCandle['buys'] - currentCandle['sells']
+    currentCandle['total'] = currentCandle['buys'] + currentCandle['sells']
+
+    currentCandle['close'] = newCandle['close']
+    currentCandle['price_delta'] = currentCandle['close'] - currentCandle['open']
+
+    currentCandle['delta_cumulative'] =  previousDeltaCum + currentCandle['delta']
+    currentCandle['oi_cumulative'] = currentCandle['oi_cumulative'] + newCandle['oi_delta']
+    currentCandle['oi_delta'] = currentCandle['oi_cumulative'] - previousOICum
+    currentCandle['time_delta'] = timeNow - previousTime
+
+    if r.get('discord_filter') == 'off':
+        if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
+            r.set('discord', 'possible 2m bull div candle')
+        if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
+            r.set('discord', 'possible 2m bear div candle')
 
 
 def addBlock(units, blocks, mode):
@@ -138,7 +181,7 @@ def addBlock(units, blocks, mode):
 
     sess = session.latest_information_for_symbol(symbol="BTCUSD")
     # print(sess)
-    timeNow = float(sess['time_now'])
+    timeNow = round(float(sess['time_now']), 1)
     stream['lastTime'] = timeNow
 
     price = sess['result'][0]['last_price']
@@ -149,7 +192,7 @@ def addBlock(units, blocks, mode):
     # vol = sess['lastVol']
     print('ADD BLOCK: ' + mode)
 
-    if mode == 'time':
+    if mode == 'time' or mode == 'timeblock':
 
         if len(stream['1mOI']) < 2:
             print('INITIAL')
@@ -163,30 +206,31 @@ def addBlock(units, blocks, mode):
 
             stream['1mOI'] = [timeNow, oi]
 
-            stream['Divs'] = getHiLow(blocks)
         else:
             stream['delta'] = [timeNow - stream['1mOI'][0], oi - stream['1mOI'][1] ]
+
+    if mode == 'timeblock':
+        stream['Divs'] = getHiLow(blocks)
 
     # print(stream)
     r.set('stream', json.dumps(stream) )
 
-
     ''' BLOCK DATA '''
+
+    lastCandle = None
 
     if len(blocks) > 1:
 
         lastIndex = len(blocks) - 1
 
         if mode == 'carry':
-            lastUnit = blocks[lastIndex] # when carrying there is no current candle
+            lastCandle = blocks[lastIndex] # when carrying there is no current candle
         else:
-            lastUnit = blocks[lastIndex - 1] # ignore last unit which is the current one
-        newOpen = lastUnit['close']
-        previousOI = lastUnit['oi_cumulative']
-        previousTime = lastUnit['time']
-        previousDeltaCum = lastUnit['delta_cumulative']
-        # previousVol = lastUnit['vol_cumulative']
-        # volDelta = vol - previousVol
+            lastCandle = blocks[lastIndex - 1] # ignore last unit which is the current one
+        newOpen = lastCandle['close']
+        previousOI = lastCandle['oi_cumulative']
+        previousTime = lastCandle['time']
+        previousDeltaCum = lastCandle['delta_cumulative']
         timeDelta = timeNow - previousTime
         oiDelta = oi - previousOI
     else:
@@ -239,12 +283,28 @@ def addBlock(units, blocks, mode):
         'total' : buyCount + sellCount,
         'oi_cumulative': oi,
         'oi_delta': oiDelta,
-        # 'vol_cumulative' : vol,
-        # 'vol_delta': volDelta,
         'pva_status': {}
     }
 
     print('NEW CANDLE: ' + mode, newCandle['timestamp'])
+
+    if mode == 'volblock' or mode == 'carry':
+        try:
+            blockSize = 1000000
+            if LOCAL:
+                blockSize = 100000
+
+            blocks2m = json.loads(r.get('volumeblocks2m'))
+            if len(blocks2m) == 0:
+                blocks2m.append(newCandle)
+            elif blocks2m[-1]['total'] == blockSize:
+                addBlockBlock(blocks2m, newCandle, timeNow)
+            elif blocks2m[-1]['total'] == blockSize * 2:
+                blocks2m.append(newCandle)
+
+            r.set('volumeblocks2m', json.dumps(blocks2m))
+        except:
+            print('VOLBLOCKS ERROR')
 
     return newCandle
 
@@ -363,7 +423,7 @@ def logTimeUnit(unit, ts):
             print('ADD TIME CANDLE')
 
             # replace current candle with completed candle
-            newCandle = addBlock(timeflow, timeblocks, 'time')
+            newCandle = addBlock(timeflow, timeblocks, 'timeblock')
             LastIndex = len(timeblocks) - 1
             timeblocks[LastIndex] = newCandle
 
@@ -392,8 +452,6 @@ def logTimeUnit(unit, ts):
             timeblocks[LastIndex] = currentCandle
             r.set('timeblocks', json.dumps(timeblocks))
             r.set('timeflow', json.dumps(timeflow))
-
-
 
 
 
@@ -435,6 +493,8 @@ def handle_trade_message(msg):
             print('REDIS RESET')
             r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
             r.set('volumeblocks', json.dumps([]) )  #  this is the store of volume based candles
+            r.set('volumeblocks2m', json.dumps([]) )  #  this is the store of volume based candles
+            r.set('volumeblocks5m', json.dumps([]) )  #  this is the store of volume based candles
             r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
             r.set('timeblocks', json.dumps([]) ) # this is the store of new time based candles
             r.set('newDay', dt_string)
@@ -500,7 +560,7 @@ def handle_trade_message(msg):
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             LastIndex = len(volumeblocks) - 1
-            newCandle = addBlock(volumeflow, volumeblocks, 'vol')
+            newCandle = addBlock(volumeflow, volumeblocks, 'volblock')
             volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
 
             r.set('volumeblocks', json.dumps(volumeblocks))
@@ -515,7 +575,7 @@ def handle_trade_message(msg):
                 for m in msg['data']:
                     blockList.append(m['size'])
 
-                r.set('discord', 'VOL BLOCK: ' + str(carryOver) + '\n' + str(carryOver//block) + '\n' + json.dumps(blockList))
+                r.set('discord', 'VOL BLOCK: ' + str(x['size']) + ':' + str(carryOver) + '\n' + str(carryOver//block) + '\n' + json.dumps(blockList))
 
 
             # if r.get('discord_filter') == 'off':
@@ -611,6 +671,8 @@ def runStream():
     r.set('stream', json.dumps(rDict) )
     # r.set('history', json.dumps([]) )
     r.set('volumeflow', json.dumps([]) )  # this the flow of message data for volume candles
+    r.set('volumeblocks2m', json.dumps([]) )  #  this is the store of volume based candles
+    r.set('volumeblocks5m', json.dumps([]) )  #  this is the store of volume based candles
     r.set('volumeblocks', json.dumps([]) )  #  this is the store of volume based candles
     r.set('timeflow', json.dumps([]) )  # this the flow of message data to create next candle
     r.set('timeblocks', json.dumps([]) ) # this is the store of new time based candles

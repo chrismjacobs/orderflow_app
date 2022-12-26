@@ -38,6 +38,8 @@
                 </div>
             </div>
 
+        <div class="table-responsive">
+
             <table class="table table-dark table-sm">
                 <thead>
                   <tr>
@@ -62,7 +64,6 @@
                     <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
                     <td style="display:none">[[item]]</td>
-                    <td style="display:none">[[item.vol_cumulative]]</td>
                     <td>[[item.total/1000000]]m</td>
                     <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
                     <td>[[item.delta_cumulative]]</td>
@@ -70,7 +71,7 @@
                     <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
                     <td style="display:none">[[item.oi_cumulative]]</td>
                     <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                    <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
+                    <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
                     <td >[[item.open]]</td>
                     <td>[[item.high]]</td>
                     <td>[[item.low]]</td>
@@ -81,17 +82,22 @@
                 </template>
                 </tbody>
               </table>
+        </div>
 
 
 
             <h3> Time Blocks </h3>
 
+            <div>
             [[ stream ]]
-            <br>
+            </div>
+
             <br>
 
             Size (5 minutes) <input type="number" v-model="timeBlockSize" step="5">
             List Length <input type="number" v-model="timeBlockList">
+
+            <div class="table-responsive">
 
                 <table class="table table table-dark table-sm">
                     <thead>
@@ -124,7 +130,7 @@
                         <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
                         <td style="display:none">[[item.oi_cumulative]]</td>
                         <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                        <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]]</td>
+                        <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
                         <td >[[item.open]]</td>
                         <td >[[item.high]]</td>
                         <td >[[item.low]]</td>
@@ -134,9 +140,11 @@
                     </template>
                     </tbody>
                   </table>
+            </div>
 
 
-        </div>
+
+                </div>
 
 
 
@@ -344,11 +352,19 @@ let vue = new Vue({
         reverseTrades() {
             let newList = []
             for (let x in this.volumeFlow) {
-                if (this.volumeFlow[x]['size'] > 100) {
-                    newList.push(this.volumeFlow[x])
+                let s = this.volumeFlow[x]['size']
+                if (s > 1000) {
+                    if (s >= 100000) {
+                       newList.push('[' + this.volumeFlow[x] + ']')
+                    } else if ( s >= 10000) {
+                        newList.push('(' + this.volumeFlow[x] + ')')
+                    } else {
+                       newList.push(this.volumeFlow[x])
+                    }
+
                 }
             }
-            return newList.slice(-10).reverse()
+            return newList.slice().reverse()
         },
         getReverseVolumeBlocks() {
             return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
