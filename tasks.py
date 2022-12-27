@@ -509,23 +509,25 @@ def handle_trade_message(msg):
     else:
         block = 1000000
 
+    ## load vol flow
     volumeflow = json.loads(r.get('volumeflow')) ## reset after each volume block
 
+    ## calculate current candle size
     volumeflowTotal = 0
     for t in volumeflow:
         volumeflowTotal += t['size']
 
-
+    ## run through data
     for x in msg['data']:
         if x['size'] > 100:
             print('msg', x['side'], x['size'])
 
+        ## look for big blocks
         if x['size'] > block:
             r.set('discord', '1000000')
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
-        # print('msg Ts', ts)
 
         # send message to time candle log
         logTimeUnit(x, ts)
@@ -540,8 +542,6 @@ def handle_trade_message(msg):
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             currentCandle = addBlock(volumeflow, volumeblocks, 'vol')
-
-            ''' need to standardize this code logic '''
 
             LastIndex = len(volumeblocks) - 1
             if LastIndex < 0:
@@ -570,12 +570,12 @@ def handle_trade_message(msg):
             volumeflowTotal = 0
             ## Note: volumeblock does not have a current candle at thsi point
 
-            if r.get('discord_filter') == 'off':
-                blockList = []
-                for m in msg['data']:
-                    blockList.append(m['size'])
+            # if r.get('discord_filter') == 'off':
+            #     blockList = []
+            #     for m in msg['data']:
+            #         blockList.append(m['size'])
 
-                r.set('discord', 'VOL BLOCK: ' + str(x['size']) + ':' + str(carryOver) + '\n' + str(carryOver//block) + '\n' + json.dumps(blockList))
+            #     r.set('discord', 'VOL BLOCK: ' + str(x['size']) + ':' + str(carryOver) + '\n' + str(carryOver//block) + '\n' + json.dumps(blockList))
 
 
             # if r.get('discord_filter') == 'off':
@@ -627,15 +627,6 @@ def startDiscord():
         await user.send('Running')
         checkRedis.start(user)
 
-    @bot.event
-    async def on_message(msg):
-        user = bot.get_user(int(DISCORD_USER))
-        print('MESSAGE DDDDDDDDD', msg.content)
-        if msg.author == user:
-            await user.send('ho')
-
-
-
     @tasks.loop(seconds=10)
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
@@ -643,6 +634,14 @@ def startDiscord():
         if r.get('discord') != 'blank':
             await user.send(r.get('discord'))
             r.set('discord', 'blank')
+
+    @bot.event
+    async def on_message(msg):
+        user = bot.get_user(int(DISCORD_USER))
+        print('MESSAGE DDDDDDDDD', msg.content)
+        if msg.author == user:
+            await user.send('ho')
+
 
     bot.run(DISCORD_TOKEN)
 
