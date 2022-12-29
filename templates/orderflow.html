@@ -18,8 +18,8 @@
     <div id="vue-app">
 
 
-        <div class="content-section m-5" style="background:darkgrey" align="center">
-            <h1 @click="start()"> Order Flow:  <br>[[ stream['lastPrice']  ]]</h1>
+        <div :class="getMargin()" style="background:darkgrey" align="center">
+            <h1 @click="start()"> Order Flow  <br>[[ stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
@@ -44,8 +44,8 @@
                 <thead>
                   <tr>
                     <th scope="col">Time</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Volume</th>
+                    <th scope="col">Sec</th>
+                    <th scope="col">Vol</th>
                     <th scope="col">Delta</th>
                     <th scope="col">CVD</th>
                     <th scope="col">Buys</th>
@@ -64,11 +64,11 @@
                     <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
                     <td style="display:none">[[item]]</td>
-                    <td>[[item.total/1000000]]m</td>
+                    <td>[[roundData(item.total)]]</td>
                     <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
                     <td>[[item.delta_cumulative]]</td>
-                    <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
-                    <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
+                    <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
+                    <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                     <td style="display:none">[[item.oi_cumulative]]</td>
                     <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                     <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
@@ -87,6 +87,7 @@
 
 
             <h3> Time Blocks </h3>
+            <h3>[[ stream['lastPrice']  ]]</h3>
 
             <div>
             [[ stream ]]
@@ -103,8 +104,8 @@
                     <thead>
                       <tr>
                         <th scope="col">Time</th>
-                        <th scope="col">Duration</th>
-                        <th scope="col">Volume</th>
+                        <th scope="col">Sec</th>
+                        <th scope="col">Vol</th>
                         <th scope="col">Delta</th>
                         <th scope="col">CVD</th>
                         <th scope="col">Buys</th>
@@ -123,11 +124,11 @@
                         <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
-                        <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]K</td>
-                        <td :style="getDeltaStyle(item.delta)">[[roundData(item.delta)]]K &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
+                        <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
+                        <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
                         <td>[[item.delta_cumulative]]</td>
-                        <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]K</td>
-                        <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]k</td>
+                        <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
+                        <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                         <td style="display:none">[[item.oi_cumulative]]</td>
                         <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                         <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
@@ -171,6 +172,16 @@ let volumeBlocks = []
 let timeBlocks = []
 
 
+var report = navigator.userAgent
+console.log(report)
+
+let mobile = false
+
+if (report.includes('Android') || report.includes('iPhone') ) {
+    mobile = true
+    console.log('mobile')
+}
+
 startVue()
 
 
@@ -185,6 +196,7 @@ let vue = new Vue({
         this.getOFData()
     },
     data: {
+        mobile: mobile,
         volumeBlocks : volumeBlocks,
         volumeFlow : volumeFlow,
         timeBlocks : timeBlocks,
@@ -198,20 +210,37 @@ let vue = new Vue({
         ofAlert : 0
     },
     methods: {
+        getMargin: function () {
+            if (this.mobile) {
+                return "content-section"
+            } else {
+                return "content-section m-5"
+            }
+
+        },
         getTime: function (t) {
             let time = t.split(' ')
             let hours = parseInt(time[1].split(':')[0]) + 8
             if (hours > 23) {
                 hours = hours - 24
             }
-            return time[0] + ' ' + time[1] + ' (' + hours + ')'
+            let x = time[0] + ' '
+            return time[1] + ' (' + hours + ')'
         },
         roundData: function (data) {
             //deal with K
-            let x = data/1000
-            let y = Math.round(x)
-            let r = y.toString()
-            return r
+            if (data >= 1000000 || data <= -1000000) {
+                let x = data/100000
+                let y = Math.round(x)
+                let r = y.toString()/10
+                return r + 'm'
+            } else {
+                let x = data/1000
+                let y = Math.round(x)
+                let r = y.toString()
+                return r + 'K'
+            }
+
         },
         getPercent: function (data, total) {
             //deal with K
@@ -221,7 +250,7 @@ let vue = new Vue({
             return r
         },
         calculateTime: function (ms) {
-            return Math.round((ms))
+            return Math.round((ms/100))
         },
         getCandleStyle: function(open, close) {
             let style = {background : 'firebrick'}
@@ -232,8 +261,12 @@ let vue = new Vue({
         },
         getOIStyle: function(oi) {
             let style = {background : 'blue', color : 'white'}
-            if (oi < 0) {
+            if (oi < -1000000) {
+                style = {background : 'DarkSlateBlue', color : 'white'}
+            }else if (oi < 0) {
                 style = {background : 'purple', color : 'white'}
+            }else if (oi > 1000000) {
+                style = {background : 'DodgerBlue', color : 'white'}
             }
             return style
         },
