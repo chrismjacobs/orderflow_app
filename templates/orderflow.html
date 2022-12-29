@@ -250,7 +250,7 @@ let vue = new Vue({
             return r
         },
         calculateTime: function (ms) {
-            return Math.round((ms/100))
+            return Math.round((ms/1000))
         },
         getCandleStyle: function(open, close) {
             let style = {background : 'firebrick'}

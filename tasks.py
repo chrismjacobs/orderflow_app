@@ -137,6 +137,8 @@ def getHiLow(blocks):
 
 def addBlockBlock(blocks, newCandle, timeNow, size):
 
+    print('BLOCK BLOCK 1')
+
     if len(blocks) > 1:
         lastCandle = blocks[-2]
         previousDeltaCum = lastCandle['delta_cumulative']
@@ -147,6 +149,7 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
         previousOICum = 0
         previousTime = 0
 
+    print('BLOCK BLOCK 2')
     currentCandle = blocks[-1]
 
     if newCandle['low'] < currentCandle['low']:
@@ -154,6 +157,7 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     if newCandle['high'] < currentCandle['high']:
         currentCandle['high'] = newCandle['high']
 
+    print('BLOCK BLOCK 3')
     currentCandle['buys'] += newCandle['buys']
     currentCandle['sells'] += newCandle['sells']
     currentCandle['delta'] = currentCandle['buys'] - currentCandle['sells']
@@ -161,6 +165,8 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
 
     currentCandle['close'] = newCandle['close']
     currentCandle['price_delta'] = currentCandle['close'] - currentCandle['open']
+
+    print('BLOCK BLOCK 4')
 
     currentCandle['delta_cumulative'] =  previousDeltaCum + currentCandle['delta']
     currentCandle['oi_cumulative'] = currentCandle['oi_cumulative'] + newCandle['oi_delta']
@@ -174,15 +180,18 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     volDivBear2M = False
     volDivBear5M = False
 
+    print('BLOCK BLOCK 5')
 
     if r.get('discord_filter') == 'off':
         if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
             if currentCandle['total'] == 2_000_000 and size == 2:
-                volDivBull2M= True
+                volDivBull2M = True
                 r.set('discord', '2M possible BULL div candle')
             if currentCandle >= 4_000_000:
                 volDivBull5M = True
                 r.set('discord', '5M possible BULL div candle')
+
+        print('BLOCK BLOCK BREAK')
 
         if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
             if currentCandle['total'] == 2_000_000 and size == 2:
@@ -477,7 +486,7 @@ def logTimeUnit(newUnit):
     print('TIME REDIS', len(timeflow), len(timeblocks))
 
     if len(timeflow) == 0:
-        print('TIME 0', newUnit)
+        print('TIME 0')
 
         ## start the initial time flow and initial current candle
         timeflow.append(newUnit)
@@ -487,7 +496,6 @@ def logTimeUnit(newUnit):
         r.set('timeblocks', json.dumps(timeblocks))
         r.set('timeflow', json.dumps(timeflow))
     else:
-        print('TF', timeflow)
         blockStart = timeflow[0]['trade_time_ms']
         if LOCAL:
             interval = (60000*1) # 1Min
@@ -666,6 +674,7 @@ def handle_trade_message(msg):
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             LastIndex = len(volumeblocks) - 1
+            print('VOL BLOCK BREAK')
             newCandle = addBlock(volumeflow, volumeblocks, 'volblock')
             volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
 
@@ -711,7 +720,18 @@ def handle_trade_message(msg):
                 print('Add Block', y)
 
             # Creat new flow block with left over contracts
-            volumeflow = [{ 'side' : x['side'] , 'size' : carryOver%block, 'trade_time_ms' : x['trade_time_ms'], 'timestamp' : ts, 'price' : price, 'blocktrade' : x['is_block_trade']}]
+            volumeflow = [
+                    { 'side' : x['side'] ,
+                    'size' : carryOver%block,
+                    'trade_time_ms' : x['trade_time_ms'],
+                    'timestamp' : ts,
+                    'price' : price,
+                    'blocktrade' : x['is_block_trade'],
+                    'streamTime' : streamTime,
+                    'streamPrice' : streamPrice,
+                    'streamOI' : streamOI
+                    }
+                ]
 
             volumeblocks = json.loads(r.get('volumeblocks'))
             currentCandle = addBlock(volumeflow, volumeblocks, 'vol')
