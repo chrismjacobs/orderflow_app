@@ -21,18 +21,6 @@ except:
 print('URL', REDIS_URL)
 print('REDIS', r)
 
-
-##### building blocks in worker
-##### highlight PVA blocks
-#### highlight PVA plus flat OI
-#### highlight PVA divergence candles
-
-#### highlight dHigh Low
-#### highlight HR high low
-### highlight 1hr HI LOW
-
-
-
 app = Flask(__name__)
 app.config['DEBUG'] = True
 app.secret_key = os.getenv('FLASK_SECRET_KEY', "super-secret")

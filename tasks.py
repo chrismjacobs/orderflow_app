@@ -184,7 +184,7 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
 
     if r.get('discord_filter') == 'off':
         if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
-            if currentCandle['total'] == 2_000_000 and size == 2:
+            if currentCandle['total'] >= 2_000_000 and size == 2:
                 volDivBull2M = True
                 r.set('discord', '2M possible BULL div candle')
             if currentCandle >= 4_000_000:
@@ -344,8 +344,8 @@ def addBlock(units, blocks, mode):
         'oi_open': OIopen,
         'oi_close': OIclose,
         'divergence' : divergence,
-        '2M' : {},
-        '5M' : {},
+        'volcandle_two' : {},
+        'volcandle_five' : {},
         'pva_status': {}
     }
 
@@ -362,7 +362,7 @@ def addBlock(units, blocks, mode):
             if len(blocks2m) == 0:
                 blocks2m.append(newCandle)
             elif blocks2m[-1]['total'] < blockSize * 2:
-                newCandle['2M'] = addBlockBlock(blocks2m, newCandle, newClose, 2)
+                newCandle['volcandle_two'] = addBlockBlock(blocks2m, newCandle, newClose, 2)
             elif blocks2m[-1]['total'] == blockSize * 2:
                 blocks2m.append(newCandle)
 
@@ -372,7 +372,7 @@ def addBlock(units, blocks, mode):
             if len(blocks5m) == 0:
                 blocks5m.append(newCandle)
             elif blocks5m[-1]['total'] < blockSize * 5:
-                newCandle['5M'] = addBlockBlock(blocks5m, newCandle, newClose, 5)
+                newCandle['volcandle_five'] = addBlockBlock(blocks5m, newCandle, newClose, 5)
             elif blocks5m[-1]['total'] == blockSize * 5:
                 blocks5m.append(newCandle)
 
@@ -433,7 +433,8 @@ def getPVAstatus(timeblocks):
                 lastPriceDelta = x['price_delta']
                 lastOIDelta = x['oi_delta']
 
-        pva = False
+        pva150 = False
+        pva200 = False
         divergenceBull = False
         divergenceBear = False
         flatOI = False
@@ -441,10 +442,12 @@ def getPVAstatus(timeblocks):
         percentage = round((lastVolume/(sumVolume/10)), 2)
         deltapercentage = round((lastDelta/lastVolume)*100, 2)
 
-        if percentage > 1.5:
-            pva = True
+        if percentage > 2:
+            pva200 = True
             if lastOIDelta < 100000  and lastOIDelta > - 100000:
                 flatOI = True
+        elif percentage > 1.5:
+            pva150 = True
 
         if lastDelta > 0 and lastPriceDelta < 0:
             divergenceBear = True
@@ -452,7 +455,8 @@ def getPVAstatus(timeblocks):
             divergenceBull = True
 
         returnPVA = {
-            'pva' : pva,
+            'pva150' : pva150,
+            'pva200' : pva200,
             'vol': lastVolume,
             'percentage' : percentage,
             'deltapercentge' : deltapercentage,
@@ -462,11 +466,11 @@ def getPVAstatus(timeblocks):
 
         print('RETURN PVA')
 
-        if pva and flatOI and lastVolume > 1000000:
+        if pva200 and flatOI and lastVolume > 1000000:
             r.set('discord', 'flatOI: ' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%')
-        elif pva and divergenceBear and lastVolume > 1000000:
+        elif pva200 and divergenceBear and lastVolume > 1000000:
             r.set('discord', 'divergence Bear: ' + json.dumps(returnPVA))
-        elif pva and divergenceBull and lastVolume > 1000000:
+        elif pva200 and divergenceBull and lastVolume > 1000000:
             r.set('discord', 'divergence Bull: ' + json.dumps(returnPVA))
 
         return returnPVA
@@ -587,8 +591,6 @@ def historyReset():
     return True
 
 
-
-
 def handle_trade_message(msg):
 
     ### check time and reset
@@ -670,6 +672,9 @@ def handle_trade_message(msg):
             # print('carryOver')
             lefttoFill = block - volumeflowTotal
             carryOver = x['size'] - lefttoFill
+
+            newUnit['size'] = lefttoFill
+
             volumeflow.append(newUnit)
 
             volumeblocks = json.loads(r.get('volumeblocks'))

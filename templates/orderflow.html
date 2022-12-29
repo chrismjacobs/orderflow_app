@@ -61,7 +61,7 @@
                 <tbody>
                 <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
                   <tr>
-                    <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
+                    <th scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
                     <td>[[calculateTime(item.time_delta)]]</td>
                     <td style="display:none">[[item]]</td>
                     <td>[[roundData(item.total)]]</td>
@@ -76,9 +76,12 @@
                     <td>[[item.high]]</td>
                     <td>[[item.low]]</td>
                     <td >[[item.close]]</td>
-
-
                   </tr>
+                        <template v-if="showVolCandle == key">
+                            <tr >
+                                <span @click="showVolCandle = null"> [[ item ]]  </span>
+                            </tr>
+                        </template>
                 </template>
                 </tbody>
               </table>
@@ -121,7 +124,7 @@
                     <tbody>
                     <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                       <tr v-if="key < timeBlockList">
-                        <th scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
+                        <th scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
                         <td>[[calculateTime(item.time_delta)]]</td>
                         <td style="display:none">[[item.vol_cumulative]]</td>
                         <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
@@ -136,8 +139,14 @@
                         <td >[[item.high]]</td>
                         <td >[[item.low]]</td>
                         <td >[[item.close]]</td>
-
                       </tr>
+                            <template v-if="showCandle == key">
+                                <tr>
+                                    <span @click="showCandle = null"> [[item.divergence]] / [[item.pva_status]] </span>
+                                </tr>
+
+                            </template>
+
                     </template>
                     </tbody>
                   </table>
@@ -196,6 +205,8 @@ let vue = new Vue({
         this.getOFData()
     },
     data: {
+        showCandle: null,
+        showVolCandle: null,
         mobile: mobile,
         volumeBlocks : volumeBlocks,
         volumeFlow : volumeFlow,
