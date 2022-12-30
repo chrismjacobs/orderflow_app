@@ -93,7 +93,7 @@
             <h3>[[ stream['lastPrice']  ]]</h3>
 
             <div>
-            [[ stream ]]
+            <span v-for="(info, key) in stream " :key="key"> [[key]]: [[info]] <br></span>
             </div>
 
             <br>

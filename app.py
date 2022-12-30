@@ -47,8 +47,10 @@ def getOF():
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
 
-    if volumeBlockSize > 1:
-        volumeBlocks = getBlocks(volumeBlockSize, volumeBlocks)
+    if volumeBlockSize == 2:
+        volumeBlocks = r.get('volumeblocks2m')
+    if volumeBlockSize == 5:
+        volumeBlocks = r.get('volumeblocks5m')
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 

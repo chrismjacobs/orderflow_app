@@ -58,8 +58,8 @@ def getHiLow(blocks):
         hAry.append(round(  float(data[i]['high'])  *2)/2)  # this formula rounds to the nearest 0.5
         lAry.append(round(  float(data[i]['low'])  *2)/2)
 
-    mHi =  round(float(max(hAry))*2)/2
-    mLow =  round(float(min(lAry))*2)/2
+    mHi =  max(hAry)
+    mLow =  min(lAry)
 
     highLocal = False
     lowLocal = False
@@ -144,6 +144,11 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
         previousDeltaCum = lastCandle['delta_cumulative']
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
+    # if len(blocks) == 2:
+    #     '''### readjust first block'''
+    #     firstCandle = blocks[0]
+    #     firstCandle['trade_time_ms'] = firstCandle['trade_time_ms'] - timeNow
+    #     firstCandle['oi_delta'] = firstCandle['oi_delta'] - newCandle['oi_delta']
     else:
         previousDeltaCum = 0
         previousOICum = 0
@@ -154,7 +159,7 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
 
     if newCandle['low'] < currentCandle['low']:
         currentCandle['low'] = newCandle['low']
-    if newCandle['high'] < currentCandle['high']:
+    if newCandle['high'] > currentCandle['high']:
         currentCandle['high'] = newCandle['high']
 
     print('BLOCK BLOCK 3')
@@ -182,24 +187,28 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
 
     print('BLOCK BLOCK 5')
 
+    deltaPercent = round( (  currentCandle['delta']  /  (size*1_000_000)  ) * 100  )
+
     if r.get('discord_filter') == 'off':
-        if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
-            if currentCandle['total'] >= 2_000_000 and size == 2:
-                volDivBull2M = True
-                r.set('discord', '2M possible BULL div candle')
-            if currentCandle >= 4_000_000:
-                volDivBull5M = True
-                r.set('discord', '5M possible BULL div candle')
+        if abs(deltaPercent) > 20:
+            if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
+                if currentCandle['total'] >= 2_000_000 and size == 2:
+                    volDivBull2M = True
+                    r.set('discord', '2M possible BULL div candle: ' + str(deltaPercent))
+                if currentCandle['total'] >= 4_000_000:
+                    deltaPercent = round((currentCandle['delta']/5_000_000)*100)
+                    volDivBull5M = True
+                    r.set('discord', '5M possible BULL div candle: ' + str(deltaPercent))
 
-        print('BLOCK BLOCK BREAK')
+            print('BLOCK BLOCK BREAK')
 
-        if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
-            if currentCandle['total'] == 2_000_000 and size == 2:
-                volDivBear2M = True
-                r.set('discord', '2M possible BEAR div candle')
-            if currentCandle >= 4_000_000:
-                volDivBear5M = True
-                r.set('discord', '5M possible BEAR div candle')
+            if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
+                if currentCandle['total'] == 2_000_000 and size == 2:
+                    volDivBear2M = True
+                    r.set('discord', '2M possible BEAR div candle: ' + str(deltaPercent))
+                if currentCandle['total'] >= 4_000_000:
+                    volDivBear5M = True
+                    r.set('discord', '5M possible BEAR div candle: ' + str(deltaPercent))
 
 
     if size == 5:
@@ -230,7 +239,7 @@ def manageStream(streamTime, streamPrice, streamOI):
         stream['1mOI'] = [streamTime, streamOI]
 
     else:
-        stream['delta'] = [streamTime - stream['1mOI'][0], streamOI - stream['1mOI'][1] ]
+        stream['oi delta'] = [round(streamTime - stream['1mOI'][0]), streamOI - stream['1mOI'][1], '(secs/oi)' ]
 
     # print(stream)
     r.set('stream', json.dumps(stream) )
@@ -274,7 +283,7 @@ def addBlock(units, blocks, mode):
         else:
             lastBlock = blocks[-2] # ignore last unit which is the current one
 
-        previousOI = lastBlock['oi_close']
+        previousOI = lastBlock['oi_cumulative']
         previousDeltaCum = lastBlock['delta_cumulative']
         previousTime = lastBlock['trade_time_ms']
         newOpen = lastBlock['close']
@@ -298,17 +307,19 @@ def addBlock(units, blocks, mode):
         else:
             sellCount += d['size']
 
+        dPrice = d['price']
+
         if count == 0:
-            highPrice = price
-            lowPrice = price
+            highPrice = dPrice
+            lowPrice = dPrice
             OIopen = d['streamOI']
             OIhigh = d['streamOI']
             OIlow = d['streamOI']
         else:
-            if price > highPrice:
-                highPrice = price
-            if price < lowPrice:
-                lowPrice = price
+            if dPrice > highPrice:
+                highPrice = dPrice
+            if dPrice < lowPrice:
+                lowPrice = dPrice
 
             if d['streamOI'] > OIhigh:
                 OIhigh = d['streamOI']
@@ -316,7 +327,6 @@ def addBlock(units, blocks, mode):
                 OIlow = d['streamOI']
 
             OIclose = d['streamOI']
-
 
         count += 1
 
@@ -337,12 +347,11 @@ def addBlock(units, blocks, mode):
         'delta' : delta,
         'delta_cumulative' : previousDeltaCum + delta,
         'total' : buyCount + sellCount,
-        'oi_cumulative': OIclose,
         'oi_delta': OIdelta,
         'oi_high': OIhigh,
         'oi_low': OIlow,
         'oi_open': OIopen,
-        'oi_close': OIclose,
+        'oi_cumulative': OIclose,
         'divergence' : divergence,
         'volcandle_two' : {},
         'volcandle_five' : {},
