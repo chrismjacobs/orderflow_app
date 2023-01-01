@@ -15,101 +15,79 @@
 
 <main role="main" class="container-md" style="background:darkgrey">
 
-    <div id="vue-app">
+    <div id="vue-app" :class="getMargin()" style="background:darkgrey">
 
 
-        <div :class="getMargin()" style="background:darkgrey" align="center">
+        <div align="center">
+            <br>
+            <br>
+
             <h1 @click="start()"> Order Flow  <br>[[ stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
+
+            <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
+            <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
+            <button @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
             <br>
-            <h3> Volume Blocks </h3>
-            Size (1mil) <input type="number" v-model="volumeBlockSize">
-            List Length <input type="number" v-model="volumeBlockList">
+            <input type="number" v-model="UTCadjust" style="width:10%; display:none">
             <br>
+            <br>
+            <span></span>
 
-            <div class="row align-items-start m-2">
-                <div class="col-6" style="background:darkgreen;color:white">
-                    <span> Buys: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] / </span></span>
-                </div>
-                <div class="col-6" style="background:firebrick;color:white">
-                    <span> Sells </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] / </span></span>
-                </div>
-            </div>
-
-        <div class="table-responsive">
-
-            <table class="table table-dark table-sm">
-                <thead>
-                  <tr>
-                    <th scope="col">Time</th>
-                    <th scope="col">Sec</th>
-                    <th scope="col">Vol</th>
-                    <th scope="col">Delta</th>
-                    <th scope="col">CVD</th>
-                    <th scope="col">Buys</th>
-                    <th scope="col">Sells</th>
-                    <th scope="col">OI</th>
-                    <th scope="col">Candle</th>
-                    <th scope="col" style="width:2%">Open</th>
-                    <th scope="col" style="width:2%">High</th>
-                    <th scope="col" style="width:2%">Low</th>
-                    <th scope="col" style="width:2%">Close</th>
-                  </tr>
-                </thead>
-                <tbody>
-                <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
-                  <tr>
-                    <th scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
-                    <td>[[calculateTime(item.time_delta)]]</td>
-                    <td style="display:none">[[item]]</td>
-                    <td>[[roundData(item.total)]]</td>
-                    <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
-                    <td>[[item.delta_cumulative]]</td>
-                    <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
-                    <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
-                    <td style="display:none">[[item.oi_cumulative]]</td>
-                    <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                    <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
-                    <td >[[item.open]]</td>
-                    <td>[[item.high]]</td>
-                    <td>[[item.low]]</td>
-                    <td >[[item.close]]</td>
-                  </tr>
-                        <template v-if="showVolCandle == key">
-                            <tr >
-                                <span @click="showVolCandle = null"> [[ item ]]  </span>
-                            </tr>
-                        </template>
-                </template>
-                </tbody>
-              </table>
         </div>
 
+        <div align="center" >
 
+            <div v-if="showTable == 'Volume'">
 
-            <h3> Time Blocks </h3>
-            <h3>[[ stream['lastPrice']  ]]</h3>
+                <h3> Volume Blocks </h3>
+                Size (1mil) <input type="number" v-model="volumeBlockSize">
 
-            <div>
-            <span v-for="(info, key) in stream " :key="key"> [[key]]: [[info]] <br></span>
+                <br>
+
+                <div v-if="!mobile" class="row align-items-start m-2">
+                    <div class="col-6" style="background:darkgreen;color:white">
+                        <span> Buys: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] / </span></span>
+                    </div>
+                    <div class="col-6" style="background:firebrick;color:white">
+                        <span> Sells </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] / </span></span>
+                    </div>
+                </div>
+
             </div>
 
-            <br>
+            <div v-if="showTable == 'Time'" align="center">
 
-            Size (5 minutes) <input type="number" v-model="timeBlockSize" step="5">
-            List Length <input type="number" v-model="timeBlockList">
+                <h3 @click="showStream = !showStream"> Time Blocks </h3>
+
+                <div v-if="showStream">
+                <span v-for="(info, key) in stream " :key="key"> [[key]]: [[info]] <br></span>
+                </div>
+
+                Size (5 minutes) <input type="number" v-model="timeBlockSize" step="5">
+                <br>
+                <br>
+
+            </div>
+
+            <div v-if="showTable == 'Delta'" align="center">
+
+                <h3> Delta Blocks </h3>
+
+                <br>
+
+            </div>
 
             <div class="table-responsive">
-
-                <table class="table table table-dark table-sm">
+                <table class="table table-dark table-sm">
                     <thead>
-                      <tr>
-                        <th scope="col">Time</th>
+                    <tr>
+                        <th scope="col" style="width:10%">Time</th>
                         <th scope="col">Sec</th>
                         <th scope="col">Vol</th>
-                        <th scope="col">Delta</th>
+                        <th scope="col" @click="hideDelta = !hideDelta">Delta</th>
                         <th scope="col">CVD</th>
                         <th scope="col">Buys</th>
                         <th scope="col">Sells</th>
@@ -119,43 +97,99 @@
                         <th scope="col" style="width:2%">High</th>
                         <th scope="col" style="width:2%">Low</th>
                         <th scope="col" style="width:2%">Close</th>
-                      </tr>
+                    </tr>
                     </thead>
-                    <tbody>
-                    <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
-                      <tr v-if="key < timeBlockList">
-                        <th scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
-                        <td>[[calculateTime(item.time_delta)]]</td>
-                        <td style="display:none">[[item.vol_cumulative]]</td>
-                        <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
-                        <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
-                        <td>[[item.delta_cumulative]]</td>
-                        <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
-                        <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
-                        <td style="display:none">[[item.oi_cumulative]]</td>
-                        <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                        <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
-                        <td >[[item.open]]</td>
-                        <td >[[item.high]]</td>
-                        <td >[[item.low]]</td>
-                        <td >[[item.close]]</td>
-                      </tr>
-                            <template v-if="showCandle == key">
-                                <tr>
-                                    <span @click="showCandle = null"> [[item.divergence]] / [[item.pva_status]] </span>
-                                </tr>
-
-                            </template>
-
-                    </template>
+                    <tbody v-if="showTable == 'Volume'">
+                        <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
+                        <tr>
+                            <th class="text-warning" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
+                            <td>[[calculateTime(item.time_delta)]]</td>
+                            <td style="display:none">[[item]]</td>
+                            <td>[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
+                            <td>[[item.delta_cumulative]]</td>
+                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
+                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
+                            <td style="display:none">[[item.oi_cumulative]]</td>
+                            <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td >[[item.open]]</td>
+                            <td>[[item.high]]</td>
+                            <td>[[item.low]]</td>
+                            <td >[[item.close]]</td>
+                        </tr>
+                                <template v-if="showVolCandle == key">
+                                    <tr >
+                                        <span @click="showVolCandle = null"> [[ item ]]  </span>
+                                    </tr>
+                                </template>
+                        </template>
                     </tbody>
-                  </table>
+                    <tbody v-if="showTable == 'Time'">
+                        <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
+                          <tr v-if="key < timeBlockList">
+                            <th class="text-info" scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
+                            <td>[[calculateTime(item.time_delta)]]</td>
+                            <td style="display:none">[[item.vol_cumulative]]</td>
+                            <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile && !hideDelta">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative)">[[item.delta_cumulative]]</td>
+                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
+                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
+                            <td style="display:none">[[item.oi_cumulative]]</td>
+                            <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td >[[item.open]]</td>
+                            <td :style="getLocal('high', key)">[[item.high]]</td>
+                            <td :style="getLocal('low', key)">[[item.low]]</td>
+                            <td >[[item.close]]</td>
+                          </tr>
+                                <template v-if="showCandle == key">
+                                    <tr>
+                                        <span @click="showCandle = null">
+                                            PVA% : [[Math.round(item.pva_status.percentage * 100)]] <br>
+                                            [[item]]
+                                        </span>
+                                    </tr>
+
+                                </template>
+
+                        </template>
+                    </tbody>
+                    <tbody v-if="showTable == 'Delta'">
+                        <template v-for="(item, key) in getReverseDeltaBlocks" :key="key" >
+                        <tr>
+                            <th class="text-success" scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
+                            <td>[[calculateTime(item.time_delta)]]</td>
+                            <td style="display:none">[[item.vol_cumulative]]</td>
+                            <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta)"> [[roundData(item.delta)]] &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative)">[[item.delta_cumulative]]</td>
+                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
+                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
+                            <td style="display:none">[[item.oi_cumulative]]</td>
+                            <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td >[[item.open]]</td>
+                            <td >[[item.high]]</td>
+                            <td >[[item.low]]</td>
+                            <td >[[item.close]]</td>
+                        </tr>
+                                <template v-if="showCandle == key">
+                                    <tr>
+                                        <span @click="showCandle = null">
+                                            [[item]]
+                                        </span>
+                                    </tr>
+
+                                </template>
+
+                        </template>
+                    </tbody>
+
+                </table>
             </div>
-
-
-
-                </div>
-
+        </div>
 
 
 
@@ -173,12 +207,6 @@
 
 
 <script type="text/javascript">
-
-let volumeFlow = []
-let timeFlow = []
-let stream = {}
-let volumeBlocks = []
-let timeBlocks = []
 
 
 var report = navigator.userAgent
@@ -205,33 +233,81 @@ let vue = new Vue({
         this.getOFData()
     },
     data: {
+        showStream: false,
+        showTable: 'Time',
+        UTCadjust: 8,
+        hideDelta: true,
         showCandle: null,
         showVolCandle: null,
         mobile: mobile,
-        volumeBlocks : volumeBlocks,
-        volumeFlow : volumeFlow,
-        timeBlocks : timeBlocks,
-        timeFlow : timeFlow,
-        stream : stream,
+        volumeBlocks : [],
+        volumeFlow : [],
+        timeBlocks : [],
+        timeFlow : [],
+        deltaBlocks : [],
+        deltaFlow : [],
+        stream : {},
         volumeBlockList: 20,
         volumeBlockSize: 1,
         timeBlockList: 100,
         timeBlockSize: 5,
         of_timer : '',
-        ofAlert : 0
+        ofAlert : 0,
+        localHigh : 0,
+        localLow : 0
     },
     methods: {
+        getLocal: function (mode, key) {
+            let sets = {
+                    high : this.localHigh,
+                    low : this.localLow,
+                }
+            let colors = {
+                    high : 'lightgreen',
+                    low : 'red',
+                }
+
+            if (this.timeBlockSize == 5) {
+                if (key == sets[mode] + 1) {
+                return { background: 'grey' , color: colors[mode]}
+                }
+            }
+        },
+        getCVDStyle: function (CVDdivergence, key, CVD) {
+            if (key == 1 && CVDdivergence) {
+                this.localLow = CVDdivergence.lowInfo.index
+                this.localHigh = CVDdivergence.highInfo.index
+                console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
+            }
+
+            if (this.timeBlockSize == 5) {
+                if (CVDdivergence && CVDdivergence.bearDiv) {
+                    return {color: 'pink'}
+                } else if (CVDdivergence && CVDdivergence.bearDiv) {
+                    return {color: 'lightblue'}
+                }
+            }
+
+            previousCandle = this.getReverseTimeBlocks[key + 1 ]
+
+            if (previousCandle && CVD < previousCandle['delta_cumulative']) {
+                return {color: 'red'}
+            } else if (previousCandle && CVD > previousCandle['delta_cumulative']) {
+                return {color: 'lightgreen'}
+            }
+
+        },
         getMargin: function () {
             if (this.mobile) {
                 return "content-section"
             } else {
-                return "content-section m-5"
+                return "content-section ml-5 mr-5"
             }
 
         },
         getTime: function (t) {
             let time = t.split(' ')
-            let hours = parseInt(time[1].split(':')[0]) + 8
+            let hours = parseInt(time[1].split(':')[0]) + this.UTCadjust
             if (hours > 23) {
                 hours = hours - 24
             }
@@ -272,7 +348,9 @@ let vue = new Vue({
         },
         getOIStyle: function(oi) {
             let style = {background : 'blue', color : 'white'}
-            if (oi < -1000000) {
+            if (oi == 0) {
+                style = {}
+            } else if (oi < -1000000) {
                 style = {background : 'DarkSlateBlue', color : 'white'}
             }else if (oi < 0) {
                 style = {background : 'purple', color : 'white'}
@@ -290,10 +368,21 @@ let vue = new Vue({
         },
         getVolumeStyle: function(pva_status, key) {
 
-            let style = {background : 'grey'}
+            let style = {}
 
-            if (pva_status['pva']) {
-                style = {background : 'blue'}
+            if (this.timeBlockSize != 5) {
+                return style
+            }
+
+            if (pva_status['pva150']) {
+                style = {background : 'grey'}
+            } else if (pva_status['pva200']) {
+                style = {background : 'cadetblue'}
+            }
+            if (pva_status['pva200'] && pva_status['divergence'] && pva_status['divergence']['bear:']) {
+                style['color'] = 'red'
+            } else if (pva_status['pva200'] && pva_status['divergence'] && pva_status['divergence']['bull:']) {
+                style['color'] = 'green'
             }
 
             return style
@@ -307,20 +396,6 @@ let vue = new Vue({
         },
         clearLimitPrice: function () {
             this.limitData.price = 0
-        },
-        getReverseVolumeBlockss: function () {
-            let lastKeys = Object.keys(this.volumeBlocks)
-            let rev = lastKeys.slice().reverse()
-            //console.log(rev)
-            let count = 0
-            let newOBJ = {}
-            for (let x in rev){
-                if (count < this.volumeBlockList) {
-                    newOBJ[rev[x]] = this.volumeBlocks[rev[x]]
-                    count += 1
-                }
-            }
-            return newOBJ
         },
         getCurrentDelta: function () {
             let dDict = {
@@ -357,15 +432,19 @@ let vue = new Vue({
             .done(function(data) {
                 console.log('OF data received')
                 vue.volumeFlow = JSON.parse(data.volumeFlow)
-                console.log('vf')
+
                 vue.volumeBlocks = JSON.parse(data.volumeBlocks)
-                console.log('vb')
+
                 vue.stream = JSON.parse(data.stream)
-                console.log('st')
+
                 vue.timeBlocks = JSON.parse(data.timeBlocks)
-                console.log('tb')
+
                 vue.timeFlow = JSON.parse(data.timeFlow)
-                console.log('tf')
+
+                vue.deltaBlocks = JSON.parse(data.deltaBlocks)
+
+                vue.deltaFlow = JSON.parse(data.deltaFlow)
+
             })
             .fail(function(){
                   alert('error has occurred gData');
@@ -411,7 +490,10 @@ let vue = new Vue({
             return newList.slice().reverse()
         },
         getReverseVolumeBlocks() {
-            return this.volumeBlocks.slice(-this.volumeBlockList).reverse()
+            return this.volumeBlocks.slice().reverse()
+        },
+        getReverseDeltaBlocks() {
+            return this.deltaBlocks.slice().reverse()
         },
         getReverseTimeBlocks() {
             return this.timeBlocks.slice().reverse()

@@ -47,6 +47,9 @@ def getOF():
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
 
+    volumeFlow = r.get('volumeflow')
+    volumeFlow = r.get('volumeflow')
+
     if volumeBlockSize == 2:
         volumeBlocks = r.get('volumeblocks2m')
     if volumeBlockSize == 5:
@@ -54,12 +57,20 @@ def getOF():
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
+    deltaBlocks = r.get('deltablocks')
+    deltaFlow = r.get('deltaflow')
+    # deltaBlocks = json.dumps([])
+    # deltaFlow = json.dumps([])
+    print(json.loads(deltaBlocks))
+
     jDict = {
-        'volumeBlocks' : volumeBlocks,
         'stream' : stream,
+        'volumeBlocks' : volumeBlocks,
         'volumeFlow' : volumeFlow,
         'timeBlocks' : timeBlocks,
-        'timeFlow' : timeFlow
+        'timeFlow' : timeFlow,
+        'deltaBlocks' : deltaBlocks,
+        'deltaFlow' : deltaFlow
     }
 
     jx = jsonify(jDict)

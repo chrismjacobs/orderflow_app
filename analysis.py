@@ -29,35 +29,36 @@ def createCandle():
         'total' : 0,
         'oi_cumulative': 0,
         'oi_delta': 0,
-        'vol_cumulative' : 0,
-        'vol_delta': 0,
     }
 
     return newCandle
 
 
 def getBlocks(size, blocksString):
+
+    ## get all the timeblocks (5Min)
     blocks = json.loads(blocksString)
 
     print(len(blocks))
 
+    # new list of candle blocks
+    newList = []
+
+    ## new candle of size
     newCandle = {}
 
     firstUnit = {}
 
-    ## new list of blocks
-    newList = []
-
     count = 1
 
     for unit in blocks:
-        print(count)
+        print('count', count, unit)
 
         ## ADD fist unit
         if count == 1:
             newCandle = {}
             for y in unit:
-                # print(unit, y)
+                # create new candle key value pairs
                 newCandle[y] = unit[y]
                 firstUnit[y] = unit[y]
 
@@ -75,7 +76,6 @@ def getBlocks(size, blocksString):
             newCandle['sells'] += unit['sells']
             newCandle['delta'] += unit['buys'] - unit['sells']
             newCandle['total'] += unit['total']
-            newCandle['vol_delta'] += unit['vol_delta']
 
             count += 1
 
@@ -92,22 +92,13 @@ def getBlocks(size, blocksString):
             newCandle['sells'] += unit['sells']
             newCandle['delta'] += unit['buys'] - unit['sells']
             newCandle['total'] += unit['total']
-            newCandle['vol_delta'] += unit['vol_delta']
 
             newCandle['close'] = unit['close']
             newCandle['price_delta'] = newCandle['close'] - newCandle['open']
+            newCandle['oi_cumulative'] = unit['oi_cumulative']
+            newCandle['oi_delta'] = newCandle['oi_cumulative'] - newCandle['oi_open']
+            newCandle['time_delta'] = newCandle['trade_time_ms'] - unit['trade_time_ms']
 
-            if len(newList) > 0:
-                lastUnit = newList[len(newList)-1]
-                previousDelta = lastUnit['delta_cumulative']
-                previousOI = lastUnit['oi_cumulative']
-                previousVol = lastUnit['vol_cumulative']
-
-                lastUnit['time_delta'] = newCandle['time'] - lastUnit['time']
-
-                newCandle['delta_cumulative'] = previousDelta + newCandle['delta']
-                newCandle['oi_cumulative'] = previousOI + newCandle['oi_delta']
-                newCandle['vol_cumulative'] = previousVol + newCandle['total']
 
             newList.append(newCandle)
 
