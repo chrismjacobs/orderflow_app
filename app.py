@@ -59,9 +59,7 @@ def getOF():
 
     deltaBlocks = r.get('deltablocks')
     deltaFlow = r.get('deltaflow')
-    # deltaBlocks = json.dumps([])
-    # deltaFlow = json.dumps([])
-    print(json.loads(deltaBlocks))
+
 
     jDict = {
         'stream' : stream,

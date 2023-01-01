@@ -97,7 +97,7 @@ def getHiLow(blocks):
             if count == tbs - 1:
                 lowLocal = True
 
-        if highInfo['index'] != 0: #and highLocal == False:
+        if highInfo['index'] != 0 and highLocal == False:
 
             cvdExcessHi = tb['delta_cumulative'] > highInfo['delta']
             cvdIntactHi = tb['high'] < mHi
@@ -116,7 +116,7 @@ def getHiLow(blocks):
                         bearDiv = True
                         r.set('discord', 'CVD bear divergence: ' + json.dumps(highInfo))
 
-        if lowInfo['index'] != 0: # and lowLocal == False:
+        if lowInfo['index'] != 0 and lowLocal == False:
             cvdExcessLo = tb['delta_cumulative'] < lowInfo['delta']
             cvdIntactLo = tb['low'] > mLow
 
@@ -269,6 +269,46 @@ def addBlock(units, blocks, mode):
         r.set('stream', json.dumps(stream) )
     # print('UNITS', len(units), len(blocks))
 
+    switch = False
+
+    if mode == 'deltablock':
+
+        try:
+
+            fastCandles = 0
+
+            switchUp = False
+            switchDown = False
+
+            if len(blocks) > 2:
+                if blocks[-1]['delta'] > 0 and blocks[-2]['delta'] < 0:
+                    switchUp = True
+                if blocks[-1]['delta'] < 0 and blocks[-2]['delta'] > 0:
+                    switchDown = True
+
+            lastElements = [-2, -3, -4, -5, -6]
+            timeElements = []
+
+            if len(blocks) >= 7:
+                for t in lastElements:
+                    timeDelta = blocks[t]['time_delta']/1000
+                    timeElements.append(timeDelta)
+                    if timeDelta < 30:
+                        fastCandles += 1
+                        timeElements.append(timeDelta)
+
+            if fastCandles >= 3:
+                if switchUp:
+                    switch = True
+                    r.set('discord', 'Delta Switch Up:' + json.dumps(timeElements) )
+                if switchDown:
+                    switch = True
+                    r.set('discord', 'Delta Switch Down:' + json.dumps(timeElements) )
+
+        except:
+
+            r.set('discord', 'delta switch fail')
+
     ''' BLOCK DATA '''
 
     print('BLOCK DATA')
@@ -362,11 +402,12 @@ def addBlock(units, blocks, mode):
         'divergence' : divergence,
         'volcandle_two' : {},
         'volcandle_five' : {},
+        'switch' : switch
         'pva_status': {}
     }
 
-
-    print('NEW CANDLE: ' + mode, newCandle['timestamp'])
+    if 'block' in mode:
+        print('NEW CANDLE: ' + mode, newCandle['timestamp'])
 
     if mode == 'volblock' or mode == 'carry':
         try:
@@ -496,14 +537,14 @@ def getPVAstatus(timeblocks):
 
 
 def logTimeUnit(newUnit):
-    print('ADD TIME FLOW')
+    # print('ADD TIME FLOW')
 
     # add a new unit which is msg from handle_message
 
     timeflow =  json.loads(r.get('timeflow')) # []
     timeblocks = json.loads(r.get('timeblocks')) # []
 
-    print('TIME REDIS', len(timeflow), len(timeblocks))
+    # print('TIME REDIS', len(timeflow), len(timeblocks))
 
     if len(timeflow) == 0:
         print('TIME 0')
@@ -523,7 +564,7 @@ def logTimeUnit(newUnit):
             interval = (60000*5) # 5Min
         blockFinish = blockStart + interval
 
-        print('TIME 1', blockStart, blockFinish)
+        # print('TIME 1')
         if newUnit['trade_time_ms'] >= blockFinish: # store current candle and start a new Candle
             print('ADD TIME CANDLE')
 
@@ -548,7 +589,7 @@ def logTimeUnit(newUnit):
 
         else: # add the unit to the time flow
 
-            print('ADD TIME UNIT')
+            # print('ADD TIME UNIT')
             timeflow.append(newUnit)
 
             # update current candle with new unit data
@@ -582,6 +623,7 @@ def getDeltaStatus(deltaflow):
     if totalBuys - totalSells < - deltaBlock:
         negDelta = True
 
+
     if totalBuys - totalSells > deltaBlock:
         posDelta = True
 
@@ -591,22 +633,22 @@ def getDeltaStatus(deltaflow):
             'posDelta' : posDelta
     }
 
+
 def logDeltaUnit(newUnit):
-    print('ADD DELTA FLOW')
 
     # add a new unit which is msg from handle_message
 
     deltaflow =  json.loads(r.get('deltaflow')) # []
     deltablocks = json.loads(r.get('deltablocks')) # []
 
-    print(' DELTA REDIS', len(deltaflow), len(deltablocks))
+    print('DELTA REDIS', len(deltaflow), len(deltablocks))
 
     if len(deltaflow) == 0:
         print('DELTA 0')
 
         ## start the initial time flow and initial current candle
         deltaflow.append(newUnit)
-        currentCandle = addBlock(deltaflow, deltablocks, 'delta')
+        currentCandle = addBlock(deltaflow, deltablocks, 'deltamode')
         deltablocks.append(currentCandle)
 
         r.set('deltablocks', json.dumps(deltablocks))
@@ -617,17 +659,20 @@ def logDeltaUnit(newUnit):
 
         deltaStatus = getDeltaStatus(deltaflow)
 
-        print('DELTA 1', deltaStatus)
+        print('DELTA 1')
 
-        if deltaStatus['posDelta'] or deltaStatus['negDelta']: # store current candle and start a new Candle
-            print('ADD DELTA CANDLE')
+        if deltaStatus['posDelta'] or deltaStatus['negDelta']:
+            # store current candle and start a new Candle
+            print('ADD DELTA CANDLE', deltaStatus)
+            if LOCAL:
+                r.set('discord', 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
             # replace current candle with completed candle
             newCandle = addBlock(deltaflow, deltablocks, 'deltablock')
             LastIndex = len(deltablocks) - 1
             deltablocks[LastIndex] = newCandle
 
-            # reset timeflow and add new unit
+            # reset deltaflow
             deltaflow = []
 
             # add fresh current candle to timeblock
@@ -635,10 +680,9 @@ def logDeltaUnit(newUnit):
             r.set('deltablocks', json.dumps(deltablocks))
             r.set('deltaflow', json.dumps(deltaflow))
 
-        else: # add the unit to the time flow
+        else: # add the unit to the delta flow
 
             print('ADD DELTA UNIT')
-            deltaflow.append(newUnit)
 
             # update current candle with new unit data
             currentCandle = addBlock(deltaflow, deltablocks, 'deltamode')
@@ -683,10 +727,12 @@ def historyReset():
                 print('REDIS STORE', dt_string)
                 vb = json.loads(r.get('volumeblocks'))
                 tb = json.loads(r.get('timeblocks'))
+                db = json.loads(r.get('deltablocks'))
                 history.append({
                     'date' : dt_string,
                     'volumeblocks' : vb,
-                    'timeblocks' : tb
+                    'timeblocks' : tb,
+                    'deltablocks' : db
                 })
 
                 pd = 'test'
@@ -873,12 +919,11 @@ def startDiscord():
         await user.send('Running')
         checkRedis.start(user)
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=3)
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
 
         if r.get('discord') != 'blank':
-            pingTest()
             await user.send(r.get('discord'))
             r.set('discord', 'blank')
 
@@ -887,6 +932,7 @@ def startDiscord():
         user = bot.get_user(int(DISCORD_USER))
         print('MESSAGE DDDDDDDDD', msg.content)
         if msg.author == user:
+            pingTest()
             await user.send('ho')
 
 
