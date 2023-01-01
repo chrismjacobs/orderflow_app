@@ -402,7 +402,7 @@ def addBlock(units, blocks, mode):
         'divergence' : divergence,
         'volcandle_two' : {},
         'volcandle_five' : {},
-        'switch' : switch
+        'switch' : switch,
         'pva_status': {}
     }
 
