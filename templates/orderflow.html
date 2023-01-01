@@ -22,7 +22,7 @@
             <br>
             <br>
 
-            <h1 @click="start()"> Order Flow  <br>[[ stream['lastPrice']  ]]</h1>
+            <h1> Order Flow  <br>[[ stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
@@ -244,7 +244,7 @@ let vue = new Vue({
     },
     data: {
         showStream: false,
-        showBS: false,
+        showBS: true,
         showTable: 'Time',
         UTCadjust: 8,
         hideDelta: true,
@@ -495,30 +495,32 @@ let vue = new Vue({
                 let s = this.volumeFlow[x]['size']
                 if (s > 1000) {
                     if (s >= 100000) {
-                       newList.push('[' + this.volumeFlow[x] + ']')
+                       this.volumeFlow[x]['size'] = '!!' + s + '!!'
+                       newList.push(this.volumeFlow[x])
                     } else if ( s >= 10000) {
-                        newList.push('(' + this.volumeFlow[x] + ')')
+                        this.volumeFlow[x]['size'] = '*' + s + '*'
+                        newList.push(this.volumeFlow[x])
                     } else {
                        newList.push(this.volumeFlow[x])
                     }
-
                 }
             }
             return newList.slice().reverse()
         },
         reverseDelta() {
             let newList = []
-            for (let x in this.deltaFlow) {
-                let s = this.deltaFlow[x]['size']
+            for (let x in this.volumeFlow) {
+                let s = this.volumeFlow[x]['size']
                 if (s > 1000) {
                     if (s >= 100000) {
-                       newList.push('[' + this.deltaFlow[x] + ']')
+                       this.volumeFlow[x]['size'] = '!!' + s + '!!'
+                       newList.push(this.volumeFlow[x])
                     } else if ( s >= 10000) {
-                        newList.push('(' + this.deltaFlow[x] + ')')
+                        this.volumeFlow[x]['size'] = '*' + s + '*'
+                        newList.push(this.volumeFlow[x])
                     } else {
-                       newList.push(this.deltaFlow[x])
+                       newList.push(this.volumeFlow[x])
                     }
-
                 }
             }
             return newList.slice().reverse()

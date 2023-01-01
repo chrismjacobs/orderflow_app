@@ -807,8 +807,8 @@ def handle_trade_message(msg):
             print('msg', x['side'], x['size'])
 
         ## look for big blocks
-        if x['size'] > block/100 and not LOCAL:
-            r.set('discord', '1000000')
+        if x['size'] > block/10 and not LOCAL:
+            r.set('discord', '100_000')
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
