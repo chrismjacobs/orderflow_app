@@ -86,7 +86,7 @@
                         <span> Sells: </span>  <span v-for="(item, key) in reverseDelta" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] / </span></span>
                     </div>
                 </div>
-                <br>
+
 
             </div>
 
@@ -245,7 +245,7 @@ let vue = new Vue({
     data: {
         showStream: false,
         showBS: false,
-        showTable: 'Delta',
+        showTable: 'Time',
         UTCadjust: 8,
         hideDelta: true,
         showCandle: null,
