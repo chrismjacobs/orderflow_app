@@ -64,7 +64,7 @@ def getHiLow(timeblocks):
                 LH2h_index = count
                 LH2h_cvd = block['delta_cumulative']
             if block['low'] < LL2h:
-                LL2h = block['high']
+                LL2h = block['low']
                 LL2h_index = count
                 LL2h_cvd = block['delta_cumulative']
         count += 1

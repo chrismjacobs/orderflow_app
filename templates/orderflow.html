@@ -125,7 +125,6 @@
                         <th scope="col">Sells</th>
                         <th scope="col">OI</th>
                         <th scope="col">Candle</th>
-                        <th scope="col" style="width:2%">Open</th>
                         <th scope="col" style="width:2%">High</th>
                         <th scope="col" style="width:2%">Low</th>
                         <th scope="col" style="width:2%">Close</th>
@@ -139,13 +138,12 @@
                             <td style="display:none">[[item]]</td>
                             <td>[[roundData(item.total)]]</td>
                             <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
+                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                             <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile">/ ([[Math.abs(item.high - item.low)]]) </span></td>
-                            <td >[[item.open]]</td>
                             <td>[[item.high]]</td>
                             <td>[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -165,13 +163,12 @@
                             <td style="display:none">[[item.vol_cumulative]]</td>
                             <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
                             <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile && !hideDelta">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
+                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                             <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
-                            <td >[[item.open]]</td>
                             <td :style="getLocal('high', key)">[[item.high]]</td>
                             <td :style="getLocal('low', key)">[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -180,7 +177,12 @@
                                     <tr>
                                         <span @click="showCandle = null">
                                             PVA% : [[Math.round(item.pva_status.percentage * 100)]] <br>
-                                            [[item]]
+                                            <br>
+                                            HIGH: [[item.divergence.highInfo]]<br>
+                                            LOW: [[item.divergence.lowInfo]]<br>
+                                            <br>
+                                            [[item.pva_status]]<br>
+
                                         </span>
                                     </tr>
 
@@ -195,14 +197,13 @@
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item.vol_cumulative]]</td>
                             <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
-                            <td :style="getDeltaStyle(item.delta)"> [[roundData(item.delta)]] &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
+                            <td :style="getDeltaStyle(item.delta)"> <span v-if="!mobile">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                             <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
-                            <td >[[item.open]]</td>
                             <td >[[item.high]]</td>
                             <td >[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -301,7 +302,7 @@ let vue = new Vue({
                 }
             let colors = {
                     high : 'lightgreen',
-                    low : 'red',
+                    low : 'crimson',
                 }
 
             if (this.timeBlockSize == 5) {
@@ -311,14 +312,15 @@ let vue = new Vue({
             }
         },
         getCVDStyle: function (CVDdivergence, key, CVD, mode) {
-
+            console.log('CVD', key, CVDdivergence)
             if (key == 1 && CVDdivergence && mode == 'time') {
+
                 this.localLow = CVDdivergence.lowInfo.index
                 this.localHigh = CVDdivergence.highInfo.index
                 // console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
             }
 
-            if (this.timeBlockSize == 5 && mode == 'time') {
+            if (this.timeBlockSize == 5 && mode == 'time' && key != 0) {
                 if (CVDdivergence && CVDdivergence.highInfo.div) {
                     return {color: 'pink'}
                 } else if (CVDdivergence && CVDdivergence.lowInfo.div) {
