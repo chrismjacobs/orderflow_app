@@ -40,103 +40,76 @@ print('REDIS', r)
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 logger = get_task_logger(__name__)
 
-def getHiLow(blocks):
+def getHiLow(timeblocks):
 
-    minutes = 120
+    tbRev = timeblocks[::-1] ## creates a new list  .reverse() change the original list
 
-    now = dt.datetime.utcnow()
-    timestamp = int(dt.datetime.timestamp(now)) - int(minutes)*60
+    ## last block is not completed but does have current HLOC
 
-    data = session.query_kline(symbol="BTCUSD", interval="1", from_time=str(timestamp))['result']
+    LH2h = tbRev[0]['high']
+    LL2h = tbRev[0]['low']
+    LH2h_index = 0
+    LL2h_index = 0
+    LH2h_cvd = tbRev[0]['delta_cumulative']
+    LL2h_cvd = tbRev[0]['delta_cumulative']
 
-    print('GET HI LOW ', len(data))
 
-    hAry = []
-    lAry = []
+    '''Set locals for the last 2 Hours'''
+    count = 0
 
-    for i in range(0, len(data)):
+    for block in tbRev:
+        if count <= 23:
+            if block['high'] > LH2h:
+                LH2h = block['high']
+                LH2h_index = count
+                LH2h_cvd = block['delta_cumulative']
+            if block['low'] < LL2h:
+                LL2h = block['high']
+                LL2h_index = count
+                LL2h_cvd = block['delta_cumulative']
+        count += 1
 
-        hAry.append(round(  float(data[i]['high'])  *2)/2)  # this formula rounds to the nearest 0.5
-        lAry.append(round(  float(data[i]['low'])  *2)/2)
+    '''Look for areas where the CVD has already exceeded '''
+    recount = 0
 
-    mHi =  max(hAry)
-    mLow =  min(lAry)
+    for block in tbRev:
+        if count <= 23 and count > 1: # discount the first two blocks
+            if block['delta_cumulative'] > LH2h_cvd:
+                LH2h_cvd = block['delta_cumulative']
+            if block['delta_cumulative'] < LL2h_cvd:
+                LL2h_cvd = block['delta_cumulative']
 
-    highLocal = False
-    lowLocal = False
+        recount += 1
 
     highInfo = {
-        'price' : mHi,
-        'index' : 0,
-        'delta' : 0
+        'price' : LH2h,
+        'index' : LH2h_index,
+        'delta' : LH2h_cvd,
+        'div' : False
     }
 
     lowInfo = {
-        'price' : mLow,
-        'index' : 0,
-        'delta' : 0
+        'price' : LL2h,
+        'index' : LL2h_index,
+        'delta' : LL2h_cvd,
+        'div' : False
     }
 
-    count = 0
+    if LH2h_index >= 2:
+        # current timeblock nor the previous is not the highest/lowest
+        if tbRev[0]['delta_cumulative'] > LH2h_cvd:
+            # Divergence Triggered
+            highInfo['div'] = True
+            r.set('discord', 'CVD BEAR div: ' + json.dumps(highInfo))
 
-    bearDiv = False
-    bullDiv = False
+    if LL2h_index >= 2:
+        if tbRev[0]['delta_cumulative'] < LL2h_cvd:
+            # Divergence Triggered
+            lowInfo['div'] = True
+            r.set('discord', 'CVD BULL div: ' + json.dumps(lowInfo))
 
-    tbs = len(blocks) - 1
 
-    for tb in blocks:
-
-        if tb['high'] == mHi:
-            highInfo['index'] = tbs - count
-            highInfo['delta'] = tb['delta_cumulative']
-            if count == tbs - 1:
-                highLocal = True
-        if tb['low'] == mLow:
-            lowInfo['index'] = tbs - count
-            lowInfo['delta'] = tb['delta_cumulative']
-            if count == tbs - 1:
-                lowLocal = True
-
-        if highInfo['index'] != 0 and highLocal == False:
-
-            cvdExcessHi = tb['delta_cumulative'] > highInfo['delta']
-            cvdIntactHi = tb['high'] < mHi
-
-            if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
-                highInfo['delta'] = tb['delta_cumulative']
-
-            # if count == tbs - 1 or count == tbs - 2:
-            #     highLocal = True
-
-            ## last candle
-            if count == tbs:
-                print('HIGH CHECK', cvdExcessHi, cvdIntactHi)
-                if cvdExcessHi and cvdIntactHi:
-                    if r.get('discord_filter') == 'off':
-                        bearDiv = True
-                        r.set('discord', 'CVD bear divergence: ' + json.dumps(highInfo))
-
-        if lowInfo['index'] != 0 and lowLocal == False:
-            cvdExcessLo = tb['delta_cumulative'] < lowInfo['delta']
-            cvdIntactLo = tb['low'] > mLow
-
-            if tb['delta_cumulative'] < lowInfo['delta'] and count < tbs:
-                lowInfo['delta'] = tb['delta_cumulative']
-
-            # if count == tbs - 1 or count == tbs - 2:
-            #     lowLocal = True
-
-            ## last candle
-            if count == tbs:
-                print('LOW CHECK', cvdExcessLo, cvdIntactLo)
-                if cvdExcessLo and cvdIntactLo:
-                    if r.get('discord_filter') == 'off':
-                        bullDiv = True
-                        r.set('discord', 'CVD bull divergence: ' + json.dumps(lowInfo))
-
-        count += 1
-
-    return {'highInfo' : highInfo , 'lowInfo' : lowInfo , 'bullDiv' : bullDiv, 'bearDiv' : bearDiv}
+    return {'highInfo' : highInfo , 'lowInfo' : lowInfo}
 
 
 def addBlockBlock(blocks, newCandle, timeNow, size):
@@ -267,16 +240,12 @@ def manageStream(streamTime, streamPrice, streamOI):
 
 def addBlock(units, blocks, mode):
 
-    divergence = None
+    CVDdivergence = {}
 
     if mode == 'timeblock':
-        divergence = getHiLow(blocks)
-        if divergence['bearDiv']:
-            divergence = 'Bull'
-        if divergence['bullDiv']:
-            divergence = 'Bear'
+        CVDdivergence = getHiLow(blocks)
         stream = json.loads(r.get('stream'))
-        stream['Divs'] = divergence
+        stream['Divs'] = CVDdivergence
         r.set('stream', json.dumps(stream) )
     # print('UNITS', len(units), len(blocks))
 
@@ -410,10 +379,10 @@ def addBlock(units, blocks, mode):
         'oi_low': OIlow,
         'oi_open': OIopen,
         'oi_cumulative': OIclose,
-        'divergence' : divergence,
+        'divergence' : CVDdivergence,
+        'switch' : switch,
         'volcandle_two' : {},
         'volcandle_five' : {},
-        'switch' : switch,
         'pva_status': {}
     }
 
@@ -528,7 +497,8 @@ def getPVAstatus(timeblocks):
             'vol': lastVolume,
             'percentage' : percentage,
             'deltapercentge' : deltapercentage,
-            'PVAdivergence' : { 'bear:' : divergenceBear, 'bull:' : divergenceBull } ,
+            'PVAbearDIV' : divergenceBear,
+            'PVAbullDIV:' : divergenceBull,
             'flatOI' : flatOI
             }
 
@@ -824,7 +794,7 @@ def handle_trade_message(msg):
         ## look for big blocks
         if x['size'] > block/10 and not LOCAL:
 
-            bString = x['side'] + ': ' + str(round(block/1000)) + 'k'
+            bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k'
             r.set('discord',  'Large Trade: ' + bString)
 
         timestamp = x['timestamp']

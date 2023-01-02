@@ -13,12 +13,12 @@
 
 </head>
 
-<main role="main" class="container-md" style="background:black">
+<main role="main" class="container-md" style="background:black;height:100%;width:100%;position:absolute">
 
-    <div id="vue-app" :class="getMargin()" style="background:black;height:100%">
+    <div id="vue-app" :class="getMargin()" style="background:black">
 
 
-        <div class="text-white" align="center">
+        <div class="text-white" align="center" >
             <br>
 
             <h1> Order Flow: [[ stream['lastPrice']  ]]</h1>
@@ -30,15 +30,22 @@
             <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
             <button @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
             <button @click="showTable='Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Notes</button>
+
+
             <br>
-            <input type="number" v-model="UTCadjust" style="width:10%; display:none">
             <br>
 
         </div>
 
-        <div align="center" >
+        <div align="center" :style="getFont()">
 
             <div v-if="showTable == 'Notes'" class="text-white p-3">
+
+                <h3> Time Adjust </h3>
+
+                    <input type="number" v-model="UTCadjust" style="width:20%">
+                <br>
+                <br>
 
                 <h3> App Notes </h3>
                 - Data presented is from current day <br>
@@ -51,14 +58,11 @@
                 (this is different from exocharts which carries over some trades so a 1mil block is actually more than 1mil) <br>
                 Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
                 - Delta blocks are set to only record differences of 1mil delta (data does differ slightly from exo charts from time to time)<br>
-                - In Delta and Volume mode you mayview all trades greater than 1000 appearing in the current block <br>
+                - In Delta and Volume mode you may view all trades greater than 1000 appearing in the current block <br>
                 - An alert will occur on trades greater than 100K <br>
 
-
                 <br>
                 <br>
-
-
 
             </div>
 
@@ -130,17 +134,17 @@
                     <tbody v-if="showTable == 'Volume'">
                         <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
                         <tr>
-                            <th class="text-warning" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
+                            <th class="text-warning text-xsmall" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item]]</td>
                             <td>[[roundData(item.total)]]</td>
                             <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
+                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile">/ ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td >[[item.open]]</td>
                             <td>[[item.high]]</td>
                             <td>[[item.low]]</td>
@@ -161,12 +165,12 @@
                             <td style="display:none">[[item.vol_cumulative]]</td>
                             <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
                             <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile && !hideDelta">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
+                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td >[[item.open]]</td>
                             <td :style="getLocal('high', key)">[[item.high]]</td>
                             <td :style="getLocal('low', key)">[[item.low]]</td>
@@ -192,12 +196,12 @@
                             <td style="display:none">[[item.vol_cumulative]]</td>
                             <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
                             <td :style="getDeltaStyle(item.delta)"> [[roundData(item.delta)]] &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</td>
-                            <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
+                            <td :style="getCVDStyle(item.CVDdivergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] / ([[Math.abs(item.high - item.low)]])</td>
+                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td >[[item.open]]</td>
                             <td >[[item.high]]</td>
                             <td >[[item.low]]</td>
@@ -267,7 +271,7 @@ let vue = new Vue({
     data: {
         showStream: false,
         showBS: true,
-        showTable: 'Volume',
+        showTable: 'Time',
         UTCadjust: 8,
         hideDelta: true,
         showCandle: null,
@@ -311,13 +315,13 @@ let vue = new Vue({
             if (key == 1 && CVDdivergence && mode == 'time') {
                 this.localLow = CVDdivergence.lowInfo.index
                 this.localHigh = CVDdivergence.highInfo.index
-                console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
+                // console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
             }
 
             if (this.timeBlockSize == 5 && mode == 'time') {
-                if (CVDdivergence && CVDdivergence.bearDiv) {
+                if (CVDdivergence && CVDdivergence.highInfo.div) {
                     return {color: 'pink'}
-                } else if (CVDdivergence && CVDdivergence.bearDiv) {
+                } else if (CVDdivergence && CVDdivergence.lowInfo.div) {
                     return {color: 'lightblue'}
                 }
             }
@@ -344,14 +348,30 @@ let vue = new Vue({
                 return "content-section ml-5 mr-5"
             }
         },
+        getFont: function () {
+            if (this.mobile) {
+                return "font-size:12px"
+            }
+        },
         getTime: function (t) {
             let time = t.split(' ')
-            let hours = parseInt(time[1].split(':')[0]) + this.UTCadjust
+            let adjust = this.UTCadjust
+            if (!parseInt(adjust)) {
+                adjust = 0
+            }
+            let hours = parseInt(time[1].split(':')[0]) + parseInt(adjust)
             if (hours > 23) {
                 hours = hours - 24
             }
+            let newTime = time[1].split(':')
             let x = time[0] + ' '
-            return time[1] + ' (' + hours + ')'
+
+            if (this.mobile) {
+                return hours + ':' + newTime[1]
+            } else {
+                return time[1] + ' (' + hours + ')'
+            }
+
         },
         roundData: function (data) {
             //deal with K
@@ -401,7 +421,7 @@ let vue = new Vue({
         getDeltaStyle: function(delta, ) {
             let style = {background : 'darkcyan'}
             if (delta < 0) {
-                style = {background : 'orange'}
+                style = {background : 'OrangeRed'}
             }
             return style
         },
@@ -418,9 +438,9 @@ let vue = new Vue({
             } else if (pva_status['pva200']) {
                 style = {background : 'cadetblue'}
             }
-            if (pva_status['pva200'] && pva_status['divergence'] && pva_status['divergence']['bear:']) {
+            if (pva_status['pva200'] && pva_status['PVAbearDIV']) {
                 style['color'] = 'red'
-            } else if (pva_status['pva200'] && pva_status['divergence'] && pva_status['divergence']['bull:']) {
+            } else if (pva_status['pva200'] && pva_status['PVAbullDIV']) {
                 style['color'] = 'green'
             }
 
