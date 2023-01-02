@@ -69,8 +69,12 @@
 
             <div v-if="showTable == 'Time'" align="center">
 
-                <div class="bg-info test-dark rounded p-1" >
-                    <h3> <span @click="showStream = !showStream"> Time Blocks </span> <input style="width:10%" type="number" v-model="timeBlockSize" step="5"></h3>
+                <div class="bg-info text-dark rounded p-1" >
+                    <h3> <span @click="showStream = !showStream"> Time Blocks ([[timeBlockSize]]) </span>
+                            <span @click="setTime(5)" class="ml-2" >&#8593</span>
+                            <span @click="setTime(-5)" class="ml-2">&#8595</span>
+                    </h3>
+
                     <div v-if="showStream">
                         <span v-for="(info, key) in stream " :key="key"> [[key]]: [[info]] <br></span>
                     </div>
@@ -81,7 +85,10 @@
             <div v-if="showTable == 'Volume'">
 
                 <div class="bg-warning test-dark rounded p-1"  >
-                    <h3> <span @click="showBS = !showBS"> Volume Blocks </span> <input style="width:10%" type="number" v-model="volumeBlockSize" step="1"></h3>
+                    <h3> <span @click="showBS = !showBS"> Volume Blocks ([[volumeBlockSize]])</span>
+                        <span @click="setVol(1)" class="ml-2" >&#8593</span>
+                        <span @click="setVol(-1)" class="ml-2">&#8595</span>
+                    </h3>
                 </div>
 
                 <div v-if="showBS" class="row align-items-start m-2">
@@ -295,19 +302,29 @@ let vue = new Vue({
         localLow : 0
     },
     methods: {
+        setTime: function (n) {
+            this.timeBlockSize += n
+            if (this.timeBlockSize <= 0 || this.timeBlockSize >= 65) {
+                this.timeBlockSize = 5
+            }
+
+        },
+        setVol: function (n) {
+            this.volumeBlockSize += n
+        },
         getLocal: function (mode, key) {
             let sets = {
                     high : this.localHigh,
                     low : this.localLow,
                 }
             let colors = {
-                    high : 'lightgreen',
-                    low : 'crimson',
+                    high : 'darkgreen',
+                    low : 'firebrick',
                 }
 
             if (this.timeBlockSize == 5) {
                 if (key == sets[mode] + 1) {
-                return { background: 'grey' , color: colors[mode]}
+                return { background: colors[mode]}
                 }
             }
         },
@@ -370,7 +387,7 @@ let vue = new Vue({
             if (this.mobile) {
                 return hours + ':' + newTime[1]
             } else {
-                return time[1] + ' (' + hours + ')'
+                return hours + ':' + newTime[1] // + ':' + newTime[2]
             }
 
         },

@@ -69,11 +69,21 @@ def getHiLow(timeblocks):
                 LL2h_cvd = block['delta_cumulative']
         count += 1
 
+    ''' check if previous candle has an exceeeding cvd'''
+    try:
+        if tbRev[LH2h_index + 1]['delta_cumulative'] > LH2h_cvd:
+            LH2h_cvd = tbRev[LH2h_index + 1]['delta_cumulative']
+
+        if tbRev[LL2h_index + 1]['delta_cumulative'] < LL2h_cvd:
+            LL2h_cvd = tbRev[LL2h_index + 1]['delta_cumulative']
+    except:
+        print('LOCAL CVD CHECK FAIL')
+
     '''Look for areas where the CVD has already exceeded '''
     recount = 0
 
     for block in tbRev:
-        if count <= 23 and count > 1: # discount the first two blocks
+        if recount <= 23 and recount > 1: # discount the first two blocks
             if block['delta_cumulative'] > LH2h_cvd:
                 LH2h_cvd = block['delta_cumulative']
             if block['delta_cumulative'] < LL2h_cvd:
@@ -284,6 +294,9 @@ def addBlock(units, blocks, mode):
                 if switchDown:
                     switch = True
                     r.set('discord', 'Delta Switch Down:' + json.dumps(timeElements) )
+
+            if r.get('discord_delta') == 'on':
+                r.set('discord', 'Delta Switch Alert')
 
         except:
 
@@ -941,8 +954,15 @@ def startDiscord():
     async def on_message(msg):
         user = bot.get_user(int(DISCORD_USER))
         print('MESSAGE DDDDDDDDD', msg.content)
+        replyText = 'ho'
+
+        if msg.content == 'delta on':
+            r.set('discord_delta', 'on')
+        if msg.content == 'delta off':
+            r.set('discord_delta', 'off')
+
         if msg.author == user:
-            await user.send('ho')
+            await user.send(replyText)
 
 
     bot.run(DISCORD_TOKEN)
