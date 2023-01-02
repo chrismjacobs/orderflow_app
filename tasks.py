@@ -105,8 +105,8 @@ def getHiLow(blocks):
             if tb['delta_cumulative'] > highInfo['delta'] and count < tbs:
                 highInfo['delta'] = tb['delta_cumulative']
 
-            if count == tbs - 1 or count == tbs - 2:
-                highLocal = True
+            # if count == tbs - 1 or count == tbs - 2:
+            #     highLocal = True
 
             ## last candle
             if count == tbs:
@@ -123,8 +123,9 @@ def getHiLow(blocks):
             if tb['delta_cumulative'] < lowInfo['delta'] and count < tbs:
                 lowInfo['delta'] = tb['delta_cumulative']
 
-            if count == tbs - 1 or count == tbs - 2:
-                lowLocal = True
+            # if count == tbs - 1 or count == tbs - 2:
+            #     lowLocal = True
+
             ## last candle
             if count == tbs:
                 print('LOW CHECK', cvdExcessLo, cvdIntactLo)
@@ -224,6 +225,13 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
 
 def manageStream(streamTime, streamPrice, streamOI):
 
+    timeblocks = json.loads(r.get('timeblocks'))
+    currentBuys = 0
+    currentSells = 0
+    if len(timeblocks) > 0:
+        currentBuys = timeblocks[-1]['buys']
+        currentSells = timeblocks[-1]['sells']
+
     print('Manage Stream')
     stream = json.loads(r.get('stream'))
     stream['lastTime'] = streamTime
@@ -236,12 +244,15 @@ def manageStream(streamTime, streamPrice, streamOI):
     elif streamTime - stream['1mOI'][0] >= 90:
 
         deltaOI =  streamOI - stream['1mOI'][1]
+        deltaOIstr = str(round(deltaOI/100_000)/10) + 'm '
+        deltaBuyStr = str(round(currentBuys/1_000)) + 'k '
+        deltaSellStr = str(- round(currentSells/1_000)) + 'k '
 
         if deltaOI > stream['oiMarker']:
-            r.set('discord', 'sudden OI increase: ' + str(deltaOI))
+            r.set('discord', 'Sudden OI INC: ' + deltaOIstr + ' ' + deltaBuyStr + ' ' + deltaSellStr)
 
         if deltaOI < - stream['oiMarker']:
-            r.set('discord', 'sudden OI decrease: ' + str(deltaOI))
+            r.set('discord', 'Sudden OI DEC: ' + deltaOIstr + ' ' + deltaBuyStr + ' ' + deltaSellStr)
 
         stream['1mOI'] = [streamTime, streamOI]
 
@@ -694,23 +705,27 @@ def logDeltaUnit(newUnit):
 
 def getPreviousDay(blocks):
 
-    dailyOpen = blocks[0]['open']
-    dailyClose = blocks[-1]['close']
-    dailyPriceDelta = dailyClose - dailyOpen
-    dailyCVD = blocks[-1]['delta_cumulative']
-    dailyDIV = False
+    try:
+        dailyOpen = blocks[0]['open']
+        dailyClose = blocks[-1]['close']
+        dailyPriceDelta = dailyClose - dailyOpen
+        dailyCVD = blocks[-1]['delta_cumulative']
+        dailyDIV = False
 
-    if dailyPriceDelta < 0 and dailyCVD > 0:
-        dailyDIV = True
-    elif dailyPriceDelta > 0 and dailyCVD < 0:
-        dailyDIV = True
+        if dailyPriceDelta < 0 and dailyCVD > 0:
+            dailyDIV = True
+        elif dailyPriceDelta > 0 and dailyCVD < 0:
+            dailyDIV = True
 
-    dailyVolume = 0
+        dailyVolume = 0
 
-    for b in blocks:
-        dailyVolume += b['total']
+        for b in blocks:
+            dailyVolume += b['total']
 
-    return json.dumps({'vol' : dailyVolume, 'cvd' : dailyCVD, 'price' : dailyPriceDelta })
+        return json.dumps({'vol' : dailyVolume, 'cvd' : dailyCVD, 'price' : dailyPriceDelta })
+
+    except:
+        return 'getPreviousDay() fail'
 
 
 def historyReset():
@@ -720,39 +735,39 @@ def historyReset():
 
     if current_time.hour == 23 and current_time.minute == 59:
         history = json.loads(r.get('history'))
+
+        vb = json.loads(r.get('volumeblocks'))
+        tb = json.loads(r.get('timeblocks'))
+        db = json.loads(r.get('deltablocks'))
+
+        pdDict = {
+                    'date' : dt_string,
+                    'volumeblocks' : vb,
+                    'timeblocks' : tb,
+                    'deltablocks' : db
+                }
+
         if len(history) > 0:
             lastHistory = json.loads(r.get('history'))[len(history)-1]
 
             if lastHistory['date'] != dt_string:
                 print('REDIS STORE', dt_string)
-                vb = json.loads(r.get('volumeblocks'))
-                tb = json.loads(r.get('timeblocks'))
-                db = json.loads(r.get('deltablocks'))
-                history.append({
-                    'date' : dt_string,
-                    'volumeblocks' : vb,
-                    'timeblocks' : tb,
-                    'deltablocks' : db
-                })
 
-                pd = 'test'
-                try:
-                 pd = getPreviousDay(tb)
-                except:
-                    pd = 'pdFail'
+                history.append(pdDict)
+
+                pd = getPreviousDay(tb)
 
                 r.set('history', json.dumps(history))
-                r.set('discord', pd + ' ' + 'history log')
+                r.set('discord', 'history log: ' + pd)
         else:
             print('REDIS STORE INITIAL')
-            vb = json.loads(r.get('volumeblocks'))
-            tb = json.loads(r.get('timeblocks'))
-            history.append({
-                'date' : current_time.strftime("%d/%m/%Y"),
-                'volumeblocks' : vb,
-                'timeblocks' : tb
-            })
+
+            history.append(pdDict)
+
+            pd = getPreviousDay(tb)
+
             r.set('history', json.dumps(history))
+            r.set('discord', 'history log: ' + pd)
 
     if current_time.hour == 0 and current_time.minute == 0:
         print('REDIS RESET', current_time)
@@ -808,7 +823,9 @@ def handle_trade_message(msg):
 
         ## look for big blocks
         if x['size'] > block/10 and not LOCAL:
-            r.set('discord', '100_000')
+
+            bString = x['side'] + ': ' + str(round(block/1000)) + 'k'
+            r.set('discord',  'Large Trade: ' + bString)
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
@@ -829,7 +846,6 @@ def handle_trade_message(msg):
         # send message to time candle log
         logTimeUnit(newUnit)
         logDeltaUnit(newUnit)
-
 
         if volumeflowTotal + x['size'] <= block:
             # Normal addition of trade to volume flow
@@ -871,8 +887,32 @@ def handle_trade_message(msg):
             volumeflow = []
             volumeflowTotal = 0
             ## Note: volumeblock does not have a current candle at thsi point
+            for y in range(carryOver//block):
 
-            # Creat new flow block with left over contracts
+                r.set('discord', 'Carry Over: ' + str(carryOver//block))
+
+                ## this is volume flow list - just one block
+                fullTradeList =  [{
+                     'side' : x['side'] ,
+                     'size' : block,
+                     'trade_time_ms' : x['trade_time_ms'],
+                     'timestamp' : ts,
+                     'price' : price,
+                     'blocktrade' : 'CARRY OVER',
+                     'streamTime' : streamTime,
+                     'streamPrice' : streamPrice,
+                     'streamOI' : streamOI
+                     }
+                ]
+                ## keep appending large blocks
+                volumeblocks = json.loads(r.get('volumeblocks'))
+                newCandle = addBlock(fullTradeList, volumeblocks, 'carry')
+                volumeblocks.append(newCandle)
+                r.set('volumeblocks', json.dumps(volumeblocks))
+
+                print('Add Block', y)
+
+            # Create new flow block with left over contracts
             volumeflow = [
                     { 'side' : x['side'] ,
                     'size' : carryOver%block,
@@ -932,7 +972,6 @@ def startDiscord():
         user = bot.get_user(int(DISCORD_USER))
         print('MESSAGE DDDDDDDDD', msg.content)
         if msg.author == user:
-            pingTest()
             await user.send('ho')
 
 
