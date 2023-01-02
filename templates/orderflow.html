@@ -197,7 +197,7 @@
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item.vol_cumulative]]</td>
                             <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
-                            <td :style="getDeltaStyle(item.delta)"> <span v-if="!mobile">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getDeltaStyle(item.delta)"> [[roundData(item.delta)]]<span v-if="!mobile">  &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</span> </td>
                             <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
                             <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
                             <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
@@ -312,7 +312,6 @@ let vue = new Vue({
             }
         },
         getCVDStyle: function (CVDdivergence, key, CVD, mode) {
-            console.log('CVD', key, CVDdivergence)
             if (key == 1 && CVDdivergence && mode == 'time') {
 
                 this.localLow = CVDdivergence.lowInfo.index
