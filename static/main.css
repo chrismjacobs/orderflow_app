@@ -1,0 +1,28 @@
+
+.ct-series-a .ct-line {
+  /* Set the colour of this series line */
+  stroke: rgb(7, 255, 226);
+  /* Control the thikness of your lines */
+  stroke-width: 3px;
+
+}
+
+.ct-series-b .ct-line {
+  /* Set the colour of this series line */
+  stroke: rgb(255, 204, 0);
+  /* Control the thikness of your lines */
+  stroke-width: 3px;
+
+}
+
+.ct-series-c .ct-line {
+  /* Set the colour of this series line */
+  stroke: rgb(174, 0, 255);
+  /* Control the thikness of your lines */
+  stroke-width: 3px;
+
+}
+
+.main {
+  height: 100vh;
+}

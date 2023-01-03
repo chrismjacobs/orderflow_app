@@ -6,26 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="{{headLogo}}">
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
-
+  <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
 
 </head>
 
-<main role="main" class="container-md" style="background:black;height:100%;width:100%;position:absolute">
+<main role="main" class="container-md" style="background:black;height:100vh;width:100%">
 
     <div id="vue-app" :class="getMargin()" style="background:black">
-
 
         <div class="text-white" align="center" >
             <br>
 
-            <h1> Order Flow: [[ stream['lastPrice']  ]]</h1>
+            <h1>[[  stream['lastPrice']  ]]</h1>
 
                 <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 
 
+            <button @click="showChart = !showChart" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
             <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
             <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
             <button @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
@@ -35,6 +36,33 @@
             <br>
             <br>
 
+        </div>
+        <div v-if="showChart" class="overflow-auto" style="width: 100%;color:#9E9E9E">
+            <div class="row">
+                <div class="col">
+                    <div class="ct-chart ct-minor-sixth" id="chart1"></div>
+                    <h4 class="ml-2"> Price <span @click="setLookBack(-10)" class="ml-2" >&#x2190</span> [[lookback]]%
+                        <span @click="setLookBack(10)" class="ml-2">&#x2192</span>
+                    </h4>
+                </div>
+                <div class="col">
+                    <div class="ct-chart ct-minor-sixth"  id="chart2"></div>
+                    <h4 class="ml-2"> CVD </h4>
+                </div>
+                <div v-if="!mobile" class="col">
+                    <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
+                    <h4 class="ml-2"> OI </h4>
+                </div>
+            </div>
+            <div v-if="mobile" class="row">
+                <div class="col">
+
+                </div>
+                <div class="col">
+                    <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
+                    <h4 class="ml-2"> OI </h4>
+                </div>
+            </div>
         </div>
 
         <div align="center" :style="getFont()">
@@ -69,7 +97,7 @@
 
             <div v-if="showTable == 'Time'" align="center">
 
-                <div class="bg-info text-dark rounded p-1" >
+                <div class="bg-info rounded pt-2 pb-1 text-white" >
                     <h3> <span @click="showStream = !showStream"> Time Blocks ([[timeBlockSize]]) </span>
                             <span @click="setTime(5)" class="ml-2" >&#8593</span>
                             <span @click="setTime(-5)" class="ml-2">&#8595</span>
@@ -84,18 +112,18 @@
 
             <div v-if="showTable == 'Volume'">
 
-                <div class="bg-warning test-dark rounded p-1"  >
+                <div class="bg-warning test-dark rounded pt-2 pb-1"  >
                     <h3> <span @click="showBS = !showBS"> Volume Blocks ([[volumeBlockSize]])</span>
                         <span @click="setVol(1)" class="ml-2" >&#8593</span>
                         <span @click="setVol(-1)" class="ml-2">&#8595</span>
                     </h3>
                 </div>
 
-                <div v-if="showBS" class="row align-items-start m-2">
-                    <div class="col-6" style="background:darkgreen;color:white">
+                <div v-if="showBS" class="row align-items-start m-2 ">
+                    <div class="col-6 rounded" style="background:darkgreen;color:white">
                         <span> Buys: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] &nbsp &nbsp  </span></span>
                     </div>
-                    <div class="col-6" style="background:firebrick;color:white">
+                    <div class="col-6 rounded" style="background:firebrick;color:white">
                         <span> Sells: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] &nbsp &nbsp  </span></span>
                     </div>
                 </div>
@@ -104,15 +132,15 @@
 
             <div v-if="showTable == 'Delta'" align="center">
 
-                <div class="bg-success test-dark rounded p-1"  >
+                <div class="bg-success rounded pt-2 pb-1 text-white"  >
                     <h3> <span @click="showBS = !showBS"> Delta Blocks </span></h3>
                 </div>
 
-                <div v-if="showBS" class="row align-items-start m-2">
-                    <div class="col-6" style="background:darkgreen;color:white">
+                <div v-if="showBS" class="row align-items-start m-2 rounded">
+                    <div class="col-6 rounded" style="background:darkgreen;color:white">
                         <span> Buys: </span>  <span v-for="(item, key) in reverseDelta" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] &nbsp &nbsp </span></span>
                     </div>
-                    <div class="col-6" style="background:firebrick;color:white">
+                    <div class="col-6 rounded" style="background:firebrick;color:white">
                         <span> Sells: </span>  <span v-for="(item, key) in reverseDelta" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] &nbsp &nbsp  </span></span>
                     </div>
                 </div>
@@ -126,10 +154,11 @@
                         <th scope="col" style="width:10%">Time</th>
                         <th scope="col">Sec</th>
                         <th scope="col">Vol</th>
-                        <th scope="col" @click="hideDelta = !hideDelta">Delta</th>
+                        <th scope="col" @click="showDelta = true">Delta</th>
+                        <th v-if="showDelta" scope="col" @click="showDelta = false"> &#x2190</th>
+                        <th v-if="showDelta" scope="col">Buys</th>
+                        <th v-if="showDelta" scope="col">Sells</th>
                         <th scope="col">CVD</th>
-                        <th scope="col">Buys</th>
-                        <th scope="col">Sells</th>
                         <th scope="col">OI</th>
                         <th scope="col">Candle</th>
                         <th scope="col" style="width:2%">High</th>
@@ -143,14 +172,15 @@
                             <th class="text-warning text-xsmall" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item]]</td>
-                            <td>[[roundData(item.total)]]</td>
-                            <td :style="getDeltaStyle(item.delta)">[[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                             <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
-                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
-                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile">/ ([[Math.abs(item.high - item.low)]]) </span></td>
+                            <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile">/ ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td>[[item.high]]</td>
                             <td>[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -168,14 +198,15 @@
                             <th class="text-info" scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item.vol_cumulative]]</td>
-                            <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
-                            <td :style="getDeltaStyle(item.delta)"><span v-if="!mobile && !hideDelta">[[roundData(item.delta)]] &nbsp &nbsp </span> [[getPercent(item.delta, item.total)]]%</td>
+                            <td :style="getVolumeStyle(item.pva_status, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
+                            <td v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                             <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
-                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
-                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
+                            <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td :style="getLocal('high', key)">[[item.high]]</td>
                             <td :style="getLocal('low', key)">[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -203,14 +234,15 @@
                             <th class="text-success" scope="row"><span @click="showCandle = key">[[getTime(item.timestamp)]]</span> </th>
                             <td>[[calculateTime(item.time_delta)]]</td>
                             <td style="display:none">[[item.vol_cumulative]]</td>
-                            <td :style="getVolumeStyle(item.pva_status, key)">[[roundData(item.total)]]</td>
-                            <td :style="getDeltaStyle(item.delta)"> [[roundData(item.delta)]]<span v-if="!mobile">  &nbsp &nbsp [[getPercent(item.delta, item.total)]]%</span> </td>
+                            <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
+                            <td :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
+                            <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                             <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
-                            <td :style="getDeltaStyle(1)">[[roundData(item.buys)]]</td>
-                            <td :style="getDeltaStyle(-1)">[[roundData(item.sells)]]</td>
                             <td style="display:none">[[item.oi_cumulative]]</td>
                             <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                            <td :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
+                            <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
                             <td >[[item.high]]</td>
                             <td >[[item.low]]</td>
                             <td >[[item.close]]</td>
@@ -259,6 +291,7 @@ if (report.includes('Android') || report.includes('iPhone') ) {
     console.log('mobile')
 }
 
+
 startVue()
 
 
@@ -272,19 +305,20 @@ let vue = new Vue({
         this.ofTimer()
         this.getOFData()
         if (mobile) {
-            this.showBS = false
             this.mobile = true
         }
     },
     data: {
-        showStream: false,
-        showBS: true,
-        showTable: 'Time',
-        UTCadjust: 8,
-        hideDelta: true,
-        showCandle: null,
-        showVolCandle: null,
-        mobile: false,
+        lookback : 100,
+        showChart : true,
+        showStream : false,
+        showBS : false,
+        showTable : 'Time',
+        UTCadjust : 8,
+        showDelta : true,
+        showCandle : null,
+        showVolCandle : null,
+        mobile : false,
         volumeBlocks : [],
         volumeFlow : [],
         timeBlocks : [],
@@ -292,16 +326,83 @@ let vue = new Vue({
         deltaBlocks : [],
         deltaFlow : [],
         stream : {},
-        volumeBlockList: 20,
-        volumeBlockSize: 1,
-        timeBlockList: 100,
-        timeBlockSize: 5,
+        volumeBlockList : 20,
+        volumeBlockSize : 1,
+        timeBlockList : 100,
+        timeBlockSize : 5,
         of_timer : '',
         ofAlert : 0,
         localHigh : 0,
-        localLow : 0
+        localLow : 0,
+        optionsP : {
+            showPoint: false,
+            showLine: true,
+            showArea: false,
+            lineSmooth: false,
+            showLabel: false,
+            axisX: {
+                showGrid: false,
+                showLabel: false,
+                offset: 0
+              },
+              axisY: {
+                showGrid: false,
+                showLabel: false,
+                offset: 0
+              }
+        },
+        optionsOI : {
+            showPoint: false,
+            showLine: true,
+            showArea: false,
+            lineSmooth: true,
+            showLabel: false,
+            axisX: {
+                showGrid: false,
+                showLabel: false,
+                offset: 0
+              },
+              axisY: {
+                showGrid: false,
+                showLabel: false,
+                offset: 0
+              }
+        }
+
     },
     methods: {
+        setLookBack: function (n) {
+            this.lookback += n
+        },
+        updateCharts: function () {
+            let labels = []
+
+            let seriesP = [[],[],[]]
+            let seriesD = [[],[],[]]
+            let seriesO = [[],[],[]]
+
+            let total = this.timeBlocks.length
+
+            let cutoff = total - (total * this.lookback/100)
+
+
+            for (let tb in this.timeBlocks) {
+                if (tb > cutoff) {
+                    labels.push(this.timeBlocks[tb]['time'])
+                    seriesP[0].push(this.timeBlocks[tb]['close'])
+                    seriesD[1].push(this.timeBlocks[tb]['delta_cumulative'])
+                    seriesO[2].push(this.timeBlocks[tb]['oi_cumulative'])
+                }
+            }
+
+            dataP = { labels : labels, series : seriesP}
+            dataD = { labels : labels, series : seriesD}
+            dataO = { labels : labels, series : seriesO}
+
+            new Chartist.Line('#chart1', dataP, this.optionsP);
+            new Chartist.Line('#chart2', dataD, this.optionsP);
+            new Chartist.Line('#chart3', dataO, this.optionsOI);
+        },
         setTime: function (n) {
             this.timeBlockSize += n
             if (this.timeBlockSize <= 0 || this.timeBlockSize >= 65) {
@@ -318,7 +419,7 @@ let vue = new Vue({
                     low : this.localLow,
                 }
             let colors = {
-                    high : 'darkgreen',
+                    high : '#004D40',
                     low : 'firebrick',
                 }
 
@@ -353,7 +454,7 @@ let vue = new Vue({
             previousCandle = candles[mode]
 
             if (previousCandle && CVD < previousCandle['delta_cumulative']) {
-                return {color: 'red'}
+                return {color: '#E53935'}
             } else if (previousCandle && CVD > previousCandle['delta_cumulative']) {
                 return {color: 'lightgreen'}
             }
@@ -417,18 +518,18 @@ let vue = new Vue({
             return Math.round((ms/1000))
         },
         getCandleStyle: function(open, close) {
-            let style = {background : 'firebrick'}
+            let style = {color : '#E53935'}
             if (open < close) {
-                style = {background : 'darkgreen'}
+                style = {color : 'lightgreen'}
             }
             return style
         },
         getOIStyle: function(oi) {
-            let style = {background : 'blue', color : 'white'}
+            let style = {background : '#303F9F', color : 'white'}
             if (oi == 0) {
                 style = {}
             } else if (oi < -1000000) {
-                style = {background : 'DarkSlateBlue', color : 'white'}
+                style = {background : '#BA68C8', color : 'white'}
             }else if (oi < 0) {
                 style = {background : 'purple', color : 'white'}
             }else if (oi > 1000000) {
@@ -436,14 +537,32 @@ let vue = new Vue({
             }
             return style
         },
-        getDeltaStyle: function(delta, ) {
-            let style = {background : 'darkcyan'}
-            if (delta < 0) {
-                style = {background : 'OrangeRed'}
+        getDeltaStyle: function(delta, mode) {
+            let style = {}
+            if (mode == 0) {
+                if (delta < 0 ) {
+                    // Orange
+                    style = {background : '#BF360C'}
+                } else if ( delta > 0) {
+                    style = {background : 'DarkCyan'}
+
+                }
+            } else if (mode < 0) {
+                if (delta > 500000) {
+                   style = {background : '#795548'}
+                } else if (delta > 100000) {
+                   style = {background : '#4E342E'}
+                }
+            } else if (mode > 0) {
+                if (delta > 500000) {
+                   style = {background : '#455A64 '}
+                } else if (delta > 100000) {
+                   style = {background : '#263238'}
+                }
             }
             return style
         },
-        getVolumeStyle: function(pva_status, key) {
+        getVolumeStyle: function(pva_status, key, price) {
 
             let style = {}
 
@@ -452,14 +571,40 @@ let vue = new Vue({
             }
 
             if (pva_status['pva150']) {
-                style = {background : 'grey'}
+                if (price < 0) {
+                    //pink
+                    style = {background : '#880E4F'}
+                } else if (price > 0) {
+                    //dark green
+                    style = {background : '#004D40'}
+                }
             } else if (pva_status['pva200']) {
-                style = {background : 'cadetblue'}
+                if (price < 0) {
+                    //red
+                    style = {background : '#D81B60'}
+                } else if (price > 0) {
+                    //green
+                    style = {background : '#00796B'}
+                }
             }
+
             if (pva_status['pva200'] && pva_status['PVAbearDIV']) {
-                style['color'] = 'red'
-            } else if (pva_status['pva200'] && pva_status['PVAbullDIV']) {
-                style['color'] = 'green'
+                style = {background : '#BDBDBD' , color : '#D32F2F' }
+            } else if (pva_status['pva200'] && pva_status['PVAbullDIV:']) {
+                style = {background : '#BDBDBD' , color : 'green' }
+            }
+
+            return style
+        },
+        getVolumeBlockStyle: function(item, key, price) {
+
+            let style = {}
+
+            if (item.volcandle_two && item.volcandle_two['Bull']) {
+                style = {background: 'grey'}
+            }
+            if (item.volcandle_two && item.volcandle_two['Bear']) {
+                style = {background: 'grey'}
             }
 
             return style
@@ -473,26 +618,6 @@ let vue = new Vue({
         },
         clearLimitPrice: function () {
             this.limitData.price = 0
-        },
-        getCurrentDelta: function () {
-            let dDict = {
-                'Buy' : 0,
-                'Sell' : 0,
-                'Delta' : 0,
-                'Total' : 0,
-            }
-
-            for(let t in this.volumeFlow) {
-                trade = this.volumeFlow[t]
-
-                dDict[trade['side']] += trade['size']
-                dDict['Total'] += trade['size']
-
-            }
-
-            dDict['Delta'] = dDict['Buy'] - dDict['Sell']
-
-            return dDict
         },
         getOFData: function (mode) {
             console.log('getOFData')
@@ -522,9 +647,12 @@ let vue = new Vue({
 
                 vue.deltaFlow = JSON.parse(data.deltaFlow)
 
+                vue.updateCharts()
+
             })
             .fail(function(){
                   alert('error has occurred gData');
+                  location.reload()
             });
         },
         start: function (mode) {
@@ -613,6 +741,13 @@ let vue = new Vue({
                 this.volumeBlockSize = 2
             } else if (this.volumeBlockSize <= 0) {
                 this.volumeBlockSize = 1
+            }
+        },
+        lookback: function () {
+            if (this.lookback > 100) {
+                this.lookback = 100
+            } else if (this.lookback < 10) {
+                this.lookback = 10
             }
         },
         ofAlert: function () {
