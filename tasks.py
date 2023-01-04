@@ -1022,7 +1022,7 @@ def runStream():
     ws_inverseP = inverse_perpetual.WebSocket(
         test=False,
         ping_interval=30,  # the default is 30
-        ping_timeout=10,  # the default is 10
+        ping_timeout=None,  # the default is 10
         domain="bybit"  # the default is "bybit"
     )
 
