@@ -232,10 +232,10 @@ def manageStream(streamTime, streamPrice, streamOI):
         deltaSellStr = str(- round(currentSells/1_000)) + 'k '
 
         if deltaOI > stream['oiMarker']:
-            r.set('discord', 'Sudden OI INC: ' + deltaOIstr + ' ' + deltaBuyStr + ' ' + deltaSellStr)
+            r.set('discord', 'Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr)
 
         if deltaOI < - stream['oiMarker']:
-            r.set('discord', 'Sudden OI DEC: ' + deltaOIstr + ' ' + deltaBuyStr + ' ' + deltaSellStr)
+            r.set('discord', 'Sudden OI DEC: ' + deltaOIstr + ' Buys ' + deltaBuyStr + ' Sells: ' + deltaSellStr)
 
         stream['1mOI'] = [streamTime, streamOI]
 
@@ -251,12 +251,14 @@ def manageStream(streamTime, streamPrice, streamOI):
 def addBlock(units, blocks, mode):
 
     CVDdivergence = {}
+    tradeCount = 0
 
     if mode == 'timeblock':
         CVDdivergence = getHiLow(blocks)
         stream = json.loads(r.get('stream'))
         stream['Divs'] = CVDdivergence
         r.set('stream', json.dumps(stream) )
+
     # print('UNITS', len(units), len(blocks))
 
     switch = False
@@ -304,7 +306,7 @@ def addBlock(units, blocks, mode):
 
     ''' BLOCK DATA '''
 
-    print('BLOCK DATA')
+    print('BLOCK DATA: ' + mode)
     previousOI = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
     newOpen = units[0]['price']
@@ -338,10 +340,19 @@ def addBlock(units, blocks, mode):
     OIhigh = 0
     OIlow = 0
 
-    count = 0
+    tradecount = 0
+    blocktradecount = {}
+    onedollarcount = 0
 
     for d in units:
         # print('BLOCK LOOP', d)
+
+        if d['blocktrade'] == "true":
+            blocktradecount[d['trade_time_ms']] = d['size']
+
+        if d['size'] == 1:
+            onedollarcount +=1
+
         if d['side'] == 'Buy':
             buyCount += d['size']
         else:
@@ -349,7 +360,7 @@ def addBlock(units, blocks, mode):
 
         dPrice = d['price']
 
-        if count == 0:
+        if tradecount == 0:
             highPrice = dPrice
             lowPrice = dPrice
             OIopen = d['streamOI']
@@ -368,7 +379,7 @@ def addBlock(units, blocks, mode):
 
             OIclose = d['streamOI']
 
-        count += 1
+        tradecount += 1
 
     delta = buyCount - sellCount
     OIdelta =  OIclose - previousOI
@@ -396,7 +407,10 @@ def addBlock(units, blocks, mode):
         'switch' : switch,
         'volcandle_two' : {},
         'volcandle_five' : {},
-        'pva_status': {}
+        'pva_status': {},
+        'tradecount': tradecount,
+        'blocktradecount': blocktradecount,
+        'onedollar' : onedollarcount
     }
 
     if 'block' in mode:
@@ -511,7 +525,7 @@ def getPVAstatus(timeblocks):
             'percentage' : percentage,
             'deltapercentge' : deltapercentage,
             'PVAbearDIV' : divergenceBear,
-            'PVAbullDIV:' : divergenceBull,
+            'PVAbullDIV' : divergenceBull,
             'flatOI' : flatOI
             }
 
@@ -635,7 +649,8 @@ def logDeltaUnit(newUnit):
     deltaflow =  json.loads(r.get('deltaflow')) # []
     deltablocks = json.loads(r.get('deltablocks')) # []
 
-    print('DELTA REDIS', len(deltaflow), len(deltablocks))
+    if LOCAL:
+        print('DELTA REDIS', len(deltaflow), len(deltablocks))
 
     if len(deltaflow) == 0:
         print('DELTA 0')
@@ -801,13 +816,14 @@ def handle_trade_message(msg):
 
     ## run through data
     for x in msg['data']:
-        if x['size'] > 100:
-            print('msg', x['side'], x['size'])
+        if x['size'] > 100_000:
+            print('msg: ' + str(x['side']) + ' ' + str(x['size']) )
 
         ## look for big blocks
         if x['size'] > block/10 and not LOCAL:
 
             bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k'
+            print('Large Trade: ' + bString)
             r.set('discord',  'Large Trade: ' + bString)
 
         timestamp = x['timestamp']
@@ -869,6 +885,9 @@ def handle_trade_message(msg):
             ## volume flow has been added as  full candle and should be reset
             volumeflow = []
             volumeflowTotal = 0
+
+            if carryOver > 200_000:
+                r.set('discord', 'Carry Over: ' + str(carryOver))
             ## Note: volumeblock does not have a current candle at thsi point
             for y in range(carryOver//block):
 

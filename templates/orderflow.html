@@ -341,14 +341,15 @@ let vue = new Vue({
             lineSmooth: false,
             showLabel: false,
             axisX: {
-                showGrid: false,
-                showLabel: false,
+                showGrid: true,
+                showLabel: true,
+                scaleMinSpace: 1,
                 offset: 0
               },
-              axisY: {
-                showGrid: false,
-                showLabel: false,
-                offset: 0
+            axisY: {
+                offset: 0,
+                showGrid: true,
+                showLabel: false
               }
         },
         optionsOI : {
@@ -584,13 +585,13 @@ let vue = new Vue({
                     style = {background : '#D81B60'}
                 } else if (price > 0) {
                     //green
-                    style = {background : '#00796B'}
+                    style = {background : '#66FFCC '}
                 }
             }
 
             if (pva_status['pva200'] && pva_status['PVAbearDIV']) {
                 style = {background : '#BDBDBD' , color : '#D32F2F' }
-            } else if (pva_status['pva200'] && pva_status['PVAbullDIV:']) {
+            } else if (pva_status['pva200'] && pva_status['PVAbullDIV']) {
                 style = {background : '#BDBDBD' , color : 'green' }
             }
 
