@@ -414,7 +414,7 @@ def addBlock(units, blocks, mode):
     }
 
     if 'block' in mode:
-        print('NEW CANDLE: ' + mode, newCandle['timestamp'])
+        print('NEW CANDLE: ' + mode + ' ' newCandle['timestamp'])
 
     if mode == 'volblock' or mode == 'carry':
         try:
@@ -591,7 +591,7 @@ def logTimeUnit(newUnit):
             # add fresh current candle to timeblock
             currentCandle = addBlock(timeflow, timeblocks, 'timemode')
             timeblocks.append(currentCandle)
-            print('TIME FLOW RESET', len(timeflow), len(timeblocks))
+            print('TIME FLOW RESET: ' + str(len(timeflow)) + ' ' + str(len(timeblocks)))
             r.set('timeblocks', json.dumps(timeblocks))
             r.set('timeflow', json.dumps(timeflow))
 
@@ -672,7 +672,7 @@ def logDeltaUnit(newUnit):
 
         if deltaStatus['posDelta'] or deltaStatus['negDelta']:
             # store current candle and start a new Candle
-            print('ADD DELTA CANDLE', deltaStatus)
+            print('ADD DELTA CANDLE: ' + json.dumps(deltaStatus))
             if LOCAL:
                 r.set('discord', 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
@@ -685,7 +685,8 @@ def logDeltaUnit(newUnit):
             deltaflow = []
 
             # add fresh current candle to timeblock
-            print('DELTA FLOW RESET', len(deltaflow), len(deltablocks))
+            if LOCAL:
+                print('DELTA FLOW RESET', len(deltaflow), len(deltablocks))
             r.set('deltablocks', json.dumps(deltablocks))
             r.set('deltaflow', json.dumps(deltaflow))
 
@@ -844,7 +845,7 @@ def handle_trade_message(msg):
 
         # send message to time candle log
         logTimeUnit(newUnit)
-        logDeltaUnit(newUnit)
+        # logDeltaUnit(newUnit)
 
         if volumeflowTotal + x['size'] <= block:
             # Normal addition of trade to volume flow
@@ -912,7 +913,7 @@ def handle_trade_message(msg):
                 volumeblocks.append(newCandle)
                 r.set('volumeblocks', json.dumps(volumeblocks))
 
-                print('Add Block', y)
+                print('Add Block: ' + str(y) )
 
             # Create new flow block with left over contracts
             volumeflow = [
