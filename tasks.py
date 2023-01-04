@@ -414,7 +414,7 @@ def addBlock(units, blocks, mode):
     }
 
     if 'block' in mode:
-        print('NEW CANDLE: ' + mode + ' ' newCandle['timestamp'])
+        print('NEW CANDLE: ' + mode + ' ' + newCandle['timestamp'])
 
     if mode == 'volblock' or mode == 'carry':
         try:
