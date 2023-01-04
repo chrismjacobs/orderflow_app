@@ -729,7 +729,7 @@ def getPreviousDay(blocks):
 
 def historyReset():
     current_time = dt.datetime.utcnow()
-    print('Current Time UTC', current_time, current_time.hour, current_time.minute)
+    print('Current Time UTC : ' + str(current_time))
     dt_string = current_time.strftime("%d/%m/%Y")
 
     if current_time.hour == 23 and current_time.minute == 59:
@@ -845,7 +845,7 @@ def handle_trade_message(msg):
 
         # send message to time candle log
         logTimeUnit(newUnit)
-        # logDeltaUnit(newUnit)
+        logDeltaUnit(newUnit)
 
         if volumeflowTotal + x['size'] <= block:
             # Normal addition of trade to volume flow
@@ -1022,7 +1022,7 @@ def runStream():
     ws_inverseP = inverse_perpetual.WebSocket(
         test=False,
         ping_interval=30,  # the default is 30
-        ping_timeout=None,  # the default is 10
+        ping_timeout=None,  # the default is 10 # set to None and it will never timeout?
         domain="bybit"  # the default is "bybit"
     )
 
