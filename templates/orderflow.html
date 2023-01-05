@@ -22,7 +22,10 @@
             <div class="text-white" align="center" >
                 <br>
 
-                <h1>[[  stream['lastPrice']  ]]</h1>
+                <h1>
+                    <span v-if="stream['lastPrice']">[[  stream['lastPrice']  ]] </span>
+                    <span v-else> Loading ... </span>
+                </h1>
 
                     <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
 

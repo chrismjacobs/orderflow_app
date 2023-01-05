@@ -95,7 +95,9 @@ def getOF():
 
     return jx
 
-
+@app.route('/start')
+def start():
+    return render_template('start.html')
 
 @app.route('/add', methods=['POST'])
 def add_inputs():
