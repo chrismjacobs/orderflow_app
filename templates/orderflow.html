@@ -38,14 +38,14 @@
                 <br>
 
             </div>
-            <div v-if="showChart < 2" class="overflow-auto" style="width: 100%;color:#9E9E9E">
+            <div v-if="showChart < 2 && showTable !='Notes'" class="overflow-auto" style="width: 100%;color:#9E9E9E">
                 <div class="row">
                     <div class="col">
                         <div class="ct-chart ct-minor-sixth" id="chart1"></div>
                         <h4 class="ml-2"> Price
-                            <span @click="setLookBack(-10)" class="ml-2" >&#x2190</span>
+                            <span @click="setLookBack(-20)" class="ml-2" >&#x2190</span>
                             <span v-if="!mobile">[[lookback]]%</span>
-                            <span @click="setLookBack(10)" class="ml-2">&#x2192</span>
+                            <span @click="setLookBack(20)" class="ml-2">&#x2192</span>
                         </h4>
                     </div>
                     <div class="col">
@@ -65,6 +65,9 @@
                     <div v-if="showTable != 'Volume'" class="col">
                         <div class="ct-chart ct-minor-sixth"  id="chart4"></div>
                         <h4 class="ml-2"> Vol </h4>
+                    </div>
+                    <div v-else class="col">
+
                     </div>
                     <div v-if="" class="col">
                         <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
@@ -179,7 +182,6 @@
                             <tr v-if="key < timeBlockList">
                                 <th class="text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                 <td>[[calculateTime(item.time_delta)]]</td>
-                                <td style="display:none">[[item.vol_cumulative]]</td>
                                 <td :style="getVolumeStyle(item.pva_status, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
                                 <td :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
@@ -217,8 +219,7 @@
                             <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
                             <tr>
                                 <th class="text-warning text-xsmall" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
-                                <td>[[calculateTime(item.time_delta)]]</td>
-                                <td style="display:none">[[item]]</td>
+                                <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
                                 <td :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
@@ -243,8 +244,7 @@
                             <template v-for="(item, key) in getReverseDeltaBlocks" :key="key" >
                             <tr>
                                 <th class="text-success" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
-                                <td>[[calculateTime(item.time_delta)]]</td>
-                                <td style="display:none">[[item.vol_cumulative]]</td>
+                                <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
                                 <td :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
@@ -321,6 +321,7 @@ let vue = new Vue({
         }
     },
     data: {
+        history : {},
         lookback : 100,
         showChart : 1,
         showStream : false,
@@ -334,6 +335,7 @@ let vue = new Vue({
         volumeBlocks : [],
         volumeFlow : [],
         timeBlocks : [],
+        historyTime : [],
         timeFlow : [],
         deltaBlocks : [],
         deltaFlow : [],
@@ -342,6 +344,7 @@ let vue = new Vue({
         volumeBlockSize : 1,
         timeBlockList : 100,
         timeBlockSize : 5,
+        timeSizes : [5,15,30,60],
         of_timer : '',
         ofAlert : 0,
         localHigh : 0,
@@ -407,7 +410,7 @@ let vue = new Vue({
             let seriesP = [[],[],[]]
             let seriesD = [[],[],[]]
             let seriesO = [[],[],[]]
-            let seriesV = [[],[],[0,1,2,3], []]
+            let seriesV = [[],[],[],[]]
 
             let total = blocks.length
 
@@ -484,9 +487,9 @@ let vue = new Vue({
             }
 
             if (this.timeBlockSize == 5 && mode == 'time' && key != 0) {
-                if (CVDdivergence && CVDdivergence.highInfo.div) {
+                if (CVDdivergence && CVDdivergence.highInfo && CVDdivergence.highInfo.div) {
                     return {color: 'pink'}
-                } else if (CVDdivergence && CVDdivergence.lowInfo.div) {
+                } else if (CVDdivergence && CVDdivergence.highInfo && CVDdivergence.lowInfo.div) {
                     return {color: 'lightblue'}
                 }
             }
@@ -562,6 +565,12 @@ let vue = new Vue({
         },
         calculateTime: function (ms) {
             return Math.round((ms/1000))
+        },
+        timeStyle: function (ms) {
+            if (Math.round((ms/1000)) <= 60) {
+                return {background: '#2C3E50' }
+            }
+
         },
         getCandleStyle: function(open, close) {
             let style = {color : '#E53935'}
@@ -777,7 +786,7 @@ let vue = new Vue({
         },
         getReverseTimeBlocks() {
             return this.timeBlocks.slice().reverse()
-        },
+        }
     },
     watch: {
         showChart: function () {

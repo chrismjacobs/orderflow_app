@@ -284,10 +284,10 @@ def addBlock(units, blocks, mode):
             if len(blocks) >= 7:
                 for t in lastElements:
                     timeDelta = blocks[t]['time_delta']/1000
-                    timeElements.append(timeDelta)
+                    timeElements.append(round(timeDelta))
                     if timeDelta < 30:
                         fastCandles += 1
-                        timeElements.append(timeDelta)
+
 
             if fastCandles >= 3:
                 if switchUp:
@@ -738,12 +738,16 @@ def historyReset():
         vb = json.loads(r.get('volumeblocks'))
         tb = json.loads(r.get('timeblocks'))
         db = json.loads(r.get('deltablocks'))
+        vb2 = json.loads(r.get('volumeblocks2m'))
+        vb5 = json.loads(r.get('volumeblocks5m'))
 
         pdDict = {
                     'date' : dt_string,
-                    'volumeblocks' : vb,
                     'timeblocks' : tb,
-                    'deltablocks' : db
+                    'deltablocks' : db,
+                    'volumeblocks' : vb,
+                    'volumeblocks2m' : vb2,
+                    'volumeblocks5m' : vb5,
                 }
 
         if len(history) > 0:
@@ -821,7 +825,7 @@ def handle_trade_message(msg):
             print('msg: ' + str(x['side']) + ' ' + str(x['size']) )
 
         ## look for big blocks
-        if x['size'] > block/10 and not LOCAL:
+        if x['size'] > 170_000 and not LOCAL:
 
             bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k'
             print('Large Trade: ' + bString)
@@ -832,8 +836,8 @@ def handle_trade_message(msg):
         price = round(float(x['price'])*2)/2
 
         newUnit = {
-                    'side' : x['side'] ,
-                    'size' : x['size'] ,
+                    'side' : x['side'],
+                    'size' : x['size'],
                     'trade_time_ms' : x['trade_time_ms'],
                     'timestamp' : ts,
                     'price' : price,

@@ -28,7 +28,11 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', "super-secret")
 @app.route('/')
 def main():
 
+
     return render_template('orderflow.html')
+
+
+
 
 @app.route('/getOF', methods=['POST'])
 def getOF():
@@ -49,6 +53,20 @@ def getOF():
 
     volumeFlow = r.get('volumeflow')
     volumeFlow = r.get('volumeflow')
+
+    lastHistory = {}
+
+    historyBlocks = json.loads(r.get('history'))
+    if len(historyBlocks) > 0:
+        lastHistory = historyBlocks[-1]
+
+
+    if lastHistory['timeblocks']:
+        ## combine History and current
+        current = json.loads(timeBlocks)
+        newblocks = lastHistory['timeblocks'] + current
+        timeBlocks = json.dumps(newblocks)
+
 
     if volumeBlockSize == 2:
         volumeBlocks = r.get('volumeblocks2m')
@@ -77,21 +95,6 @@ def getOF():
 
     return jx
 
-
-@app.route('/startOF', methods=['POST'])
-def startOF():
-    volumeBlockSize = int(request.form ['volumeBlockSize'])
-    if volumeBlockSize == int(START_CODE):
-        task = runStream.delay()
-        r.set('task_id', str(task))
-        print('task_id', str(task))
-        return jsonify({'task_id': str(task)})
-    else:
-        return jsonify({'task_id': 'fail'})
-
-@app.route('/start')
-def start():
-    return render_template('start.html')
 
 
 @app.route('/add', methods=['POST'])
