@@ -7,6 +7,8 @@
 
 }
 
+.ct-grid{ stroke: rgb(81, 81, 81);}
+
 .ct-series-b .ct-line {
   /* Set the colour of this series line */
   stroke: rgb(255, 204, 0);
@@ -21,6 +23,12 @@
   /* Control the thikness of your lines */
   stroke-width: 3px;
 
+}
+
+.ct-series-d .ct-bar {
+  /* Set the colour of this series line */
+  stroke: rgb(145, 145, 145);
+  /* Control the thikness of your lines */
 }
 
 .main {
