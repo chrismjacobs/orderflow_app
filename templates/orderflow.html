@@ -484,9 +484,11 @@ let vue = new Vue({
         getCVDStyle: function (CVDdivergence, key, CVD, mode) {
             if (key == 1 && CVDdivergence && mode == 'time') {
 
-                this.localLow = CVDdivergence.lowInfo.index
-                this.localHigh = CVDdivergence.highInfo.index
-                // console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
+                if (CVDdivergence.lowInfo && CVDdivergence.lowInfo.index) {
+                    this.localLow = CVDdivergence.lowInfo.index
+                    this.localHigh = CVDdivergence.highInfo.index
+                    // console.log(this.localHigh , CVDdivergence.highInfo, this.localLow, CVDdivergence.lowInfo, CVD)
+                }
             }
 
             if (this.timeBlockSize == 5 && mode == 'time' && key != 0) {
