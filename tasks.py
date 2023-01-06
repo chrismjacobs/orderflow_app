@@ -111,35 +111,45 @@ def getHiLow(timeblocks):
             # Divergence Triggered
             highInfo['div'] = True
             r.set('discord', 'CVD BEAR div: ' + json.dumps(highInfo))
+            streamAlert('CVD BEAR div: ' + json.dumps(highInfo), 'CVD Divergence')
 
     if LL2h_index >= 2:
         if tbRev[0]['delta_cumulative'] < LL2h_cvd:
             # Divergence Triggered
             lowInfo['div'] = True
             r.set('discord', 'CVD BULL div: ' + json.dumps(lowInfo))
+            streamAlert('CVD Bull div: ' + json.dumps(lowInfo), 'CVD Divergence')
 
 
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo}
 
 
+def getHistory():
+
+    historyBlocks = json.loads(r.get('history'))
+    if len(historyBlocks) > 0:
+        return historyBlocks[-1]
+    else:
+        return False
+
+
 def addBlockBlock(blocks, newCandle, timeNow, size):
 
     print('BLOCK BLOCK 1')
+    previousDeltaCum = 0
+    previousOICum = 0
+    previousTime = 0
 
     if len(blocks) > 1:
         lastCandle = blocks[-2]
         previousDeltaCum = lastCandle['delta_cumulative']
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
-    # if len(blocks) == 2:
-    #     '''### readjust first block'''
-    #     firstCandle = blocks[0]
-    #     firstCandle['trade_time_ms'] = firstCandle['trade_time_ms'] - timeNow
-    #     firstCandle['oi_delta'] = firstCandle['oi_delta'] - newCandle['oi_delta']
-    else:
-        previousDeltaCum = 0
-        previousOICum = 0
-        previousTime = 0
+    elif getHistory():
+        lastCandle = getHistory()['volumeblocks'][-1]
+        previousDeltaCum = lastCandle['delta_cumulative']
+        previousOICum = lastCandle['oi_cumulative']
+        previousTime = lastCandle['trade_time_ms']
 
     print('BLOCK BLOCK 2')
     currentCandle = blocks[-1]
@@ -181,21 +191,21 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
             if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
                 if currentCandle['total'] >= 2_000_000 and size == 2:
                     volDivBull2M = True
-                    r.set('discord', '2M possible BULL div candle: ' + str(deltaPercent))
+                    r.set('discord', '2M possible BULL div candle: Delta ' + str(deltaPercent) + '%')
                 if currentCandle['total'] >= 4_000_000:
                     deltaPercent = round((currentCandle['delta']/5_000_000)*100)
                     volDivBull5M = True
-                    r.set('discord', '5M possible BULL div candle: ' + str(deltaPercent))
+                    r.set('discord', '5M possible BULL div candle: Delta ' + str(deltaPercent) + '%')
 
             print('BLOCK BLOCK BREAK')
 
             if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
                 if currentCandle['total'] == 2_000_000 and size == 2:
                     volDivBear2M = True
-                    r.set('discord', '2M possible BEAR div candle: ' + str(deltaPercent))
+                    r.set('discord', '2M possible BEAR div candle: Delta ' + str(deltaPercent) + '%')
                 if currentCandle['total'] >= 4_000_000:
                     volDivBear5M = True
-                    r.set('discord', '5M possible BEAR div candle: ' + str(deltaPercent))
+                    r.set('discord', '5M possible BEAR div candle: Delta ' + str(deltaPercent) + '%')
 
 
     if size == 5:
@@ -204,7 +214,15 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     if size == 2:
         return { 'Bull': volDivBull2M, 'Bear': volDivBear2M }
 
+def streamAlert(message, mode):
+    print('Alet Stream')
+    stream = json.loads(r.get('stream'))
 
+    current_time = dt.datetime.utcnow()
+    print('Current Time UTC Alert : ' + str(current_time).split('.')[0])
+
+    stream['alert'] = [str(current_time), mode, message]
+    r.set('stream', json.dumps(stream) )
 
 def manageStream(streamTime, streamPrice, streamOI):
 
@@ -229,13 +247,19 @@ def manageStream(streamTime, streamPrice, streamOI):
         deltaOI =  streamOI - stream['1mOI'][1]
         deltaOIstr = str(round(deltaOI/100_000)/10) + 'm '
         deltaBuyStr = str(round(currentBuys/1_000)) + 'k '
-        deltaSellStr = str(- round(currentSells/1_000)) + 'k '
+        deltaSellStr = str(round(currentSells/1_000)) + 'k '
 
         if deltaOI > stream['oiMarker']:
-            r.set('discord', 'Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr)
+            message = 'Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
+            r.set('discord', message)
+            streamAlert(message, 'OI')
+
 
         if deltaOI < - stream['oiMarker']:
-            r.set('discord', 'Sudden OI DEC: ' + deltaOIstr + ' Buys ' + deltaBuyStr + ' Sells: ' + deltaSellStr)
+            message = 'Sudden OI DEC: ' + deltaOIstr + ' Buys: ' + deltaBuyStr + ' Sells: ' + deltaSellStr  + ' Price: ' + str(stream['lastPrice'])
+            r.set('discord', message)
+            streamAlert(message, 'OI')
+
 
         stream['1mOI'] = [streamTime, streamOI]
 
@@ -251,7 +275,6 @@ def manageStream(streamTime, streamPrice, streamOI):
 def addBlock(units, blocks, mode):
 
     CVDdivergence = {}
-    tradeCount = 0
 
     if mode == 'timeblock':
         CVDdivergence = getHiLow(blocks)
@@ -292,10 +315,12 @@ def addBlock(units, blocks, mode):
             if fastCandles >= 3:
                 if switchUp:
                     switch = True
-                    r.set('discord', 'Delta Switch Up:' + json.dumps(timeElements) )
+                    r.set('discord', 'Delta Switch Up: ' + json.dumps(timeElements) )
+                    streamAlert('Delta Switch Up: ' + json.dumps(timeElements), 'Delta')
                 if switchDown:
                     switch = True
-                    r.set('discord', 'Delta Switch Down:' + json.dumps(timeElements) )
+                    r.set('discord', 'Delta Switch Down: ' + json.dumps(timeElements) )
+                    streamAlert('Delta Switch Down: ' + json.dumps(timeElements), 'Delta')
 
             if r.get('discord_delta') == 'on':
                 r.set('discord', 'Delta Switch Alert')
@@ -319,6 +344,11 @@ def addBlock(units, blocks, mode):
     timeDelta2 = newClose - previousTime
 
     #print('BLOCK DATA 2')
+
+    ## if just one block than that is the current candle
+    ## last block is the previous one
+    ## but if its the start of the day then we need to get Historical last block
+
     if len(blocks) > 1:
         if mode == 'carry':
             lastBlock = blocks[-1] # when carrying there is no current candle
@@ -449,6 +479,8 @@ def addBlock(units, blocks, mode):
     return newCandle
 
 
+
+
 def getPVAstatus(timeblocks):
     last11blocks = []
     if len(timeblocks) < 11:
@@ -533,6 +565,7 @@ def getPVAstatus(timeblocks):
 
         if pva200 and flatOI and lastVolume > 1_000_000:
             r.set('discord', 'PVA flatOI: ' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%')
+            streamAlert('PVA canlde with flat OI', 'PVA')
         elif pva200 and divergenceBear and lastVolume > 1_000_000:
             r.set('discord', 'PVA divergence Bear: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']))
         elif pva200 and divergenceBull and lastVolume > 1_000_000:
@@ -830,6 +863,7 @@ def handle_trade_message(msg):
             bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k'
             print('Large Trade: ' + bString)
             r.set('discord',  'Large Trade: ' + bString)
+            streamAlert('Large Trade: ' + bString, 'Trade')
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
