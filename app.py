@@ -84,10 +84,29 @@ def getOF():
 
     if volumeBlockSize == 2:
         volumeBlocks = r.get('volumeblocks2m')
+
+        if lastHistory['volumeblocks2m']:
+            ## combine History and current
+            currentVolume2m = json.loads(volumeBlocks)
+            newVolume2m = lastHistory['volumeblocks2m'] + currentVolume2m
+            volumeBlocks = json.dumps(newVolume2m)
+
+
     if volumeBlockSize == 5:
         volumeBlocks = r.get('volumeblocks5m')
+
+        if lastHistory['volumeblocks5m']:
+            ## combine History and current
+            currentVolume5m = json.loads(volumeBlocks)
+            newVolume5m = lastHistory['volumeblocks5m'] + currentVolume5m
+            volumeBlocks = json.dumps(newVolume5m)
+
+
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
+
+
+
 
 
 

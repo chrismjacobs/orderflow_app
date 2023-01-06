@@ -86,7 +86,8 @@
                     <h3> Time Adjust </h3>
 
                     Time adjusted from UTC
-                    <input type="number" v-model="UTCadjust" style="width:20%">
+                    <br>
+                    <input type="number" v-model="UTCadjust" style="width:10%">
 
                     <br>
                     <br>
@@ -446,7 +447,9 @@ let vue = new Vue({
                     labels.push(tb)
                     seriesP[0].push(blocks[tb]['close'])
                     seriesD[1].push(blocks[tb]['delta_cumulative'])
-                    seriesO[2].push(blocks[tb]['oi_cumulative'])
+                    if (blocks[tb]['oi_cumulative'] != 0) {
+                       seriesO[2].push(blocks[tb]['oi_cumulative'])
+                    }
                     seriesV[3].push(blocks[tb]['total'])
                 }
             }
@@ -670,6 +673,9 @@ let vue = new Vue({
                 } else if (price > 0) {
                     //green
                     style = {background : '#66CC00'}
+                } else if (price == 0) {
+                    //browns
+                    style = {background : '#922B21'}
                 }
             }
 
@@ -736,7 +742,7 @@ let vue = new Vue({
 
             })
             .fail(function(){
-                  alert('error has occurred gData');
+                  console.log('error has occurred gData')
                   location.reload()
             });
         },
