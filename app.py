@@ -51,8 +51,8 @@ def getOF():
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
 
-    volumeFlow = r.get('volumeflow')
-    volumeFlow = r.get('volumeflow')
+    deltaBlocks = r.get('deltablocks')
+    deltaFlow = r.get('deltaflow')
 
     lastHistory = {}
 
@@ -63,9 +63,23 @@ def getOF():
 
     if lastHistory['timeblocks']:
         ## combine History and current
-        current = json.loads(timeBlocks)
-        newblocks = lastHistory['timeblocks'] + current
-        timeBlocks = json.dumps(newblocks)
+        currentTime = json.loads(timeBlocks)
+        newTime = lastHistory['timeblocks'] + currentTime
+        timeBlocks = json.dumps(newTime)
+
+    if lastHistory['deltablocks']:
+        ## combine History and current
+        currentDelta = json.loads(deltaBlocks)
+        newDelta = lastHistory['deltablocks'] + currentDelta
+        deltaBlocks = json.dumps(newDelta)
+
+    if lastHistory['volumeblocks']:
+        ## combine History and current
+        currentVolume = json.loads(volumeBlocks)
+        newVolume = lastHistory['volumeblocks'] + currentVolume
+        volumeBlocks = json.dumps(newVolume)
+
+
 
 
     if volumeBlockSize == 2:
@@ -75,8 +89,7 @@ def getOF():
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
-    deltaBlocks = r.get('deltablocks')
-    deltaFlow = r.get('deltaflow')
+
 
 
     jDict = {

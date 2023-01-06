@@ -85,23 +85,35 @@
 
                     <h3> Time Adjust </h3>
 
-                        <input type="number" v-model="UTCadjust" style="width:20%">
+                    Time adjusted from UTC
+                    <input type="number" v-model="UTCadjust" style="width:20%">
+
                     <br>
                     <br>
 
                     <h3> App Notes </h3>
-                    - Data presented is from current day <br>
+                    - Data presented is from current day and previous day <br>
                     - Taken from Bybit API (BTCUSD.perp) <br>
-                    - Previous Day Data is also presented....<br>
 
-                    - Time mode is set to minimum 5 mins and goes up in increments of 5min <br>
+                    - Time mode is set to minimum 5 mins and can be 5/15/30/60 mins <br>
+                    - In 5mins mode PVA candle will be highlighted<br>
+                    - PVA candles that show possible divergence are highlighted in grey<br>
+                    - Possible occurance of CVD divergence will also be highlighted in the CVD column<br>
+                    <br>
                     - Volume mode can be set to 1 (default), 2 and 5 mil blocks <br>
                     - Volume blocks are exactly divisions of 1mil <br>
-                    (this is different from exocharts which carries over some trades so a 1mil block is actually more than 1mil) <br>
+                    (this is different from exocharts which doesn't split and carries over trades so a 1mil block is actually more than 1mil) <br>
                     Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
                     - Delta blocks are set to only record differences of 1mil delta (data does differ slightly from exo charts from time to time)<br>
                     - In Delta and Volume mode you may view all trades greater than 1000 appearing in the current block <br>
-                    - An alert will occur on trades greater than 100K <br>
+                    <br>
+                    <br>
+                    <h3> Alerts </h3>
+
+                    Possible Future alerts will include: <br>
+
+                    CVD Divergence / Large Trades / High volume candle with flat OI / Sudden delta switch ups / Sudden dramatic changes in OI
+
 
                     <br>
                     <br>
@@ -112,9 +124,9 @@
                 <div v-if="showTable == 'Time'" align="center">
 
                     <div class="bg-info rounded pt-2 pb-1 text-white" >
-                        <h3> <span @click="showStream = !showStream"> Time Blocks ([[timeBlockSize]]) </span>
-                                <span @click="setTime(5)" class="ml-2" >&#8593</span>
-                                <span @click="setTime(-5)" class="ml-2">&#8595</span>
+                        <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
+                                <span @click="setTime(+1)" class="ml-2" >&#8593</span>
+                                <span @click="setTime(-1)" class="ml-2">&#8595</span>
                         </h3>
 
                         <div v-if="showStream">
@@ -322,15 +334,18 @@ let vue = new Vue({
         if (mobile) {
             this.mobile = true
         }
+        if (localStorage['UTC']) {
+            this.UTCadjust = localStorage['UTC']
+        }
     },
     data: {
         history : {},
-        lookback : 100,
+        lookback : 40,
         showChart : 1,
         showStream : false,
         showBS : false,
         showTable : 'Time',
-        UTCadjust : 8,
+        UTCadjust : 0,
         showDelta : true,
         showCandle : null,
         showVolCandle : null,
@@ -346,6 +361,7 @@ let vue = new Vue({
         volumeBlockList : 20,
         volumeBlockSize : 1,
         timeBlockList : 100,
+        timeMarker : 0,
         timeBlockSize : 5,
         timeSizes : [5,15,30,60],
         of_timer : '',
@@ -406,6 +422,11 @@ let vue = new Vue({
                 Delta : this.deltaBlocks
             }
 
+            if (!blockOBJ[this.showTable]) {
+                console.log('no tables')
+                return false
+            }
+
             let blocks = blockOBJ[this.showTable]
 
             let labels = []
@@ -456,10 +477,14 @@ let vue = new Vue({
 
         },
         setTime: function (n) {
-            this.timeBlockSize += n
-            if (this.timeBlockSize <= 0 || this.timeBlockSize >= 65) {
-                this.timeBlockSize = 5
+            this.timeMarker += n
+
+            if (this.timeMarker > 3 || this.timeMarker < 0) {
+                this.timeMarker = 0
             }
+
+            this.timeBlockSize = this.timeSizes[this.timeMarker]
+
 
         },
         setVol: function (n) {
@@ -794,6 +819,9 @@ let vue = new Vue({
         }
     },
     watch: {
+        UTCadjust: function () {
+            localStorage.setItem('UTC', this.UTCadjust)
+        },
         showChart: function () {
             if (this.showChart > 2) {
                 this.showChart = 0
