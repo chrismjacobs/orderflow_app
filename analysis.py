@@ -34,6 +34,50 @@ def createCandle():
     return newCandle
 
 
+
+def getPVAStatus(newBlocks):
+
+    last10vols = []
+
+    for b in newBlocks:
+
+        returnPVA = {
+            'pva150' : False,
+            'pva200' : False,
+            'vol': 0,
+            'percentage' : 0,
+            'deltapercentage' : 0,
+            'PVAbearDIV' : None,
+            'PVAbullDIV' : None,
+            'flatOI' : None
+        }
+
+        total = 0
+
+        for v in last10vols:
+            total += v
+
+        average = total/10
+
+        if len(last10vols) == 10:
+            returnPVA['percentage'] = round((b['total']/average)*100)
+
+            if b['total'] > average * 2:
+                returnPVA['pva200'] = True
+
+            elif b['total'] > average * 1.5:
+                returnPVA['pva150'] = True
+
+        if len(last10vols) == 10:
+            last10vols.pop(0)
+
+        last10vols.append(b['total'])
+
+        b['pva_status'] = returnPVA
+
+    return newBlocks
+
+
 def getBlocks(size, blocksString):
 
     ## get all the timeblocks (5Min)
@@ -52,7 +96,7 @@ def getBlocks(size, blocksString):
     count = 1
 
     for unit in blocks:
-        print('count', count, unit)
+        # print('count', count, unit)
 
         ## ADD fist unit
         if count == 1:
@@ -104,8 +148,10 @@ def getBlocks(size, blocksString):
 
             count = 1
 
+    newBlocks = getPVAStatus(newList)
 
-    print(len(newList))
-    return json.dumps(newList)
+
+    print(len(newBlocks))
+    return json.dumps(newBlocks)
 
 # getVolumeBlock()

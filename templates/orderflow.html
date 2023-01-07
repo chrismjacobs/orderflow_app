@@ -24,12 +24,28 @@
 
                 <h1>
                     <span v-if="stream['lastPrice']">[[  stream['lastPrice']  ]] </span>
-                    <span v-else> Loading ... </span>
+                    <span v-else> Loading ... </span> <br>
                 </h1>
 
-                    <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
+                <div @click="showAlerts = !showAlerts">
+                    <span class="text-danger"> [[getAlert('note')]] </span>
+                    <br>
+                    <span class="text-danger"> [[getAlert('info')]] </span>
+                </div>
+                <div v-if="showAlerts">
+
+                    <span v-for="(item, key) in alertList" class="text-danger">
+                        <span v-if="item[0]"> [[item]] </span>
+                    </span>
+
+                </div>
 
 
+
+                <audio id="xyz" src="https://rekt-journal.s3.ap-northeast-1.amazonaws.com/alert.mp3" style="display:none" controls preload="auto"></audio>
+
+                <br>
+                <br>
                 <button @click="showChart += 1" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
                 <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
                 <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
@@ -87,7 +103,14 @@
 
                     Time adjusted from UTC
                     <br>
-                    <input type="number" v-model="UTCadjust" style="width:10%">
+                    <input type="number" v-model="UTCadjust" style="width:10%" align='center'>
+
+                    <br>
+                    <br>
+
+                    <h3> Alert Sound </h3>
+
+                    <button @click="alertOn = !alertOn" type="button" class="btn btn-secondary" data-bs-toggle="button">[[alertOn]]</button>
 
                     <br>
                     <br>
@@ -216,14 +239,9 @@
                                             <span>
                                                 PVA% : [[Math.round(item.pva_status.percentage * 100)]] <br>
                                                 <br>
-                                                [[item.tradecount]] <br>
-                                                [[item.blocktradecount]] <br>
-                                                [[item.onedollar]] <br>
-                                                HIGH: [[item.divergence.highInfo]]<br>
-                                                LOW: [[item.divergence.lowInfo]]<br>
-                                                <br>
-                                                [[item.pva_status]]<br>
-
+                                                Trade Count: [[item.tradecount]] <br>
+                                                One Dollar Trades: [[item.onedollar]] <br>
+                                                BlockTrades: [[item.blocktradecount]] <br>
                                             </span>
                                         </tr>
 
@@ -249,7 +267,7 @@
                                 <td>[[item.low]]</td>
                                 <td >[[item.close]]</td>
                             </tr>
-                                    <template v-if="showVolCandle == key">
+                                    <template v-if="showVolCandle == false">
                                         <tr >
                                             <span @click="showVolCandle = null"> [[ item ]]  </span>
                                         </tr>
@@ -274,7 +292,7 @@
                                 <td >[[item.low]]</td>
                                 <td >[[item.close]]</td>
                             </tr>
-                                    <template v-if="showCandle == key">
+                                    <template v-if="showCandle == false">
                                         <tr>
                                             <span>
                                                 [[item]]
@@ -359,6 +377,9 @@ let vue = new Vue({
         deltaBlocks : [],
         deltaFlow : [],
         stream : {},
+        alertList : [],
+        alertOn : true,
+        showAlerts : false,
         volumeBlockList : 20,
         volumeBlockSize : 1,
         timeBlockList : 100,
@@ -406,6 +427,58 @@ let vue = new Vue({
           }
     },
     methods: {
+        audioAlert: function () {
+            if (this.alertOn == false) {
+                return false
+            }
+
+            console.log(document.getElementById('xyz'))
+
+            let lastAlert = this.alertList[this.alertList.length - 1]
+
+            let audio = "https://rekt-journal.s3.ap-northeast-1.amazonaws.com/software.wav"
+
+            if (lastAlert[1].includes('CVD')) {
+                audio = "https://rekt-journal.s3.ap-northeast-1.amazonaws.com/atm.wav"
+            } else if (lastAlert[1].includes('Trade')) {
+                audio = "https://rekt-journal.s3.ap-northeast-1.amazonaws.com/game.wav"
+            }
+
+            document.getElementById('xyz').src = audio
+            document.getElementById('xyz').play()
+        },
+        getAlert: function (mode) {
+
+            let lastAlert = this.alertList[this.alertList.length - 1]
+
+            if (lastAlert && mode == 'note' ) {
+                if (lastAlert[0]) {
+                    let alert =  this.getTime(lastAlert[0]) + ' ' + lastAlert[1]
+                    return alert
+                }
+            } else if (lastAlert && mode == 'info' ) {
+                if (lastAlert[2]) {
+                    let notice = lastAlert[1]
+                    let alert = lastAlert[2]
+
+                    if (notice.includes('CVD')) {
+                        if (alert.includes('Bull')) {
+                            return 'Potential Bullish Divergence Occuring'
+                        }
+                        if (alert.includes('Bear')) {
+                            return 'Potential Bearish Divergence Occuring'
+                        }
+                    } else if (notice.includes('Trade')) {
+                        return alert
+                    } else {
+                        return alert
+                    }
+                }
+            } else {
+                return 'No Alert'
+            }
+
+        },
         showCandleToggle: function (key) {
             if (this.showCandle == key) {
                 this.showCandle = null
@@ -570,7 +643,7 @@ let vue = new Vue({
             if (this.mobile) {
                 return hours + ':' + newTime[1]
             } else {
-                return hours + ':' + newTime[1] + ':' + newTime[2]
+                return hours + ':' + newTime[1] + ':' + newTime[2].split('.')[0]
             }
 
         },
@@ -654,9 +727,6 @@ let vue = new Vue({
 
             let style = {}
 
-            if (this.timeBlockSize != 5) {
-                return style
-            }
 
             if (pva_status['pva150']) {
                 if (price < 0) {
@@ -825,6 +895,20 @@ let vue = new Vue({
         }
     },
     watch: {
+        stream: function () {
+            console.log(this.stream)
+            console.log(this.alertList)
+
+            let lastAlert = this.alertList[this.alertList.length - 1]
+
+            if (this.alertList.length == 0) {
+                this.alertList.push(this.stream['alert'])
+            } else if (lastAlert[0] != this.stream['alert'][0]) {
+                console.log('push', lastAlert, this.stream['alert'])
+                this.alertList.push(this.stream['alert'])
+                this.audioAlert()
+            }
+        },
         UTCadjust: function () {
             localStorage.setItem('UTC', this.UTCadjust)
         },
