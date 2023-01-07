@@ -111,7 +111,7 @@ def getHiLow(timeblocks):
             # Divergence Triggered
             highInfo['div'] = True
             r.set('discord', 'CVD BEAR div: ' + json.dumps(highInfo))
-            streamAlert('CVD BEAR div: ' + json.dumps(highInfo), 'CVD Divergence')
+            streamAlert('CVD Bear div: ' + json.dumps(highInfo), 'CVD Divergence')
 
     if LL2h_index >= 2:
         if tbRev[0]['delta_cumulative'] < LL2h_cvd:
@@ -332,18 +332,11 @@ def addBlock(units, blocks, mode):
     ''' BLOCK DATA '''
 
     print('BLOCK DATA: ' + mode)
-    previousOI = units[0]['streamOI']
+    previousOICum = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
     newOpen = units[0]['price']
     price = units[-1]['price']
     previousDeltaCum = 0
-
-    newStart  = units[0]['trade_time_ms']
-    newClose = units[-1]['trade_time_ms']
-    timeDelta = newClose - newStart
-    timeDelta2 = newClose - previousTime
-
-    #print('BLOCK DATA 2')
 
     ## if just one block than that is the current candle
     ## last block is the previous one
@@ -351,14 +344,26 @@ def addBlock(units, blocks, mode):
 
     if len(blocks) > 1:
         if mode == 'carry':
-            lastBlock = blocks[-1] # when carrying there is no current candle
+            lastCandle = blocks[-1] # when carrying there is no current candle
         else:
-            lastBlock = blocks[-2] # ignore last unit which is the current one
+            lastCandle = blocks[-2] # ignore last unit which is the current one
+        previousDeltaCum = lastCandle['delta_cumulative']
+        previousOICum = lastCandle['oi_cumulative']
+        previousTime = lastCandle['trade_time_ms']
+        newOpen = lastCandle['close']
+    elif getHistory():
+        lastCandle = getHistory()['timeblocks'][-1]
+        previousDeltaCum = lastCandle['delta_cumulative']
+        previousOICum = lastCandle['oi_cumulative']
+        previousTime = lastCandle['trade_time_ms']
+        newOpen = lastCandle['close']
 
-        previousOI = lastBlock['oi_cumulative']
-        previousDeltaCum = lastBlock['delta_cumulative']
-        previousTime = lastBlock['trade_time_ms']
-        newOpen = lastBlock['close']
+
+    newStart  = units[0]['trade_time_ms']
+    newClose = units[-1]['trade_time_ms']
+    timeDelta = newClose - newStart
+    timeDelta2 = newClose - previousTime
+
 
     buyCount = 0
     sellCount = 0
@@ -412,7 +417,7 @@ def addBlock(units, blocks, mode):
         tradecount += 1
 
     delta = buyCount - sellCount
-    OIdelta =  OIclose - previousOI
+    OIdelta =  OIclose - previousOICum
 
     newCandle = {
         'trade_time_ms' : newClose,
@@ -432,6 +437,7 @@ def addBlock(units, blocks, mode):
         'oi_high': OIhigh,
         'oi_low': OIlow,
         'oi_open': OIopen,
+        'oi_range': OIhigh - OIlow,
         'oi_cumulative': OIclose,
         'divergence' : CVDdivergence,
         'switch' : switch,
@@ -515,6 +521,8 @@ def getPVAstatus(timeblocks):
     lastVolume = 0
     lastDelta = 0
     lastPriceDelta = 0
+    lastOIDelta = 0
+    lastOIRange = 0
 
     try:
         count = 1
@@ -526,8 +534,8 @@ def getPVAstatus(timeblocks):
                 lastVolume = x['total']
                 lastDelta = x['delta']
                 lastPriceDelta = x['price_delta']
-                lastPriceDelta = x['price_delta']
                 lastOIDelta = x['oi_delta']
+                lastOIRange = round((x['oi_high'] - x['oi_low'])/100_000)/10
 
         pva150 = False
         pva200 = False
@@ -555,17 +563,18 @@ def getPVAstatus(timeblocks):
             'pva200' : pva200,
             'vol': lastVolume,
             'percentage' : percentage,
-            'deltapercentge' : deltapercentage,
+            'deltapercentage' : deltapercentage,
             'PVAbearDIV' : divergenceBear,
             'PVAbullDIV' : divergenceBull,
+            'rangeOI' : lastOIRange,
             'flatOI' : flatOI
             }
 
         print('RETURN PVA')
 
         if pva200 and flatOI and lastVolume > 1_000_000:
-            r.set('discord', 'PVA flatOI: ' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%')
-            streamAlert('PVA canlde with flat OI', 'PVA')
+            r.set('discord', 'PVA flatOI  Vol:' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm')
+            streamAlert('PVA candle with flat OI', 'PVA')
         elif pva200 and divergenceBear and lastVolume > 1_000_000:
             r.set('discord', 'PVA divergence Bear: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']))
         elif pva200 and divergenceBull and lastVolume > 1_000_000:
@@ -1037,7 +1046,8 @@ def runStream():
         'lastOI' : 0,
         '1mOI' : [],
         'oiMarker' : 1000000,
-        'Divs' : {}
+        'Divs' : {},
+        'alert' : None
     }
 
     r.set('discord_filter',  'off')

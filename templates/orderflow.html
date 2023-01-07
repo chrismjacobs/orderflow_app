@@ -34,7 +34,7 @@
                 </div>
                 <div v-if="showAlerts">
 
-                    <span v-for="(item, key) in alertList" class="text-danger">
+                    <span v-for="(item, key) in getAlertList()" class="text-danger">
                         <span v-if="item[0]"> [[item]] </span>
                     </span>
 
@@ -485,6 +485,11 @@ let vue = new Vue({
             } else {
                 this.showCandle = key
             }
+        },
+        getAlertList: function () {
+            let newList = []
+
+            return this.alertList
         },
         setLookBack: function (n) {
             this.lookback += n
