@@ -11,6 +11,7 @@ import discord
 import time
 from discord.ext import tasks, commands
 from pythonping import ping
+from math import trunc
 
 
 session = inverse_perpetual.HTTP(
@@ -58,7 +59,7 @@ def getHiLow(timeblocks):
     count = 0
 
     for block in tbRev:
-        if count <= 23:
+        if count <= 23: ### looks at past two hours
             if block['high'] > LH2h:
                 LH2h = block['high']
                 LH2h_index = count
@@ -91,10 +92,23 @@ def getHiLow(timeblocks):
 
         recount += 1
 
+    '''Calculate total OI gone into the divergence'''
+    oicount = 0
+
+    for block in tbRev:
+        if oicount <= 23 and oicount > 1: # discount the first two blocks
+            if block['delta_cumulative'] > LH2h_cvd:
+                LH2h_cvd = block['delta_cumulative']
+            if block['delta_cumulative'] < LL2h_cvd:
+                LL2h_cvd = block['delta_cumulative']
+
+        recount += 1
+
     highInfo = {
         'price' : LH2h,
         'index' : LH2h_index,
         'delta' : LH2h_cvd,
+        'oi' : tbRev[1]['oi_cumulative'] - tbRev[LH2h_index]['oi_cumulative'],
         'div' : False
     }
 
@@ -102,6 +116,7 @@ def getHiLow(timeblocks):
         'price' : LL2h,
         'index' : LL2h_index,
         'delta' : LL2h_cvd,
+        'oi' : tbRev[1]['oi_cumulative'] - tbRev[LL2h_index]['oi_cumulative'],
         'div' : False
     }
 
@@ -182,30 +197,33 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     volDivBear2M = False
     volDivBear5M = False
 
+    volFast2M = []
+    volFast5M = []
+
     print('BLOCK BLOCK 5')
 
     deltaPercent = round( (  currentCandle['delta']  /  (size*1_000_000)  ) * 100  )
 
     if r.get('discord_filter') == 'off':
         if abs(deltaPercent) > 20:
-            if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 0:
+            if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 4:
                 if currentCandle['total'] >= 2_000_000 and size == 2:
                     volDivBull2M = True
-                    r.set('discord', '2M possible BULL div candle: Delta ' + str(deltaPercent) + '%')
+                    r.set('discord', '2M possible BULL div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
                 if currentCandle['total'] >= 4_000_000:
                     deltaPercent = round((currentCandle['delta']/5_000_000)*100)
                     volDivBull5M = True
-                    r.set('discord', '5M possible BULL div candle: Delta ' + str(deltaPercent) + '%')
+                    r.set('discord', '5M possible BULL div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
 
             print('BLOCK BLOCK BREAK')
 
-            if currentCandle['delta'] > 0 and currentCandle['price_delta'] < 0:
+            if currentCandle['delta'] > 0 and currentCandle['price_delta'] < -4:
                 if currentCandle['total'] == 2_000_000 and size == 2:
                     volDivBear2M = True
-                    r.set('discord', '2M possible BEAR div candle: Delta ' + str(deltaPercent) + '%')
+                    r.set('discord', '2M possible BEAR div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
                 if currentCandle['total'] >= 4_000_000:
                     volDivBear5M = True
-                    r.set('discord', '5M possible BEAR div candle: Delta ' + str(deltaPercent) + '%')
+                    r.set('discord', '5M possible BEAR div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
 
 
     if size == 5:
@@ -221,8 +239,20 @@ def streamAlert(message, mode):
     current_time = dt.datetime.utcnow()
     print('Current Time UTC Alert : ' + str(current_time).split('.')[0])
 
-    stream['alert'] = [str(current_time), mode, message]
+    alertList = stream['alerts']
+    alertMessage = [str(current_time), mode, message]
+
+    alertList.insert(0, alertMessage)
+
+    if len(alertList) > 5:
+        alertList.pop()
+
     r.set('stream', json.dumps(stream) )
+
+
+    ''' alerts notes '''
+    # sudden OI change - looks at current candle or infact previous candle if time just passed -
+    # perhaps calculate the likely reason
 
 def manageStream(streamTime, streamPrice, streamOI):
 
@@ -355,8 +385,7 @@ def addBlock(units, blocks, mode):
         lastCandle = getHistory()['timeblocks'][-1]
         previousDeltaCum = lastCandle['delta_cumulative']
         previousOICum = lastCandle['oi_cumulative']
-        previousTime = lastCandle['trade_time_ms']
-        newOpen = lastCandle['close']
+
 
 
     newStart  = units[0]['trade_time_ms']
@@ -378,6 +407,9 @@ def addBlock(units, blocks, mode):
     tradecount = 0
     blocktradecount = {}
     onedollarcount = 0
+    tickBuy = {}
+    tickSell = {}
+
 
     for d in units:
         # print('BLOCK LOOP', d)
@@ -394,6 +426,32 @@ def addBlock(units, blocks, mode):
             sellCount += d['size']
 
         dPrice = d['price']
+
+        tickPrice = str(trunc(dPrice/10)*10)
+
+        # print('tickPrice', tickPrice)
+
+        if 'time' in mode:
+            if d['side'] == 'Buy':
+
+                if tickPrice not in tickBuy:
+                    tickBuy[tickPrice] = d['size']
+                else:
+                    tickBuy[tickPrice] += d['size']
+
+                if tickPrice not in tickSell:
+                    tickSell[tickPrice] = 0
+
+            if d['side'] == 'Sell':
+
+                if tickPrice not in tickSell:
+                    tickSell[tickPrice] = d['size']
+                else:
+                    tickSell[tickPrice] += d['size']
+
+                if tickPrice not in tickBuy:
+                    tickBuy[tickPrice] = 0
+
 
         if tradecount == 0:
             highPrice = dPrice
@@ -419,6 +477,8 @@ def addBlock(units, blocks, mode):
     delta = buyCount - sellCount
     OIdelta =  OIclose - previousOICum
 
+
+
     newCandle = {
         'trade_time_ms' : newClose,
         'timestamp' : str(units[0]['timestamp']),
@@ -443,6 +503,8 @@ def addBlock(units, blocks, mode):
         'switch' : switch,
         'volcandle_two' : {},
         'volcandle_five' : {},
+        'tickBuy' : tickBuy,
+        'tickSell' : tickSell,
         'pva_status': {},
         'tradecount': tradecount,
         'blocktradecount': blocktradecount,
@@ -866,17 +928,18 @@ def handle_trade_message(msg):
         if x['size'] > 100_000:
             print('msg: ' + str(x['side']) + ' ' + str(x['size']) )
 
-        ## look for big blocks
-        if x['size'] > 170_000 and not LOCAL:
-
-            bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k'
-            print('Large Trade: ' + bString)
-            r.set('discord',  'Large Trade: ' + bString)
-            streamAlert('Large Trade: ' + bString, 'Trade')
 
         timestamp = x['timestamp']
         ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
         price = round(float(x['price'])*2)/2
+
+        ## look for big blocks
+        if x['size'] > 170_000 and not LOCAL:
+
+            bString = x['side'] + ': ' + str(round(x['size']/1000)) + 'k ' + str(price) + '$'
+            print('Large Trade: ' + bString)
+            r.set('discord',  'Large Trade: ' + bString)
+            streamAlert('Large Trade: ' + bString, 'Trade')
 
         newUnit = {
                     'side' : x['side'],
@@ -1047,7 +1110,7 @@ def runStream():
         '1mOI' : [],
         'oiMarker' : 1000000,
         'Divs' : {},
-        'alert' : None
+        'alerts' : []
     }
 
     r.set('discord_filter',  'off')
