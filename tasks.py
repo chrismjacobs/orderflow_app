@@ -92,23 +92,21 @@ def getHiLow(timeblocks):
 
         recount += 1
 
-    '''Calculate total OI gone into the divergence'''
-    oicount = 0
+    oih = 0
+    oil = 0
 
-    for block in tbRev:
-        if oicount <= 23 and oicount > 1: # discount the first two blocks
-            if block['delta_cumulative'] > LH2h_cvd:
-                LH2h_cvd = block['delta_cumulative']
-            if block['delta_cumulative'] < LL2h_cvd:
-                LL2h_cvd = block['delta_cumulative']
+    try:
+        oih = tbRev[0]['oi_cumulative'] - tbRev[LH2h_index]['oi_cumulative']
+        oih = tbRev[0]['oi_cumulative'] - tbRev[LL2h_index]['oi_cumulative']
+    except:
+        print('OI count FAIL')
 
-        recount += 1
 
     highInfo = {
         'price' : LH2h,
         'index' : LH2h_index,
         'delta' : LH2h_cvd,
-        'oi' : tbRev[1]['oi_cumulative'] - tbRev[LH2h_index]['oi_cumulative'],
+        'oi' : oih,
         'div' : False
     }
 
@@ -116,7 +114,7 @@ def getHiLow(timeblocks):
         'price' : LL2h,
         'index' : LL2h_index,
         'delta' : LL2h_cvd,
-        'oi' : tbRev[1]['oi_cumulative'] - tbRev[LL2h_index]['oi_cumulative'],
+        'oi' : oil,
         'div' : False
     }
 
@@ -432,25 +430,28 @@ def addBlock(units, blocks, mode):
         # print('tickPrice', tickPrice)
 
         if 'time' in mode:
-            if d['side'] == 'Buy':
+            try:
+                if d['side'] == 'Buy':
 
-                if tickPrice not in tickBuy:
-                    tickBuy[tickPrice] = d['size']
-                else:
-                    tickBuy[tickPrice] += d['size']
+                    if tickPrice not in tickBuy:
+                        tickBuy[tickPrice] = d['size']
+                    else:
+                        tickBuy[tickPrice] += d['size']
 
-                if tickPrice not in tickSell:
-                    tickSell[tickPrice] = 0
+                    if tickPrice not in tickSell:
+                        tickSell[tickPrice] = 0
 
-            if d['side'] == 'Sell':
+                if d['side'] == 'Sell':
 
-                if tickPrice not in tickSell:
-                    tickSell[tickPrice] = d['size']
-                else:
-                    tickSell[tickPrice] += d['size']
+                    if tickPrice not in tickSell:
+                        tickSell[tickPrice] = d['size']
+                    else:
+                        tickSell[tickPrice] += d['size']
 
-                if tickPrice not in tickBuy:
-                    tickBuy[tickPrice] = 0
+                    if tickPrice not in tickBuy:
+                        tickBuy[tickPrice] = 0
+            except:
+                print('TICK FAIL')
 
 
         if tradecount == 0:
