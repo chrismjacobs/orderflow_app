@@ -448,6 +448,7 @@ let vue = new Vue({
             document.getElementById('xyz').play()
         },
         getAlert: function (mode) {
+            return false
 
             let lastAlert = this.alertList[this.alertList.length - 1]
 
@@ -903,16 +904,6 @@ let vue = new Vue({
         stream: function () {
             console.log(this.stream)
             console.log(this.alertList)
-
-            let lastAlert = this.alertList[this.alertList.length - 1]
-
-            if (this.alertList.length == 0) {
-                this.alertList.push(this.stream['alert'])
-            } else if (lastAlert[0] != this.stream['alert'][0]) {
-                console.log('push', lastAlert, this.stream['alert'])
-                this.alertList.push(this.stream['alert'])
-                this.audioAlert()
-            }
         },
         UTCadjust: function () {
             localStorage.setItem('UTC', this.UTCadjust)
