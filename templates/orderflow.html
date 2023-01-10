@@ -146,7 +146,7 @@
 
                 <div v-if="showTable == 'Time'" align="center">
 
-                    <div class="bg-info rounded pt-2 pb-1 text-white" >
+                    <div class="border border-info rounded pt-2 pb-1 text-info" >
                         <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
                                 <span @click="setTime(+1)" class="ml-2" >&#8593</span>
                                 <span @click="setTime(-1)" class="ml-2">&#8595</span>
@@ -161,7 +161,7 @@
 
                 <div v-if="showTable == 'Volume'">
 
-                    <div class="bg-warning test-dark rounded pt-2 pb-1"  >
+                    <div class="border border-warning text-warning rounded pt-2 pb-1"  >
                         <h3> <span @click="showBS = !showBS"> Volume Blocks ([[volumeBlockSize]])</span>
                             <span @click="setVol(1)" class="ml-2" >&#8593</span>
                             <span @click="setVol(-1)" class="ml-2">&#8595</span>
@@ -181,7 +181,7 @@
 
                 <div v-if="showTable == 'Delta'" align="center">
 
-                    <div class="bg-success rounded pt-2 pb-1 text-white"  >
+                    <div class="border border-success rounded pt-2 pb-1 text-success"  >
                         <h3> <span @click="showBS = !showBS"> Delta Blocks </span></h3>
                     </div>
 
@@ -365,7 +365,7 @@ let vue = new Vue({
     },
     data: {
         user : '',
-        passcode : '',
+        login : false,
         history : {},
         lookback : 40,
         showChart : 1,
@@ -853,6 +853,10 @@ let vue = new Vue({
                 vue.deltaFlow = JSON.parse(data.deltaFlow)
 
                 vue.updateCharts()
+
+                vue.user = data.user
+
+                vue.login = data.login
 
             })
             .fail(function(){
