@@ -139,7 +139,7 @@ def worker():
     else:
         flash("Your command has failed: " + str(x))
 
-    return redirect('/')
+    return render_template('start.html')
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():

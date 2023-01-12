@@ -21,4 +21,79 @@
 {% endblock  %}
 
 
+{% block script %}
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+
+
+<script type="text/javascript">
+
+
+var report = navigator.userAgent
+console.log(report)
+
+let mobile = false
+
+if (report.includes('Android') || report.includes('iPhone') ) {
+    mobile = true
+    console.log('mobile')
+}
+
+
+startVue()
+
+
+function startVue(){
+
+let vue = new Vue({
+
+    el: '#vue-app',
+    delimiters: ['[[', ']]'],
+    mounted: function() {
+
+        if (mobile) {
+            this.mobile = true
+        }
+
+    },
+    data: {
+        user : '',
+        passcode : ''
+    },
+    methods: {
+        login: function () {
+            console.log('start')
+
+            $.ajax({
+                data : {
+                },
+                type : 'POST',
+                url : '/workerAction'
+
+            })
+            .done(function(data) {
+                console.log(data)
+                alert('Started')
+            })
+            .fail(function(){
+                  alert('error has occurred with worker start');
+            });
+        },
+    }
+})// end NEW VUE
+
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+
+
+
+
+
 
