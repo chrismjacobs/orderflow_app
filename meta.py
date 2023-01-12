@@ -29,6 +29,7 @@ except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     LOCAL = False
     DEBUG = False
+    r = redis.from_url(REDIS_URL, decode_responses=True)
 
 
 
