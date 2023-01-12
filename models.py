@@ -24,23 +24,23 @@ class User(db.Model, UserMixin):
     info = db.Column(db.String(), default='')
 
 
-    def get_reset_token(self, expires_sec=1800):
-        expires_sec = 1800
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+    # def get_reset_token(self, expires_sec=1800):
+    #     expires_sec = 1800
+    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
+    #     return s.dumps({'user_id': self.id}).decode('utf-8')
 
-    @staticmethod #tell python not to expect that self parameter as an argument, just accepting the token
-    def verify_reset_token(token):
-        expires_sec = 1800
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        try:
-            user_id = s.loads(token)['user_id']
-        except:
-            return None
-        return User.query.get(user_id)
+    # @staticmethod #tell python not to expect that self parameter as an argument, just accepting the token
+    # def verify_reset_token(token):
+    #     expires_sec = 1800
+    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
+    #     try:
+    #         user_id = s.loads(token)['user_id']
+    #     except:
+    #         return None
+    #     return User.query.get(user_id)
 
-    def __repr__(self):  # double underscore method or dunder method, marks the data, this is how it is printed
-        return f"User('{self.username}', '{self.email}'"
+    # def __repr__(self):  # double underscore method or dunder method, marks the data, this is how it is printed
+    #     return f"User('{self.username}', '{self.email}'"
 
 
 
