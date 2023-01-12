@@ -14,6 +14,7 @@ click-repl==0.2.0
 Deprecated==1.2.13
 discord==2.1.0
 Flask==2.1.1
+Flask-Admin==1.6.0
 Flask-Bcrypt==1.0.1
 Flask-Login==0.6.2
 Flask-Mail==0.9.1
