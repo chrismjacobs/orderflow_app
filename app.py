@@ -126,11 +126,12 @@ def getOF():
 def start():
     return render_template('start.html')
 
-@app.route('/worker', methods=['POST'])
+@app.route('/workerAction', methods=['POST'])
 def worker():
     x = int(request.form['x'] or 0)
+    print('workerAction', x, START_CODE)
 
-    if x == START_CODE:
+    if x == int(START_CODE):
         task = runStream.delay()
         r.set('task_id', str(task))
         print('task_id', str(task))

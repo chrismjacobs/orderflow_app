@@ -18,7 +18,6 @@ try:
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     print('SUCCESS')
 except:
-    print('EXCEPTION')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -30,6 +29,7 @@ except:
     LOCAL = False
     DEBUG = False
     r = redis.from_url(REDIS_URL, decode_responses=True)
+    print('EXCEPTION')
 
 
 
