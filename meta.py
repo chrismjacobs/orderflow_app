@@ -20,12 +20,12 @@ try:
 except:
     print('EXCEPTION')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
-    AWS_ACCESS_KEY_ID = os.getenv['AWS_ACCESS_KEY_ID']
-    AWS_SECRET_ACCESS_KEY = os.getenv['AWS_SECRET_ACCESS_KEY']
-    SECRET_KEY = os.getenv['SECRET_KEY']
-    API_KEY = os.getenv['API_KEY']
-    API_SECRET = os.getenv['API_SECRET']
-    START_CODE = os.getenv['START_CODE']
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    API_KEY = os.getenv('API_KEY')
+    API_SECRET = os.getenv('API_SECRET')
+    START_CODE = os.getenv('START_CODE')
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     LOCAL = False
     DEBUG = False
