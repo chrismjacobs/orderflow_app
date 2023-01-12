@@ -55,19 +55,19 @@ def getOF():
         lastHistory = historyBlocks[-1]
 
 
-    if lastHistory['timeblocks']:
+    if 'timeblocks' in lastHistory:
         ## combine History and current
         currentTime = json.loads(timeBlocks)
         newTime = lastHistory['timeblocks'] + currentTime
         timeBlocks = json.dumps(newTime)
 
-    if lastHistory['deltablocks']:
+    if 'deltablocks' in lastHistory:
         ## combine History and current
         currentDelta = json.loads(deltaBlocks)
         newDelta = lastHistory['deltablocks'] + currentDelta
         deltaBlocks = json.dumps(newDelta)
 
-    if lastHistory['volumeblocks']:
+    if 'volumeblocks' in lastHistory:
         ## combine History and current
         currentVolume = json.loads(volumeBlocks)
         newVolume = lastHistory['volumeblocks'] + currentVolume
@@ -79,7 +79,7 @@ def getOF():
     if volumeBlockSize == 2:
         volumeBlocks = r.get('volumeblocks2m')
 
-        if lastHistory['volumeblocks2m']:
+        if 'volumeblocks2m' in lastHistory:
             ## combine History and current
             currentVolume2m = json.loads(volumeBlocks)
             newVolume2m = lastHistory['volumeblocks2m'] + currentVolume2m
@@ -89,7 +89,7 @@ def getOF():
     if volumeBlockSize == 5:
         volumeBlocks = r.get('volumeblocks5m')
 
-        if lastHistory['volumeblocks5m']:
+        if 'volumeblocks5m' in lastHistory:
             ## combine History and current
             currentVolume5m = json.loads(volumeBlocks)
             newVolume5m = lastHistory['volumeblocks5m'] + currentVolume5m
@@ -143,6 +143,7 @@ def worker():
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
     data = json.loads(request.data)
+    print('TRADING VIEW ACTION')
 
     return redirect('/')
 
