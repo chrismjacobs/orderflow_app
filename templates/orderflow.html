@@ -181,7 +181,7 @@
 
                 <div v-if="showTable == 'Delta'" align="center">
 
-                    <div class="border border-success rounded pt-2 pb-1 text-success"  >
+                    <div class="border border-success rounded pt-2 pb-1 text-white"  >
                         <h3> <span @click="showBS = !showBS"> Delta Blocks </span></h3>
                     </div>
 
@@ -215,7 +215,7 @@
                             <th scope="col" style="width:2%">Close</th>
                         </tr>
                         </thead>
-                        <tbody v-if="showTable == 'Time'">
+                        <tbody v-if="showTable == 'Time'" id='timeTable'>
                             <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                             <tr v-if="key < timeBlockList">
                                 <th class="text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
@@ -226,7 +226,7 @@
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                 <td v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
-                                <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  ([[roundData(item.oi_range)]])</td>
+                                <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <span v-if="showTable == 'Time' && timeBlockSize == 5">([[roundData(item.oi_range)]])</span></td>
                                 <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
                                 <td :style="getLocal('high', key)">[[item.high]]</td>
                                 <td :style="getLocal('low', key)">[[item.low]]</td>
@@ -858,6 +858,9 @@ let vue = new Vue({
 
                 vue.login = data.login
 
+                //let e = document.getElementById('timeTable')
+                //e.scrollLeft = e.scrollWidth
+
             })
             .fail(function(){
                   console.log('error has occurred gData')
@@ -919,6 +922,7 @@ let vue = new Vue({
             return this.deltaBlocks.slice().reverse()
         },
         getReverseTimeBlocks() {
+            let x = 12*12
             return this.timeBlocks.slice().reverse()
         }
     },
@@ -935,6 +939,9 @@ let vue = new Vue({
         UTCadjust: function () {
             console.log('UTC', this.UTCadjust)
             localStorage.setItem('UTC', this.UTCadjust)
+        },
+        timeBlockSize: function () {
+            this.timeBlocks = []
         },
         showChart: function () {
             if (this.showChart > 2) {

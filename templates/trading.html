@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{{headLogo}}">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+
+
+</head >
+
+<main role="main" class="container-md">
+    <body style="background:black">
+        <div id="vue-app">
+            <div :class="getMargin()">
+
+                <h1 class="m-3 text-white"> Trading Desk </h1>
+
+                <div :class="getTradeDiv()">
+
+                    <div class="col  list-group p-3 m-2" style="background:orange">
+
+                        <h3 class="mt-3 mb-2"> Checklist </h3>
+
+
+                        <ul class="m-1">
+                            <li class="list-group-item list-group-item-dark p-1" v-for="(check, c) in checklist" class="list-group-item">
+                                <div class="row" >
+                                    <div class="col-6">
+                                        [[check]]
+                                    </div>
+                                    <div class="col">
+                                        <button @click="checkChange(c)" :class="getCheckBTN(c)" type="button"> [[ checkBTN[c] ]]</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+
+                    </div>
+
+                    <div class="col list-group p-3 m-2" style="background:grey">
+
+                        <h3 class="mt-3 mb-2"> Lessons </h3>
+
+                        <ul >
+                            <li class="list-group-item list-group-item-info" v-for="(less, k) in lessons" class="list-group-item">[[less]]</li>
+                        </ul>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div :class="getTradeDiv()">
+
+
+                    <div class="col m-2" :style="getSideColor()">
+
+                        <h3 class="mt-3 mb-2"> Trade </h3>
+
+                        <div class="input-group mb-3">
+                            <button @click="getData('first', 'Buy')" class="btn btn-secondary" type="button" id="button-addon1">Buy</button>
+                            <button @click="getData('first', 'Sell')" class="btn btn-secondary" type="button" id="button-addon1">Sell</button>
+                            <button @click="clearPrice()" class="btn btn-secondary" type="button" id="button-addon1">&#9746</button>
+                            <input type="number" class="form-control" v-model="orderData.first">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="getData('stop')" class="btn btn-secondary" type="button" id="button-addon1">Stop</button>
+                            <input type="number" class="form-control" v-model="orderData.stop">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="getTP()" class="btn btn-secondary" type="button" id="button-addon1">TP</button>
+                            <input type="number" class="form-control" v-model="orderData.profit">
+                        </div>
+
+                        <div class=" mb-3" style="background:white;color:black" >
+                            <button @click="getRR()" class="btn btn-secondary" type="button" id="button-addon1">RR: </button>  <span v-if="mobile"> <br> </span>
+                            <span v-for="(item, key) in orderData.rr"> [[key]] [[item]] &nbsp </span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <button @click="getOrder('limit')" class="btn btn-info" type="button" id="button-addon1">Order Limit</button>
+                            <button @click="getOrder('market')" class="btn btn-danger" type="button" id="button-addon1">Order Market</button>
+
+                            <button @click="getOrder('instant')" class="btn btn-success" type="button" id="button-addon1">Order Instant</button>
+                            <br>
+                            <br>
+                            <span class = 'text-dark'> [[ orderData.order ]] <span>
+                        </div>
+
+                    </div>
+
+                    <div class="col m-2" style="background:lightgrey">
+
+                        <h3 class="mt-3 mb-2"> Settings </h3>
+
+                        <div class="input-group mb-3 mt-2">
+                            <button @click="setTime(5)" class="btn btn-secondary" type="button" id="button-addon1">&#128337 &#8593</button>
+                            <button @click="setTime(-5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                            <input type="number" class="form-control" v-model="orderData.minutes">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="setLadder(1)" class="btn btn-secondary" type="button" id="button-addon1">Ladder &#8593</button>
+                            <button @click="setLadder(-1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                            <input type="number" class="form-control" v-model="orderData.ladder">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="setSpread(0.5)" class="btn btn-secondary" type="button" id="button-addon1">Spread &#8593</button>
+                            <button @click="setSpread(-0.5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                            <input type="number" class="form-control" v-model="orderData.spread">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="setRisk(0.1)" class="btn btn-secondary" type="button" id="button-addon1">Risk &#8593</button>
+                            <button @click="setRisk(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                            <input type="number" class="form-control" v-model="orderData.risk">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="getData('leverage', 1)" class="btn btn-secondary" type="button" id="button-addon1">Lev</button>
+                            <button @click="getData('leverage', 0)" :stlye="getLevStyle()" class="btn btn-secondary" type="button" id="button-addon1">Set</button>
+                            <input type="number" class="form-control" v-model="orderData.leverage">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="setFraction(0.1)" class="btn btn-secondary" type="button" id="button-addon1">% &#8593</button>
+                            <button @click="setFraction(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                            <input type="number" class="form-control" v-model="orderData.fraction">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="getData('funds')" class="btn btn-secondary" type="button" id="button-addon1">BTC</button>
+                            <input type="number" class="form-control" v-model="btc">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <button @click="getData('size')" class="btn btn-secondary" type="button" id="button-addon1">Position</button>
+                            <button @click="getData('cancel')" class="btn btn-secondary" type="button" id="button-addon1">Cancel</button>
+                            <br>
+                            <input type="text" class="form-control" v-model="orderData.position">
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+
+            </div> <!-- end trading desk-->
+
+        </div> <!-- end vue app-->
+    </body>
+</main>
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+
+
+<script type="text/javascript">
+
+var report = navigator.userAgent
+console.log(report)
+
+let mobile = false
+
+if (report.includes('Android') || report.includes('iPhone') ) {
+    mobile = true
+    console.log('mobile')
+}
+
+startVue()
+
+
+function startVue(){
+
+let vue = new Vue({
+
+    el: '#vue-app',
+    delimiters: ['[[', ']]'],
+    mounted: function() {
+
+        this.getData('leverage', 0)
+        this.getData('funds')
+        this.getData('size')
+
+        for (let c in this.checklist) {
+            this.checkBTN[c] = false
+        }
+        console.log(this.checkBTN)
+    },
+    data: {
+        checklist:{
+            GP : 'Is there a GP involved?',
+            PV : 'Is there a Pivot involved?',
+            SF : 'Is there an SFP involved?',
+            RG : 'Is the trade from outside a range (VP/PF/Reg)?',
+            TT : 'Are there confirmed trapped trader?',
+            OF : 'Is there an order flow trend (OI/CVD/PA)?',
+            SP : 'Is there SPX confluence?',
+            VT : 'Has volatility been considered?',
+            MM : 'Has Macro Momentum been analyzed? '
+        },
+        checkBTN: {},
+        lessons:{
+            PIVOT : 'If a pivot is broken, the retest can be spot on',
+            SFPTARGET : 'If trading up to an SFP, just take profit before that level',
+            SR : 'Trading against support/resistance better have good reason and tight stop',
+        },
+        orderData: {
+            side: '',
+            first: 0,
+            risk: 0.7,
+            spread: 0.5,
+            ladder: 2,
+            fraction: 0.9,
+            minutes: 10,
+            stop: 0,
+            leverage: 2,
+            profit: 0,
+            rr: {},
+            funds: 0,
+            order: '...',
+            position : null
+        },
+        btc: 0,
+        report: report,
+        mobile: mobile
+
+    },
+    methods: {
+        checkChange: function (c) {
+            this.checkBTN[c] = !this.checkBTN[c]
+            this.checkBTN = {...this.checkBTN}
+            console.log(this.checkBTN, c)
+        },
+        getCheckBTN: function (c) {
+            if (this.checkBTN[c]) {
+                return 'btn btn-success m-0'
+            } else {
+                return 'btn btn-danger m-0'
+            }
+        },
+        getMargin: function () {
+            if (this.mobile) {
+                return "content-section"
+            } else {
+                return "content-section m-5"
+            }
+        },
+        getTradeDiv: function () {
+            if (this.mobile) {
+                return "align-items-start m-0"
+            } else {
+                return "row align-items-start m-1"
+            }
+        },
+        addNote: function (side) {
+            if (side == 'bear') {
+                this.bearNotesList.push(this.bearNotesTemp)
+                this.bearNotesTemp = ''
+                localStorage.setItem('bearNotes', JSON.stringify(this.bearNotesList))
+            } else {
+                this.bullNotesList.push(this.bullNotesTemp)
+                this.bullNotesTemp = ''
+                localStorage.setItem('bullNotes', JSON.stringify(this.bullNotesList))
+            }
+        },
+        clearNotes: function (side) {
+            if (side == 'bear') {
+                this.bearNotesList = []
+                localStorage.setItem('bearNotes', [])
+            } else {
+                this.bullNotesList = []
+                localStorage.setItem('bullNotes', [])
+            }
+        },
+        getSide: function () {
+            let e = document.getElementById('sideSelect')
+            let v = e.options[e.selectedIndex].value
+            this.orderData.side = undefined
+            this.orderData.side = v
+            console.log(v)
+            return e.options[e.selectedIndex].value
+        },
+        getEntry: function () {
+            let e = document.getElementById('entrySelect')
+            let v = e.options[e.selectedIndex].value
+            console.log('entry', v)
+            this.loadRecord(v)
+            return e.options[e.selectedIndex].value
+        },
+        getSideColor: function () {
+            if (this.orderData.side == 'Buy') {
+                return 'background:mediumseagreen'
+            } else if (this.orderData.side == 'Sell'){
+                return 'background:MediumVioletRed'
+            } else {
+                return 'background:Grey'
+            }
+        },
+        getType: function () {
+            let e = document.getElementById('typeSelect')
+            let v = e.options[e.selectedIndex].value
+            return e.options[e.selectedIndex].value
+        },
+        getTypeColor: function () {
+            if (this.getType()[1] == 'F' ) {
+                return 'background:lavendar;width:45%;display: inline-block;'
+            }
+        },
+        getLevStyle: function () {
+            if (this.orderData.leverage < 1) {
+                return 'background:red'
+            }
+        },
+        getRR: function () {
+
+            let OD = this.orderData
+            let profit_d
+            let profit_p
+            let rr
+
+            let loss_d = Math.abs(OD.first - OD.stop)
+            let loss_p = (Math.round((Math.abs(OD.first - OD.stop)/OD.first)*10000)/100)*this.orderData.leverage
+            if (OD.profit == 0) {
+                profit_d = '-'
+                profit_p = '-'
+                rr = '-'
+            } else {
+                profit_d = Math.abs(OD.first - OD.profit)
+                profit_p = Math.round((Math.abs(OD.first - OD.profit)/OD.first)*10000)/100
+                rr = Math.round((profit_d/loss_d)*1000)/1000
+            }
+
+
+            OD.rr = { 'SL: ' : loss_d + '$ ',
+                      'S% ' : loss_p,
+                      'TP: ' : profit_d + '$',
+                      'L% ' : profit_p,
+                      'RR ' : '( ' + rr + ' )'
+                    }
+
+            //console.log(OD.rr)
+        },
+        getTP: function () {
+
+            let _this = this.orderData
+
+            let ratio = 2
+
+            let loss_d = Math.abs(_this.first - _this.stop)
+            let price = this.orderData.first
+            let side = this.orderData.side
+
+            let tp
+
+            console.log('tp', side, loss_d, price, ratio, price + (loss_d*ratio) )
+
+            if (side == 'Buy') {
+                tp = price + (loss_d*ratio)
+            } else {
+                tp = price - (loss_d*ratio)
+            }
+
+            this.orderData.profit = tp
+
+        },
+        clearPrice: function () {
+            this.orderData.order = ''
+            this.orderData.first = 0
+        },
+        setLadder: function (n) {
+            newNumber = this.orderData.ladder + n
+            this.orderData.ladder = Math.round(newNumber * 10) / 10
+        },
+        setRisk: function (n) {
+            newNumber = this.orderData.risk + n
+            this.orderData.risk = Math.round(newNumber * 10) / 10
+        },
+        setSpread: function (n) {
+            newNumber = this.orderData.spread + n
+            this.orderData.spread = Math.round(newNumber * 10) / 10
+        },
+        setTime: function (n) {
+            this.orderData.minutes += n
+        },
+        setLimitFraction: function (n) {
+            newNumber = this.orderData.fraction + n
+            this.orderData.fraction = Math.round(newNumber * 10) / 10
+
+        },
+        setFraction: function (n) {
+            newNumber = this.orderData.fraction + n
+            this.orderData.fraction = Math.round(newNumber * 10) / 10
+        },
+        getData: function (mode, x) {
+            console.log('getData', mode, x)
+
+            //mark r to reset risk later
+            const r = this.orderData.risk
+
+            if (x == 0) {
+                this.orderData.risk = 0
+            }
+
+
+            if (x == 'Buy') {
+                this.orderData.side = 'Buy'
+            } else if (x == 'Sell') {
+                this.orderData.side = 'Sell'
+            }
+
+
+            console.log('risk', this.orderData.risk)
+
+            $.ajax({
+                data : {
+
+                    mode: mode,
+                    side: this.orderData.side,
+                    minutes: this.orderData.minutes,
+                    first: this.orderData.first,
+                    stop: this.orderData.stop,
+                    risk: this.orderData.risk,
+                    fraction: this.orderData.fraction,
+                    leverage: this.orderData.leverage,
+                    btc: this.orderData.btc,
+                },
+                type : 'POST',
+                url : '/getData'
+
+            })
+            .done(function(data) {
+                console.log(data.result, data.mode)
+                if (data.mode == 'alert') {
+                    console.log('alert')
+                    //alert(data.result)
+                } else if (data.mode == 'funds') {
+                    vue.orderData[data.mode] = data.result
+                    vue.btc = data.result
+                } else if (data.mode == 'first') {
+                    vue.orderData[data.mode] = data.result
+                    if (vue.orderData.price != 0 && vue.orderData.stop !=0) {
+                        vue.getRR()
+                    }
+                } else if (data.mode == 'size' || data.mode == 'cancel' ) {
+                    vue.orderData.position = data.result
+                } else {
+                    vue.orderData[data.mode] = data.result
+                    if (vue.orderData.price != 0 && vue.orderData.stop !=0) {
+                        vue.getRR()
+                    }
+                }
+                if (vue.orderData.risk == 0) {
+                    vue.orderData.risk = r
+                }
+                return data.result
+            })
+            .fail(function(){
+                  alert('error has occurred gData');
+            });
+        },
+        getOrder: function (mode) {
+            if (this.orderData.stop == 0) {
+                alert('no stop set')
+                return false
+            } else if (Math.abs(this.orderData.stop-this.orderData.first) < 20) {
+                this.orderData.stop = this.orderData.first + 21
+                if (this.orderData.side == 'Buy') {
+                    this.orderData.stop =  this.orderData.first - 21
+                }
+                alert('stop is too close')
+                return false
+            }
+
+            if (mode == 'market') {
+                this.orderData.first = 0
+            }
+            if (mode == 'instant') {
+                this.orderData.first = 0
+                this.orderData.ladder = 1
+            }
+
+            console.log('getOrder')
+
+            $.ajax({
+                data : {
+                    mode: true,
+                    side: this.orderData.side,
+                    first: this.orderData.first,
+                    stop: this.orderData.stop,
+                    fraction: this.orderData.fraction,
+                    leverage: this.orderData.leverage,
+                    profit: this.orderData.profit,
+                    spread: this.orderData.spread,
+                    ladder: this.orderData.ladder,
+                    pw: this.orderData.position
+                },
+                type : 'POST',
+                url : '/getOrder'
+
+            })
+            .done(function(data) {
+                console.log(data.result)
+                vue.orderData.order = data.result
+            })
+            .fail(function(){
+                  alert('error has occurred getOrder');
+            });
+        }
+    },
+    computed: {
+        getTakeProfit() {
+            return this.orderData.profit
+        },
+        getStopLoss() {
+            return this.orderData.stop
+        }
+    },
+    watch: {
+        btc: function () {
+            console.log('watch', this.btc)
+
+            let funds = this.orderData.funds
+
+            let frac = (this.btc/funds)
+            if (frac == 1) {
+                frac = 0.9
+            }
+            this.orderData.fraction = frac
+        },
+        getTakeProfit: function () {
+            this.getRR()
+        },
+        getStopLoss: function () {
+            this.getRR()
+        },
+    }
+
+})// end NEW VUE
+
+}
+
+
+</script>
+
+
+
+{% endblock %}
+
+
+

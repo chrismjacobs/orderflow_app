@@ -1,38 +1,32 @@
-from flask import Flask, flash, render_template, redirect, request, jsonify
+from flask import Flask, flash, render_template, redirect, request, jsonify, url_for
+from flask_login import current_user, login_required, LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_mail import Mail
+import json
 from analysis import getBlocks
-import os, json
-import redis
+from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 
-LOCAL = False
-
-try:
-    import config
-    LOCAL = True
-    REDIS_URL = config.REDIS_URL
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
-except:
-    REDIS_URL = os.getenv('CELERY_BROKER_URL')
-    START_CODE = int(os.getenv('START_CODE'))
-    r = redis.from_url(REDIS_URL, decode_responses=True)
+if not LOCAL:
     from tasks import runStream
-    # from bot import runBot
 
-
-print('URL', REDIS_URL)
-print('REDIS', r)
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
-app.secret_key = os.getenv('FLASK_SECRET_KEY', "super-secret")
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+app.config['DEBUG'] = DEBUG
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+bcrypt = Bcrypt()
+login_manager = LoginManager(app)
+login_manager.login_view = 'login' # if user isn't logged in it will redirect to login page
+login_manager.login_message_category = 'info'
+
 
 @app.route('/')
-def main():
-
+def home():
 
     return render_template('orderflow.html')
-
-
-
 
 @app.route('/getOF', methods=['POST'])
 def getOF():
@@ -106,10 +100,9 @@ def getOF():
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
 
-
-
-
-
+    user = False
+    if current_user.is_authenticated:
+        user = current_user.username
 
     jDict = {
         'stream' : stream,
@@ -118,7 +111,9 @@ def getOF():
         'timeBlocks' : timeBlocks,
         'timeFlow' : timeFlow,
         'deltaBlocks' : deltaBlocks,
-        'deltaFlow' : deltaFlow
+        'deltaFlow' : deltaFlow,
+        'login' : current_user.is_authenticated,
+        'user' : user
     }
 
     jx = jsonify(jDict)
@@ -131,8 +126,8 @@ def getOF():
 def start():
     return render_template('start.html')
 
-@app.route('/add', methods=['POST'])
-def add_inputs():
+@app.route('/worker', methods=['POST'])
+def worker():
     x = int(request.form['x'] or 0)
 
     if x == START_CODE:
@@ -144,6 +139,18 @@ def add_inputs():
         flash("Your command has failed: " + str(x))
 
     return redirect('/')
+
+@app.route("/tradingview", methods=['POST'])
+def tradingview_webhook():
+    data = json.loads(request.data)
+
+    return redirect('/')
+
+
+from routesAdmin import *
+from routesJournal import *
+from routesTrade import *
+
 
 if __name__ == '__main__':
     app.run()

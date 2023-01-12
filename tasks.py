@@ -826,7 +826,7 @@ def getPreviousDay(blocks):
         for b in blocks:
             dailyVolume += b['total']
 
-        return json.dumps({'vol' : dailyVolume, 'cvd' : dailyCVD, 'price' : dailyPriceDelta })
+        return json.dumps({'vol(mil)' : round(dailyVolume/100_000)/10, 'cvd' : round(dailyCVD/100_000)/10, 'price' : dailyPriceDelta })
 
     except:
         return 'getPreviousDay() fail'
