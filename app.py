@@ -143,7 +143,7 @@ def worker():
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
-    data = json.loads(request.data)
+    # data = json.loads(request.data)
     print('TRADING VIEW ACTION')
 
     return redirect('/')
