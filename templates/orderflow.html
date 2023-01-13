@@ -237,10 +237,7 @@
                                             <th class="text-info" scope="row"> </th>
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
-                                            <td> Trades: [[item.tradecount]] <br>
-                                                 1$: [[item.onedollar]] <br>
-                                                 Blocks: [[Object.keys(item.blocktradecount).length]] <br>
-                                            </td>
+                                            <td> </td>
                                             <td v-if="showDelta" > <span v-for="(price, index) in getTickPrices(item.tickBuy, 'price')"> [[price]] <br> </span></td>
                                             <td v-if="showDelta" ><span v-for="(level, index) in getTickPrices(item.tickSell, 'amount')"> [[roundData(level)]] <br> </span></td>
                                             <td v-if="showDelta" ><span v-for="(level, index) in getTickPrices(item.tickBuy, 'amount')"> [[roundData(level)]] <br> </span></td>
