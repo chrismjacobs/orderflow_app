@@ -94,7 +94,12 @@
                             <button @click="getOrder('instant')" class="btn btn-success" type="button" id="button-addon1">Order Instant</button>
                             <br>
                             <br>
-                            <span class = 'text-dark'> [[ orderData.order ]] <span>
+                            <span class = 'text-dark'>
+                                [[ orderData.order.side ]] <br>
+                                Stop: [[ orderData.order.stop_loss ]] <br>
+                                Profit: [[ orderData.order.take_profit ]] <br>
+                                Err: [[ orderData.order.reject_reason ]] <br>
+                            <span>
                         </div>
 
                     </div>
@@ -222,7 +227,9 @@ let vue = new Vue({
         lessons:{
             PIVOT : 'If a pivot is broken, the retest can be spot on',
             SFPTARGET : 'If trading up to an SFP, just take profit before that level',
-            SR : 'Trading against support/resistance better have good reason and tight stop',
+            SR : 'When trading against support/resistance better have good reason and tight stop',
+            OID : 'Sudden OI decrease does not mean reversal, price reverts to demand zone',
+            DMD : 'A demand zone might be position in direct, or positions under water waiting for chance to exit',
         },
         orderData: {
             side: '',
@@ -520,7 +527,7 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log(data.result)
-                vue.orderData.order = data.result
+                vue.orderData.order = JSON.parse(data.result)
             })
             .fail(function(){
                   alert('error has occurred getOrder');
