@@ -384,11 +384,10 @@ def addBlock(units, blocks, mode):
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
-    elif getHistory():
+    elif 'time' in mode and getHistory():
         lastCandle = getHistory()['timeblocks'][-1]
         previousDeltaCum = lastCandle['delta_cumulative']
         previousOICum = lastCandle['oi_cumulative']
-
 
 
 
@@ -418,7 +417,6 @@ def addBlock(units, blocks, mode):
 
     for d in units:
         # print('BLOCK LOOP', d)
-
 
         if d['side'] == 'Buy':
             buyCount += d['size']
@@ -858,9 +856,9 @@ def logVolumeUnit(buyUnit, sellUnit):
     if volumeflowTotal + totalMsgSize <= block:  # Normal addition of trade to volume flow
         # print(volumeflowTotal, '< Block')
 
-        if buyUnit['size'] > 0:
+        if buyUnit['size'] > 1:
             volumeflow.append(buyUnit)
-        if sellUnit['size'] > 0:
+        if sellUnit['size'] > 1:
             volumeflow.append(sellUnit)
 
 
@@ -879,30 +877,30 @@ def logVolumeUnit(buyUnit, sellUnit):
     else: # Need to add a new block
 
         # print('carryOver')
-        print('new blockkkkk', totalMsgSize, block, volumeflowTotal)
+        print('new blockkkkk --  Total msg size: ' + str(totalMsgSize) + ' Vol flow total: ' + str(volumeflowTotal))
         lefttoFill = block - volumeflowTotal
-        carryOver = int(totalMsgSize - lefttoFill)
 
         ## split buys and sells evenly
         proportion = lefttoFill/totalMsgSize
+
+        ## left to fill 100_000  totalmsg size 1_300_000  (1_000_000 buys   300_000 sells)
+        ## proportion = 0.076
+
         buyFill = buyUnit['size'] * proportion
         sellFill = sellUnit['size'] * proportion
 
         buyCopy = buyUnit.copy()
         sellCopy = sellUnit.copy()
 
-        buyCopy['size'] = buyFill
-        sellCopy['size'] = sellFill
+        buyCopy['size'] = int(buyFill)
+        sellCopy['size'] = int(sellFill)
 
         if buyCopy['size'] > 0:
             volumeflow.append(buyCopy)
+            buyUnit['size'] -= int(buyFill)
         if sellCopy['size'] > 0:
             volumeflow.append(sellCopy)
-
-        buyUnit['size'] -= buyFill
-        sellUnit['size'] -= sellFill
-
-        carryOver = int(buyUnit['size'] + sellUnit['size'])
+            sellUnit['size'] -= int(sellFill)
 
         volumeblocks = json.loads(r.get('volumeblocks'))
         LastIndex = len(volumeblocks) - 1
@@ -915,42 +913,37 @@ def logVolumeUnit(buyUnit, sellUnit):
         ## volume flow has been added as full candle and should be reset
         volumeflow = []
 
-        # print('Carry Over', carryOver, block, carryOver//block)
-
-        for y in range(carryOver//block):
-
-            r.set('discord', 'Carry Over: ' + str(buyUnit['size']) + ' -- ' + str(sellUnit['size']) + ' -- ' + str(carryOver//block))
-
-            buyCopyCarry = buyUnit.copy()
-            sellCopyCarry = sellUnit.copy()
-
-            if buyCopyCarry['size'] > 0:
-                buyCopyCarry['size'] = 1_000_000
-                volumeflow.append(buyCopyCarry)
-                buyUnit['size'] -= 1_000_000
-
-            else:
-                sellCopyCarry['size'] = 1_000_000
-                volumeflow.append(sellCopyCarry)
-                sellUnit['size'] -= 1_000_000
-
-            volumeflow.append(sellCopyCarry)
-
-            ## this is volume flow list - just one block
-
+        while buyUnit['size'] > block:
             ## keep appending large blocks
+            r.set('discord', 'Carry Over: ' + str(buyUnit['size']) + ' -- ' + str(sellUnit['size']))
             volumeblocks = json.loads(r.get('volumeblocks'))
-            newCandle = addBlock(volumeflow, volumeblocks, 'carry')
+            newUnit = buyUnit.copy()
+            newUnit['size'] = block
+            buyUnit['size'] = buyUnit['size'] - block
+            newCandle = addBlock([newUnit], volumeblocks, 'carry')
             volumeblocks.append(newCandle)
             r.set('volumeblocks', json.dumps(volumeblocks))
 
-            print('Add Block: ' + str(y) )
+        while sellUnit['size'] > block:
+            ## keep appending large blocks
+            r.set('discord', 'Carry Over: ' + str(buyUnit['size']) + ' -- ' + str(sellUnit['size']))
+            volumeblocks = json.loads(r.get('volumeblocks'))
+            newUnit = sellUnit.copy()
+            newUnit['size'] = block
+            sellUnit['size'] = sellUnit['size'] - block
+            newCandle = addBlock([newUnit], volumeblocks, 'carry')
+            volumeblocks.append(newCandle)
+            r.set('volumeblocks', json.dumps(volumeblocks))
+
+        if buyUnit['size'] + sellUnit['size']  >  block:
+            ## This is very unlikley so just set an alert
+            r.set('discord', 'Unlikley Carry: ' + str(buyUnit['size']) + ' -- ' + str(sellUnit['size']))
+
 
         # Create new flow block with left over contracts
-
-        if buyUnit['size'] > 0:
+        if buyUnit['size'] > 1:
             volumeflow.append(buyUnit)
-        if sellUnit['size'] > 0:
+        if sellUnit['size'] > 1:
             volumeflow.append(sellUnit)
 
         volumeblocks = json.loads(r.get('volumeblocks'))
@@ -958,7 +951,6 @@ def logVolumeUnit(buyUnit, sellUnit):
         volumeblocks.append(currentCandle)
         r.set('volumeblocks', json.dumps(volumeblocks))
         r.set('volumeflow', json.dumps(volumeflow))
-
 
 
 def getPreviousDay(blocks):
@@ -1088,6 +1080,7 @@ def compiler(message):
                     'tradecount' : 0
     }
 
+
     for x in message:
         if x['side'] == 'Buy':
             print('Buy ' + str(x['price']))
@@ -1110,7 +1103,7 @@ def compiler(message):
         print('Large Trade: ' + bString)
         r.set('discord',  'Large Trade: ' + bString)
 
-    print('DATA RECORD ' + str(buyUnit['size']) + ' --- ' + str(sellUnit['size']))
+    print('DATA RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']))
 
 
     return [buyUnit, sellUnit]
