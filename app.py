@@ -33,14 +33,15 @@ def getOF():
 
     volumeBlockSize = int(request.form ['volumeBlockSize'])
     timeBlockSize = int(request.form ['timeBlockSize'])
+    coin = request.form ['coin']
 
     print('BLOCK SIZES', volumeBlockSize, timeBlockSize)
 
 
-    stream = r.get('stream')
+    stream = r.get('stream_' + coin)
 
-    timeBlocks = r.get('timeblocks')
-    timeFlow = r.get('timeflow')
+    timeBlocks = r.get('timeblocks_' + coin)
+    timeFlow = r.get('timeflow_' + coin)
 
     volumeBlocks = r.get('volumeblocks')
     volumeFlow = r.get('volumeflow')
@@ -50,15 +51,15 @@ def getOF():
 
     lastHistory = {}
 
-    historyBlocks = json.loads(r.get('history'))
+    historyBlocks = json.loads(r.get('history_' + coin))
     if len(historyBlocks) > 0:
         lastHistory = historyBlocks[-1]
 
 
-    if 'timeblocks' in lastHistory:
+    if 'timeblocks_' + coin in lastHistory:
         ## combine History and current
         currentTime = json.loads(timeBlocks)
-        newTime = lastHistory['timeblocks'] + currentTime
+        newTime = lastHistory['timeblocks_' + coin] + currentTime
         timeBlocks = json.dumps(newTime)
 
     if 'deltablocks' in lastHistory:
@@ -113,7 +114,8 @@ def getOF():
         'deltaBlocks' : deltaBlocks,
         'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
-        'user' : user
+        'user' : user,
+        'coin' : coin
     }
 
     jx = jsonify(jDict)
