@@ -48,7 +48,8 @@
 
 
                 <br>
-                <button @click="showChart += 1" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
+                <button style="display:none" @click="showChart += 1" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
+                <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
                 <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
                 <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
                 <button @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
@@ -238,9 +239,7 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td v-if="showDelta" > <span v-for="(price, index) in getTickPrices(item.tickBuy, 'price')"> [[price]] <br> </span></td>
-                                            <td v-if="showDelta" ><span v-for="(level, index) in getTickPrices(item.tickSell, 'amount')"> [[roundData(level)]] <br> </span></td>
-                                            <td v-if="showDelta" ><span v-for="(level, index) in getTickPrices(item.tickBuy, 'amount')"> [[roundData(level)]] <br> </span></td>
+                                            <td> [[ item.tickList ]] </td>
                                         </tr>
 
                                     </template>
@@ -361,6 +360,8 @@ let vue = new Vue({
         this.lookback = 60
     },
     data: {
+        coin : 'BTCUSD',
+        coins : ['BTCUSD', 'ETHUSD'],
         user : '',
         login : false,
         history : {},
@@ -432,6 +433,15 @@ let vue = new Vue({
           }
     },
     methods: {
+        toggleCoin: function () {
+            let x = 0
+            if (this.coin == this.coins[x]) {
+                x = 1
+            } else {
+                x = 0
+            }
+            this.coin = this.coins[x]
+        },
         audioAlert: function () {
             if (this.alertOn == false) {
                 return false
@@ -699,7 +709,12 @@ let vue = new Vue({
                 let x = data/1000
                 let y = Math.round(x)
                 let r = y.toString()
-                return r + 'K'
+                if (r == '1000') {
+                    return '1m'
+                } else {
+                    return r + 'K'
+                }
+
             }
 
         },
@@ -827,7 +842,8 @@ let vue = new Vue({
             $.ajax({
                 data : {
                     volumeBlockSize: this.volumeBlockSize,
-                    timeBlockSize: this.timeBlockSize
+                    timeBlockSize: this.timeBlockSize,
+                    coin: this.coin
                 },
                 type : 'POST',
                 url : '/getOF'
