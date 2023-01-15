@@ -43,11 +43,11 @@ def getOF():
     timeBlocks = r.get('timeblocks_' + coin)
     timeFlow = r.get('timeflow_' + coin)
 
-    volumeBlocks = r.get('volumeblocks')
-    volumeFlow = r.get('volumeflow')
+    volumeBlocks = r.get('volumeblocks_' + coin)
+    volumeFlow = r.get('volumeflow_' + coin)
 
-    deltaBlocks = r.get('deltablocks')
-    deltaFlow = r.get('deltaflow')
+    deltaBlocks = r.get('deltablocks_' + coin)
+    deltaFlow = r.get('deltaflow_' + coin)
 
     lastHistory = {}
 
@@ -59,7 +59,7 @@ def getOF():
     if 'timeblocks_' + coin in lastHistory:
         ## combine History and current
         currentTime = json.loads(timeBlocks)
-        newTime = lastHistory['timeblocks_' + coin] + currentTime
+        newTime = lastHistory['timeblocks'] + currentTime
         timeBlocks = json.dumps(newTime)
 
     if 'deltablocks' in lastHistory:
@@ -78,7 +78,7 @@ def getOF():
 
 
     if volumeBlockSize == 2:
-        volumeBlocks = r.get('volumeblocks2m')
+        volumeBlocks = r.get('volumeblocks2m_' + coin)
 
         if 'volumeblocks2m' in lastHistory:
             ## combine History and current
