@@ -249,7 +249,7 @@
                         <tbody v-if="showTable == 'Volume'">
                             <template v-for="(item, key) in getReverseVolumeBlocks" :key="key" >
                             <tr>
-                                <th class="text-warning text-xsmall" scope="row"><span @click="showVolCandle = key">[[getTime(item.timestamp)]]</span> </th>
+                                <th class="text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                 <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
                                 <td :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
@@ -264,9 +264,9 @@
                                 <td>[[item.low]]</td>
                                 <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
                             </tr>
-                                    <template v-if="showVolCandle == false">
+                                    <template v-if="showCandle == key">
                                         <tr >
-                                            <span @click="showVolCandle = null"> [[ item ]]  </span>
+                                            <span> [[ item ]]  </span>
                                         </tr>
                                     </template>
                             </template>
@@ -289,7 +289,7 @@
                                 <td >[[item.low]]</td>
                                 <td :style="getCloseStyle(item.close, key, 'delta')">[[item.close]]</td>
                             </tr>
-                                    <template v-if="showCandle == false">
+                                    <template v-if="showCandle == key">
                                         <tr>
                                             <span>
                                                 [[item]]
@@ -360,8 +360,8 @@ let vue = new Vue({
         this.lookback = 60
     },
     data: {
-        coin : 'BTCUSD',
-        coins : ['BTCUSD', 'ETHUSD'],
+        coin : 'BTC',
+        coins : ['BTC', 'ETH'],
         user : '',
         login : false,
         history : {},
@@ -499,6 +499,7 @@ let vue = new Vue({
 
         },
         showCandleToggle: function (key) {
+            console.log(key)
             if (this.showCandle == key) {
                 this.showCandle = null
             } else {
@@ -709,6 +710,7 @@ let vue = new Vue({
                 let x = data/1000
                 let y = Math.round(x)
                 let r = y.toString()
+                return r + 'K'
                 if (r == '1000') {
                     return '1m'
                 } else {
