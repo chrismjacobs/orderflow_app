@@ -361,7 +361,7 @@ let vue = new Vue({
     },
     data: {
         coin : 'BTC',
-        coins : ['BTC', 'ETH'],
+        coins : ['BTC', 'ETH', 'SOL'],
         user : '',
         login : false,
         history : {},
@@ -434,13 +434,14 @@ let vue = new Vue({
     },
     methods: {
         toggleCoin: function () {
-            let x = 0
-            if (this.coin == this.coins[x]) {
-                x = 1
-            } else {
-                x = 0
+            let x = this.coins.indexOf(this.coin)
+
+            let n = x + 1
+            if (n > this.coins.length) {
+                n = 0
             }
-            this.coin = this.coins[x]
+
+            this.coin = this.coins[n]
         },
         audioAlert: function () {
             if (this.alertOn == false) {

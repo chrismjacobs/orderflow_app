@@ -296,11 +296,14 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
 
 def getImbalances(tickList):
+    print('IMBALANCES')
 
     ticks = len(tickList)
+    # 1 2 3
 
-    for i in range(ticks):
-        if i + 1 <= ticks:
+    for i in range(ticks):  # 0 1 2
+        if i + 1 < ticks:
+            print(i, ticks)
             BIbuys = tickList[i]['Buy']
             BIsells = tickList[i + 1]['Sell']
 
@@ -417,7 +420,8 @@ def addBlock(units, blocks, mode, coin):
     newStart  = units[0]['trade_time_ms']
     newClose = units[-1]['trade_time_ms']
 
-    print('TIME CHECK', previousTime, newClose, newStart, type(newClose), type(newStart))
+    # if LOCAL:
+    #     print('TIME CHECK', previousTime, newClose, newStart, type(newClose), type(newStart))
 
     timeDelta = newClose - newStart
     timeDelta2 = newClose - previousTime
@@ -452,7 +456,6 @@ def addBlock(units, blocks, mode, coin):
             priceList.append(price)
             # print('SPREAD CHECK', price, type(price) )
             if coin == 'BTC':
-
                 tickPrice = str(trunc(price/10)*10)
 
             elif coin == 'ETH':
@@ -468,8 +471,9 @@ def addBlock(units, blocks, mode, coin):
             # print('tickPrice', tickPrice)
 
             if coin == 'BTC':
+                # print('TICKES', tickDict, tickPrice)
 
-                if tickPrice not in tickDict :
+                if tickPrice not in tickDict:
 
                     tickDict[tickPrice] = {
                         'tickPrice' : tickPrice,
@@ -493,6 +497,7 @@ def addBlock(units, blocks, mode, coin):
     tickList = []
 
     if coin == 'BTC':
+        # print('TICKS SORT')
 
         tickKeys = list(tickDict.keys())
         tickKeys.sort(reverse = True)
