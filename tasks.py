@@ -2,7 +2,7 @@ import os, json, math
 from celery import Celery
 from celery.utils.log import get_task_logger
 from time import sleep
-from pybit import inverse_perpetual
+from pybit import inverse_perpetual, usdt_perpetual
 # from message import sendMessage
 import datetime as dt
 from datetime import datetime
@@ -151,14 +151,12 @@ def getHistory(coin):
         return False
 
 
-def addBlockBlock(blocks, newCandle, timeNow, size):
+def addBlockBlock(blocks, newCandle, timeNow, size, coin):
 
     print('BLOCK BLOCK 1')
     previousDeltaCum = 0
     previousOICum = 0
     previousTime = 0
-
-    coin = 'BTCUSD'
 
     if len(blocks) > 1:
         lastCandle = blocks[-2]
@@ -196,15 +194,6 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     currentCandle['time_delta'] = timeNow - previousTime
 
 
-    volDivBull2M = False
-    volDivBull5M = False
-
-    volDivBear2M = False
-    volDivBear5M = False
-
-    volFast2M = []
-    volFast5M = []
-
     print('BLOCK BLOCK 5')
 
     deltaPercent = round( (  currentCandle['delta']  /  (size*1_000_000)  ) * 100  )
@@ -213,30 +202,27 @@ def addBlockBlock(blocks, newCandle, timeNow, size):
     if abs(deltaPercent) > 20:
         if currentCandle['delta'] < 0 and currentCandle['price_delta'] > 4:
             if currentCandle['total'] >= 2_000_000 and size == 2:
-                volDivBull2M = True
+                currentCandle['volDivBull2M'] = True
                 r.set('discord_' + coin, '2M possible BULL div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
             if currentCandle['total'] >= 4_000_000:
                 deltaPercent = round((currentCandle['delta']/5_000_000)*100)
-                volDivBull5M = True
+                currentCandle['volDivBull5M'] = True
                 r.set('discord_' + coin, '5M possible BULL div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
 
         print('BLOCK BLOCK BREAK')
 
         if currentCandle['delta'] > 0 and currentCandle['price_delta'] < -4:
             if currentCandle['total'] == 2_000_000 and size == 2:
-                volDivBear2M = True
+                currentCandle['volDivBear2M'] = True
                 r.set('discord_' + coin, '2M possible BEAR div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
             if currentCandle['total'] >= 4_000_000:
-                volDivBear5M = True
+                currentCandle['volDivBear5M'] = True
                 r.set('discord_' + coin, '5M possible BEAR div candle: Delta ' + str(deltaPercent) + '% ' + str(currentCandle['price_delta']) + '$')
 
     print('BLOCK BLOCK RETURN')
 
-    if size == 5:
-        return { 'Bull': volDivBull5M, 'Bear': volDivBear5M }
+    return currentCandle
 
-    if size == 2:
-        return { 'Bull': volDivBull2M, 'Bear': volDivBear2M }
 
 def streamAlert(message, mode, coin):
     print('Alert Stream')
@@ -309,6 +295,40 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
     return True
 
 
+def getImbalances(tickList):
+
+    ticks = len(tickList)
+
+    for i in range(ticks):
+        if i + 1 <= ticks:
+            BIbuys = tickList[i]['Buy']
+            BIsells = tickList[i + 1]['Sell']
+
+            if BIbuys == 0:
+                BIbuys == 1
+
+            BIpct = round((BIbuys / BIsells) * 100)
+            if BIpct > 1000:
+                BIpct = 1000
+
+            tickList[i + 1]['Buy%'] = BIpct
+
+            SIbuys = tickList[i]['Buy']
+            SIsells = tickList[i + 1]['Sell']
+
+            if SIbuys == 0:
+                SIbuys == 1
+
+            SIpct = round((SIsells / SIbuys) * 100)
+            if SIpct > 1000:
+                SIpct = 1000
+
+            tickList[i + 1]['Sell%'] = SIpct
+
+    return tickList
+
+
+
 def addBlock(units, blocks, mode, coin):
 
     CVDdivergence = {}
@@ -319,7 +339,7 @@ def addBlock(units, blocks, mode, coin):
         stream['Divs'] = CVDdivergence
         r.set('stream_' + coin, json.dumps(stream) )
 
-    # print('UNITS', len(units), len(blocks))
+    print('ADD BLOCK')
 
     switch = False
 
@@ -367,7 +387,7 @@ def addBlock(units, blocks, mode, coin):
 
     ''' BLOCK DATA '''
 
-    # print('BLOCK DATA: ' + mode + ' -- ' + coin)
+    print('BLOCK DATA: ' + mode + ' -- ' + coin)
     previousOICum = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
     newOpen = units[0]['streamPrice']
@@ -397,7 +417,7 @@ def addBlock(units, blocks, mode, coin):
     newStart  = units[0]['trade_time_ms']
     newClose = units[-1]['trade_time_ms']
 
-    # print('TIME CHECK', previousTime, newClose)
+    print('TIME CHECK', previousTime, newClose, newStart, type(newClose), type(newStart))
 
     timeDelta = newClose - newStart
     timeDelta2 = newClose - previousTime
@@ -431,11 +451,11 @@ def addBlock(units, blocks, mode, coin):
             price = float(price)
             priceList.append(price)
             # print('SPREAD CHECK', price, type(price) )
-            if coin == 'BTCUSD':
+            if coin == 'BTC':
 
                 tickPrice = str(trunc(price/10)*10)
 
-            elif coin == 'ETHUSD':
+            elif coin == 'ETH':
                 ##  1159.56 --> 1159.25
                 floor = math.floor(price)
                 rnd = round(price)
@@ -447,35 +467,43 @@ def addBlock(units, blocks, mode, coin):
 
             # print('tickPrice', tickPrice)
 
-            if tickPrice not in tickDict:
+            if coin == 'BTC':
 
-                tickDict[tickPrice] = {
-                    'tickPrice' : tickPrice,
-                    'Buy' : 0,
-                    'Sell'  : 0,
-                    'BuyPercent' : 0,
-                    'SellPercent' : 0
-                }
+                if tickPrice not in tickDict :
 
-            tickDict[tickPrice][d['side']] += d['spread'][str(price)] ## the spread keys come back as strings
+                    tickDict[tickPrice] = {
+                        'tickPrice' : tickPrice,
+                        'Sell'  : 0,
+                        'Buy' : 0,
+                        'Sell%' : 0,
+                        'Buy%' : 0
+                    }
+
+                tickDict[tickPrice][d['side']] += d['spread'][str(price)] ## the spread keys come back as strings
 
 
             oiList.append(d['streamOI'])
             OIclose = d['streamOI']
 
-
-    tickKeys = list(tickDict.keys())
-    tickKeys.sort(reverse = True)
-
     highPrice = max(priceList)
     lowPrice = min(priceList)
 
-    # print('SORT DATA ' + str(priceList))
+
 
     tickList = []
 
-    for p in tickKeys:
-        tickList.append(tickDict[p])
+    if coin == 'BTC':
+
+        tickKeys = list(tickDict.keys())
+        tickKeys.sort(reverse = True)
+
+        # print('SORT DATA ' + str(priceList))
+
+        for p in tickKeys:
+            tickList.append(tickDict[p])
+
+        if 'time' in mode and coin == 'BTC':
+            tickList = getImbalances(tickList)
 
     oiList.sort()
 
@@ -520,16 +548,21 @@ def addBlock(units, blocks, mode, coin):
         print('NEW CANDLE: ' + mode + ' ' + coin)
 
     if mode == 'volblock' or mode == 'carry':
+
         try:
             blockSize = 1_000_000
             if LOCAL:
                 blockSize = 100_000
 
+            newCandle['total'] = blockSize
+
+
             blocks2m = json.loads(r.get('volumeblocks2m_' + coin))
             if len(blocks2m) == 0:
                 blocks2m.append(newCandle)
             elif blocks2m[-1]['total'] < blockSize * 2:
-                newCandle['volcandle_two'] = addBlockBlock(blocks2m, newCandle, newClose, 2)
+                currentCandle = addBlockBlock(blocks2m, newCandle, newClose, 2, coin)
+                blocks2m[-1] = currentCandle
             elif blocks2m[-1]['total'] == blockSize * 2:
                 blocks2m.append(newCandle)
 
@@ -539,7 +572,7 @@ def addBlock(units, blocks, mode, coin):
             if len(blocks5m) == 0:
                 blocks5m.append(newCandle)
             elif blocks5m[-1]['total'] < blockSize * 5:
-                newCandle['volcandle_five'] = addBlockBlock(blocks5m, newCandle, newClose, 5)
+                newCandle['volcandle_five'] = addBlockBlock(blocks5m, newCandle, newClose, 5, coin)
             elif blocks5m[-1]['total'] == blockSize * 5:
                 blocks5m.append(newCandle)
 
@@ -853,7 +886,8 @@ def logVolumeUnit(buyUnit, sellUnit, coin):
         volumeflowTotal += t['size']
 
     if volumeflowTotal > block:
-        ### DEal with the uncomman event where the last function left an excess on volume flow
+        ### Deal with the uncomman event where the last function left an excess on volume flow
+        print('VOL FLOW EXCESS ' + str(volumeflowTotal))
         volumeblocks = json.loads(r.get('volumeblocks_' + coin))
         currentCandle = addBlock(volumeflow, volumeblocks, 'volblock', coin)
 
@@ -1074,12 +1108,12 @@ def historyReset(coin):
     return True
 
 
-def compiler(message, coin):
+def compiler(message, pair, coin):
 
     timestamp = message[0]['timestamp']
     ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
 
-    sess = session.latest_information_for_symbol(symbol=coin)
+    sess = session.latest_information_for_symbol(symbol=pair)
 
     streamTime = round(float(sess['time_now']), 1)
     streamPrice = float(sess['result'][0]['last_price'])
@@ -1090,7 +1124,7 @@ def compiler(message, coin):
     buyUnit = {
                     'side' : 'Buy',
                     'size' : 0,
-                    'trade_time_ms' : message[0]['trade_time_ms'],
+                    'trade_time_ms' : int(message[0]['trade_time_ms']),
                     'timestamp' : ts,
                     'streamTime' : streamTime,
                     'streamPrice' : streamPrice,
@@ -1102,7 +1136,7 @@ def compiler(message, coin):
     sellUnit = {
                     'side' : 'Sell',
                     'size' : 0,
-                    'trade_time_ms' :message[0]['trade_time_ms'],
+                    'trade_time_ms' : int(message[0]['trade_time_ms']),
                     'timestamp' : ts,
                     'streamTime' : streamTime,
                     'streamPrice' : streamPrice,
@@ -1152,7 +1186,8 @@ def compiler(message, coin):
 
 def handle_trade_message(msg):
 
-    coin = msg['topic'].split('.')[1]
+    pair = msg['topic'].split('.')[1]
+    coin = pair.split('USD')[0]
 
 
     ### check time and reset
@@ -1162,14 +1197,14 @@ def handle_trade_message(msg):
     # print(msg['data'])
 
 
-    compiledMessage = compiler(msg['data'], coin)
+    compiledMessage = compiler(msg['data'], pair, coin)
 
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    if coin == 'BTCUSD':
+    if coin == 'BTC':
         logVolumeUnit(buyUnit, sellUnit, coin)
 
     # logDeltaUnit(buyUnit, sellUnit)
@@ -1196,7 +1231,7 @@ def startDiscord():
         print('DISCORD REDIS CHECK')
 
 
-        coinList = ['BTCUSD', 'ETHUSD']
+        coinList = ['BTC', 'ETH']
 
         for coin in coinList:
 
@@ -1238,7 +1273,7 @@ def runStream():
         'alerts' : []
     }
 
-    coins = ['BTCUSD', 'ETHUSD']
+    coins = ['BTC', 'ETH', 'GALA', 'SOL']
 
     for c in coins:
         r.set('stream_' + c, json.dumps(rDict) )
@@ -1251,8 +1286,8 @@ def runStream():
         r.set('volumeblocks5m_' + c, json.dumps([]) )  #  this is the store of volume based candles
         r.set('volumeblocks_' + c, json.dumps([]) )  #  this is the store of volume based candles
 
-        # r.set('deltaflow_' + c, json.dumps([]) )
-        # r.set('deltablocks_' + c, json.dumps([]) )
+        r.set('deltaflow_' + c, json.dumps([]) )
+        r.set('deltablocks_' + c, json.dumps([]) )
 
         # r.set('history_' + c, json.dumps([]) )
 
@@ -1268,6 +1303,17 @@ def runStream():
 
     ws_inverseP.trade_stream(
         handle_trade_message, ["BTCUSD", "ETHUSD"]
+    )
+
+    ws_usdtP = usdt_perpetual.WebSocket(
+        test=False,
+        ping_interval=30,  # the default is 30
+        ping_timeout=None,  # the default is 10 # set to None and it will never timeout?
+        domain="bybit"  # the default is "bybit"
+    )
+
+    ws_usdtP.trade_stream(
+        handle_trade_message, ["SOLUSDT"]
     )
 
 
