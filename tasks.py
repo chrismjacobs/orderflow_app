@@ -276,7 +276,7 @@ def getImbalances(tickList):
             BIsells = tickList[i + 1]['Sell']
 
             if BIsells == 0:
-                BIsells == 1
+                BIsells = 1
 
             BIpct = round((BIbuys / BIsells) * 100)
             if BIpct > 1000:
@@ -288,7 +288,7 @@ def getImbalances(tickList):
             SIsells = tickList[i + 1]['Sell']
 
             if SIbuys == 0:
-                SIbuys == 1
+                SIbuys = 1
 
             SIpct = round((SIsells / SIbuys) * 100)
             if SIpct > 1000:
@@ -542,8 +542,8 @@ def getPVAstatus(timeblocks, coin):
 
     # print('PVA Calculate')
 
-    sumVolume = 0
-    lastVolume = 0
+    sumVolume = 1
+    lastVolume = 1
     lastDelta = 0
     lastPriceDelta = 0
     lastOIDelta = 0
@@ -610,6 +610,7 @@ def getPVAstatus(timeblocks, coin):
         return returnPVA
 
     except:
+        print('PVA ERROR')
         return {}
 
 
@@ -866,6 +867,9 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         lefttoFill = block - volumeflowTotal
 
         ## split buys and sells evenly
+        if totalMsgSize == 0:
+            totalMsgSize = 1
+
         proportion = lefttoFill/totalMsgSize
 
         ## left to fill 100_000  totalmsg size 1_300_000  (1_000_000 buys   300_000 sells)
@@ -1211,6 +1215,12 @@ def runStream():
 
     print('RUN_STREAM')
 
+
+    for k in r.keys():
+        if k[0] != '_':
+            r.delete(k)
+        print(k)
+
     coinDict = {
         ###  channel, OI
         'BTC' : [1064447410350329876, 1_000_000 ],
@@ -1218,8 +1228,7 @@ def runStream():
         'GALA' : [1064447289516638208, 3_000_000 ]
     }
 
-    coinDict = json.loads(r.get('coinDict'))
-
+    r.set('coinDict', json.dumps(coinDict))
 
     for c in coinDict:
         rDict = {
