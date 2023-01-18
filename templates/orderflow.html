@@ -239,7 +239,7 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td> [[ item.tickList ]] </td>
+                                            <td> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp [[ roundData(tick.Sell) ]] &nbsp |  &nbsp [[ roundData(tick.Buy) ]] &nbsp  <br></span </td>
                                         </tr>
 
                                     </template>
@@ -361,7 +361,7 @@ let vue = new Vue({
     },
     data: {
         coin : 'BTC',
-        coins : ['BTC', 'ETH', 'SOL'],
+        coins : ['BTC', 'ETH', 'GALA'],
         user : '',
         login : false,
         history : {},
@@ -387,7 +387,7 @@ let vue = new Vue({
         alertOn : true,
         showAlerts : false,
         volumeBlockList : 20,
-        volumeBlockSize : 1,
+        volumeBlockSize : 2,
         timeBlockList : 100,
         timeMarker : 0,
         timeBlockSize : 5,
@@ -864,15 +864,18 @@ let vue = new Vue({
 
                 vue.timeFlow = JSON.parse(data.timeFlow)
 
-                vue.deltaBlocks = JSON.parse(data.deltaBlocks)
+                //vue.deltaBlocks = JSON.parse(data.deltaBlocks)
 
-                vue.deltaFlow = JSON.parse(data.deltaFlow)
+                //vue.deltaFlow = JSON.parse(data.deltaFlow)
 
                 vue.updateCharts()
 
                 vue.user = data.user
+                console.log('USER', data.user)
 
                 vue.login = data.login
+                console.log('LOGIN', data.login)
+
 
                 //let e = document.getElementById('timeTable')
                 //e.scrollLeft = e.scrollWidth

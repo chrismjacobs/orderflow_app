@@ -43,11 +43,12 @@ def getOF():
     timeBlocks = r.get('timeblocks_' + coin)
     timeFlow = r.get('timeflow_' + coin)
 
-    volumeBlocks = r.get('volumeblocks_' + coin)
-    volumeFlow = r.get('volumeflow_' + coin)
 
-    deltaBlocks = r.get('deltablocks_' + coin)
-    deltaFlow = r.get('deltaflow_' + coin)
+    volumeBlocks = r.get('volumeblocks_' + coin + str(volumeBlockSize))
+    volumeFlow = r.get('volumeflow_' + coin + str(volumeBlockSize))
+
+    # deltaBlocks = r.get('deltablocks_' + coin)
+    # deltaFlow = r.get('deltaflow_' + coin)
 
     lastHistory = {}
 
@@ -59,42 +60,20 @@ def getOF():
     if 'timeblocks_' + coin in lastHistory:
         ## combine History and current
         currentTime = json.loads(timeBlocks)
-        newTime = lastHistory['timeblocks'] + currentTime
+        newTime = lastHistory['timeblocks_' + coin] + currentTime
         timeBlocks = json.dumps(newTime)
 
-    if 'deltablocks' in lastHistory:
-        ## combine History and current
-        currentDelta = json.loads(deltaBlocks)
-        newDelta = lastHistory['deltablocks'] + currentDelta
-        deltaBlocks = json.dumps(newDelta)
+    # if 'deltablocks' in lastHistory:
+    #     ## combine History and current
+    #     currentDelta = json.loads(deltaBlocks)
+    #     newDelta = lastHistory['deltablocks'] + currentDelta
+    #     deltaBlocks = json.dumps(newDelta)
 
-    if 'volumeblocks' in lastHistory:
+    if 'volumeblocks_' + coin + + str(volumeBlockSize) in lastHistory:
         ## combine History and current
         currentVolume = json.loads(volumeBlocks)
         newVolume = lastHistory['volumeblocks'] + currentVolume
         volumeBlocks = json.dumps(newVolume)
-
-
-
-
-    if volumeBlockSize == 2:
-        volumeBlocks = r.get('volumeblocks2m_' + coin)
-
-        if 'volumeblocks2m' in lastHistory:
-            ## combine History and current
-            currentVolume2m = json.loads(volumeBlocks)
-            newVolume2m = lastHistory['volumeblocks2m'] + currentVolume2m
-            volumeBlocks = json.dumps(newVolume2m)
-
-
-    if volumeBlockSize == 5:
-        volumeBlocks = r.get('volumeblocks5m')
-
-        if 'volumeblocks5m' in lastHistory:
-            ## combine History and current
-            currentVolume5m = json.loads(volumeBlocks)
-            newVolume5m = lastHistory['volumeblocks5m'] + currentVolume5m
-            volumeBlocks = json.dumps(newVolume5m)
 
 
     if timeBlockSize > 5:
@@ -111,8 +90,8 @@ def getOF():
         'volumeFlow' : volumeFlow,
         'timeBlocks' : timeBlocks,
         'timeFlow' : timeFlow,
-        'deltaBlocks' : deltaBlocks,
-        'deltaFlow' : deltaFlow,
+        # 'deltaBlocks' : deltaBlocks,
+        # 'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
         'user' : user,
         'coin' : coin
