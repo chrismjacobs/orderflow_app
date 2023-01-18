@@ -52,7 +52,7 @@
                 <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
                 <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
                 <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
-                <button @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
+                <button style="display:none" @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
                 <button @click="showTable='Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">&#x2699;</button>
 
 
@@ -228,7 +228,7 @@
                                 <td v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
                                 <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <span v-if="showTable == 'Time' && timeBlockSize == 5">([[roundData(item.oi_range)]])</span></td>
-                                <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
+                                <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[getRange(item.high, item.low)]]) </span></td>
                                 <td :style="getLocal('high', key)">[[item.high]]</td>
                                 <td :style="getLocal('low', key)">[[item.low]]</td>
                                 <td :style="getCloseStyle(item.close, key, 'time')">[[item.close]]</td>
@@ -259,7 +259,7 @@
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
                                 <td style="display:none">[[item.oi_cumulative]]</td>
                                 <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile">/ ([[Math.abs(item.high - item.low)]]) </span></td>
+                                <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile">/ ([[getRange(item.high, item.low)]]) </span></td>
                                 <td>[[item.high]]</td>
                                 <td>[[item.low]]</td>
                                 <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
@@ -433,6 +433,19 @@ let vue = new Vue({
           }
     },
     methods: {
+        getRange: function (high, low) {
+            let abs = Math.abs(high - low)
+
+            let c = {
+                BTC : 1,
+                ETH : 100,
+                GALA : 10000
+            }
+
+            return Math.round(abs*c[this.coin])/c[this.coin]
+
+
+        },
         toggleCoin: function () {
             let x = this.coins.indexOf(this.coin)
 
