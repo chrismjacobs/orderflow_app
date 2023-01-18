@@ -69,7 +69,7 @@ def getOF():
     #     newDelta = lastHistory['deltablocks'] + currentDelta
     #     deltaBlocks = json.dumps(newDelta)
 
-    if 'volumeblocks_' + coin + + str(volumeBlockSize) in lastHistory:
+    if 'volumeblocks_' + coin + str(volumeBlockSize) in lastHistory:
         ## combine History and current
         currentVolume = json.loads(volumeBlocks)
         newVolume = lastHistory['volumeblocks'] + currentVolume
