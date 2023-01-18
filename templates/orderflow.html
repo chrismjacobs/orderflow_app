@@ -145,6 +145,96 @@
                 </div>
 
 
+                <div v-if="!mobile && showVertical">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border border-info rounded pt-2 pb-1 text-info" >
+                                <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
+                                        <span @click="setTime(+1)" class="ml-2" >&#8593</span>
+                                        <span @click="setTime(-1)" class="ml-2">&#8595</span>
+                                </h3>
+                            </div>
+                            <table class="table table-dark table-sm vert">
+                                <thead class="vert">
+                                    <tr class="vert">
+                                        <th class="vert p-1" scope="col">Sec</th>
+                                        <th class="vert p-1" scope="col">Vol</th>
+                                        <th class="vert p-1" scope="col" @click="showDelta = true">Delta <span v-if="showDelta == false && !mobile" @click="showDelta = true"> &#x2192 </span></th>
+                                        <th class="vert p-1" v-if="showDelta" scope="col" @click="showDelta = false"> &#x2190</th>
+                                        <th class="vert p-1" v-if="showDelta" scope="col">Sells</th>
+                                        <th class="vert p-1" v-if="showDelta" scope="col">Buys</th>
+                                        <th class="vert pt-3 pb-3" scope="col">OI</th>
+                                        <th class="vert pt-3 pb-3" scope="col">Candle</th>
+                                        <th class="vert p-1" scope="col" style="width:2%">High</th>
+                                        <th class="vert p-1" scope="col" style="width:2%">Close</th>
+                                        <th class="vert p-1" scope="col" style="width:2%">Low</th>
+                                    </tr>
+                                    </thead>
+                                <tbody class="vert" id='timeTableVert'>
+                                    <template v-for="(item, key) in timeBlocks.slice(timeBlocks.length - 10)" :key="key" >
+                                        <tr class="vert" v-if="key < timeBlockList">
+                                            <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
+                                            <td class="vert" :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                                            <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
+                                            <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                            <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
+                                            <td class="vert" v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
+                                            <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <br> <span v-if="showTable == 'Time' && timeBlockSize == 5">([[roundData(item.oi_range)]])</span></td>
+                                            <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> <br> ([[getRange(item.high, item.low)]]) </span></td>
+                                            <td class="vert" :style="getLocal('high', key)">[[item.high]]</td>
+                                            <td class="vert" :style="getCloseStyle(item.close, key, 'time')">[[item.close]]</td>
+                                            <td class="vert" :style="getLocal('low', key)">[[item.low]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="col">
+                            <div class="border border-warning text-warning rounded pt-2 pb-1"  >
+                                <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
+                                    <span @click="setVol(1)" class="ml-2" >&#8593</span>
+                                    <span @click="setVol(-1)" class="ml-2">&#8595</span>
+                                </h3>
+                            </div>
+                            <table class="table table-dark table-sm vert">
+                                <thead class="vert">
+                                    <tr class="vert" >
+                                        <th class="vert p-1"  style="width:10%">Time</th>
+                                        <th class="vert p-1" >Sec</th>
+                                        <th class="vert p-1" >Vol</th>
+                                        <th class="vert p-1"  @click="showDelta = true">Delta <span v-if="showDelta == false && !mobile" @click="showDelta = true"> &#x2192 </span></th>
+                                        <th class="vert p-1" >OI</th>
+                                        <th class="vert pt-3 pb-3" >Candle</th>
+                                        <th class="vert p-1"  style="width:2%">High</th>
+                                        <th class="vert p-1"  style="width:2%">Close</th>
+                                        <th class="vert p-1"  style="width:2%">Low</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="vert" id='volTableVert'>
+                                    <template v-for="(item, key) in volumeBlocks.slice(volumeBlocks.length - 10)" :key="key" >
+                                    <tr class="vert">
+                                        <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
+                                        <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
+                                        <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta)">[[roundData(item.total)]]</td>
+                                        <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                        <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                                        <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> <br> ([[getRange(item.high, item.low)]]) </span></td>
+                                        <td class="vert">[[item.high]]</td>
+                                        <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
+                                        <td class="vert">[[item.low]]</td>
+                                    </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
                 <div v-if="showTable == 'Time'" align="center">
 
                     <div class="border border-info rounded pt-2 pb-1 text-info" >
@@ -152,47 +242,17 @@
                                 <span @click="setTime(+1)" class="ml-2" >&#8593</span>
                                 <span @click="setTime(-1)" class="ml-2">&#8595</span>
                         </h3>
-
-                        <div v-if="showStream">
-                            <span v-for="(info, key) in stream " :key="key"> [[key]]: [[info]] <br></span>
-                        </div>
                     </div>
 
                 </div>
 
-                <div v-if="showTable == 'Volume'">
+                <div v-else if="showTable == 'Volume'">
 
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
-                        <h3> <span @click="showBS = !showBS"> Volume Blocks ([[volumeBlockSize]])</span>
+                        <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
                             <span @click="setVol(1)" class="ml-2" >&#8593</span>
                             <span @click="setVol(-1)" class="ml-2">&#8595</span>
                         </h3>
-                    </div>
-
-                    <div v-if="showBS" class="row align-items-start m-2 ">
-                        <div class="col-6 rounded" style="background:darkgreen;color:white">
-                            <span> Buys: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] &nbsp &nbsp  </span></span>
-                        </div>
-                        <div class="col-6 rounded" style="background:firebrick;color:white">
-                            <span> Sells: </span>  <span v-for="(item, key) in reverseTrades" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] &nbsp &nbsp  </span></span>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div v-if="showTable == 'Delta'" align="center">
-
-                    <div class="border border-success rounded pt-2 pb-1 text-success"  >
-                        <h3> <span @click="showBS = !showBS"> Delta Blocks </span></h3>
-                    </div>
-
-                    <div v-if="showBS" class="row align-items-start m-2 rounded">
-                        <div class="col-6 rounded" style="background:darkgreen;color:white">
-                            <span> Buys: </span>  <span v-for="(item, key) in reverseDelta" :key="key" ><span v-if="item.side == 'Buy'"> [[item.size]] &nbsp &nbsp </span></span>
-                        </div>
-                        <div class="col-6 rounded" style="background:firebrick;color:white">
-                            <span> Sells: </span>  <span v-for="(item, key) in reverseDelta" :key="key" ><span v-if="item.side == 'Sell'"> [[item.size]] &nbsp &nbsp  </span></span>
-                        </div>
                     </div>
 
                 </div>
@@ -360,6 +420,7 @@ let vue = new Vue({
         this.lookback = 60
     },
     data: {
+        showVertical: true,
         coin : 'BTC',
         coins : ['BTC', 'ETH', 'GALA'],
         user : '',
@@ -693,7 +754,7 @@ let vue = new Vue({
                 return "font-size:12px"
             }
         },
-        getTime: function (t) {
+        getTime: function (t, v) {
             let time = t.split(' ')
             let adjust = this.UTCadjust
             if (!parseInt(adjust)) {
@@ -706,7 +767,7 @@ let vue = new Vue({
             let newTime = time[1].split(':')
             let x = time[0] + ' '
 
-            if (this.mobile) {
+            if (this.mobile || v == 'v') {
                 return hours + ':' + newTime[1]
             } else {
                 return hours + ':' + newTime[1] + ':' + newTime[2].split('.')[0]
@@ -821,13 +882,34 @@ let vue = new Vue({
                 }
             }
 
-            if (pva_status['pva200'] && pva_status['PVAbearDIV']) {
-                style = {background : '#BDBDBD' , color : '#D32F2F' }
-            } else if (pva_status['pva200'] && pva_status['PVAbullDIV']) {
-                style = {background : '#BDBDBD' , color : 'green' }
+            if (this.user) {
+                if (pva_status['pva200'] && pva_status['PVAbearDIV']) {
+                    style = {background : '#BDBDBD' , color : '#D32F2F' }
+                } else if (pva_status['pva200'] && pva_status['PVAbullDIV']) {
+                    style = {background : '#BDBDBD' , color : 'green' }
+                }
             }
 
+
             return style
+        },
+        getVolumeDivStyle: function(price, delta) {
+
+            let style = {}
+
+            if (price < 0 && delta > 0 ) {
+                //pink
+                style = {background : '#880E4F'}
+
+            } else if (price > 0 && delta < 0 ) {
+
+                style = {background : '#66CC00'}
+
+            }
+
+            if (this.user) {
+               return style
+            }
         },
         getVolumeBlockStyle: function(item, key, price) {
 
@@ -881,6 +963,12 @@ let vue = new Vue({
 
                 //vue.deltaFlow = JSON.parse(data.deltaFlow)
 
+                let et = document.getElementById('timeTableVert')
+                et.scrollLeft = et.scrollWidth
+
+                let ev = document.getElementById('volTableVert')
+                ev.scrollLeft = ev.scrollWidth
+
                 vue.updateCharts()
 
                 vue.user = data.user
@@ -889,9 +977,6 @@ let vue = new Vue({
                 vue.login = data.login
                 console.log('LOGIN', data.login)
 
-
-                //let e = document.getElementById('timeTable')
-                //e.scrollLeft = e.scrollWidth
 
             })
             .fail(function(){

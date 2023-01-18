@@ -34,3 +34,16 @@
 .main {
   height: 100vh;
 }
+
+table.vert { border-collapse: collapse; white-space: nowrap; }
+tr.vert { display: inline-block; }
+th.vert, td.vert { display: block; border: 0px solid black; }
+tbody.vert, thead.vert { display: inline-block; vertical-align: top; }
+
+tbody.vert {
+  width: 550px;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+tbody.vert tr.vert { margin-right: -5px;}

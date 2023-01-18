@@ -496,12 +496,12 @@ def addBlock(units, blocks, mode, coin):
 
         if abs(deltaPercent) > 20:
             print('VOL DIV CHECK 2')
-            if newCandle['delta'] < 0 and newCandle['price_delta'] > 0:
+            if newCandle['delta'] < 0 and newCandle['price_delta'] > 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
                 r.set('discord_' + coin, coin + ' BULL VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$')
 
             print('VOL DIV CHECK 3')
-            if newCandle['delta'] > 0 and newCandle['price_delta'] < 0:
+            if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
                 r.set('discord_' + coin, coin + ' BEAR VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$')
 
@@ -1133,6 +1133,11 @@ def handle_trade_message(msg):
     pair = msg['topic'].split('.')[1]
     coin = pair.split('USD')[0]
 
+    exclusive = json.loads(r.get('exclusive'))
+
+    if coin not in exclusive:
+        return False
+
 
     ### check time and reset
     historyReset(coin)
@@ -1150,9 +1155,10 @@ def handle_trade_message(msg):
 
     coinList = ['BTC', 'ETH', 'GALA']
 
-    if coin in coinList:
+    if coin == 'BTC':
         logVolumeUnit(buyUnit, sellUnit, coin, 2)
-        logVolumeUnit(buyUnit, sellUnit, coin, 5)
+
+    logVolumeUnit(buyUnit, sellUnit, coin, 5)
 
 
 
@@ -1228,7 +1234,10 @@ def runStream():
         'GALA' : [1064447289516638208, 3_000_000 ]
     }
 
+    exclusive = ['BTC', 'ETH', 'GALA']
+
     r.set('coinDict', json.dumps(coinDict))
+    r.set('exclusive', json.dumps(exclusive))
 
     for c in coinDict:
         rDict = {
