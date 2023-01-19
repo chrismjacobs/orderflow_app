@@ -137,11 +137,7 @@ def getHiLow(timeblocks, coin):
 
 
 def getHistory(coin):
-    # print('GET HISTORY ' + coin)
-
-
-    if r.get('history_' + coin) == None:
-        r.set('history_' + coin, json.dumps([]))
+    # print('GET HISTORY ' + coin, r.get('history_' + coin))
 
     historyBlocks = json.loads(r.get('history_' + coin))
     if len(historyBlocks) > 0:
@@ -798,6 +794,8 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
     vFlow = 'volumeflow_' + coin + str(size)
     vBlocks = 'volumeblocks_' + coin + str(size)
 
+
+
     if not r.get(vFlow):
         r.set(vFlow, json.dumps([]))
         r.set(vBlocks, json.dumps([]))
@@ -975,6 +973,11 @@ def getPreviousDay(blocks):
 
 
 def historyReset(coin):
+    # print('HISTORY RESET ' + coin)
+
+    if r.get('history_' + coin) == None:
+        r.set('history_' + coin, json.dumps([]))
+
     current_time = dt.datetime.utcnow()
 
     dt_string = current_time.strftime("%d/%m/%Y")
@@ -1124,7 +1127,7 @@ def compiler(message, pair, coin):
     #     print('Large Trade: ' + bString)
     #     r.set('discord_' + coin,  'Large Trade: ' + bString)
 
-    print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']))
+    print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) + json.dumps(sellUnit['spread']) + json.dumps(buyUnit['spread']))
 
 
     return [buyUnit, sellUnit]
@@ -1137,10 +1140,14 @@ def handle_trade_message(msg):
 
     coinDict = json.loads(r.get('coinDict'))
 
+    # print(coinDict)
+
     if not coinDict[coin]['active']:
+        print('not active ' + coin)
         return False
 
     if coinDict[coin]['purge']:
+        print('purge ' + coin)
         for k in r.keys():
             if coin in k:
                 r.delete(k)
@@ -1159,9 +1166,8 @@ def handle_trade_message(msg):
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    for coin in coinDict:
-        for vs in coinDict[coin]['volsize']:
-            logVolumeUnit(buyUnit, sellUnit, coin, vs)
+    for vs in coinDict[coin]['volsize']:
+        logVolumeUnit(buyUnit, sellUnit, coin, int(vs))
 
 
 def sendMessage(coin, string, bg, text):
