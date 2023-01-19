@@ -171,7 +171,7 @@
                                     </tr>
                                     </thead>
                                 <tbody class="vert" id='timeTableVert'>
-                                    <template v-for="(item, key) in timeBlocks.slice(timeBlocks.length - 10)" :key="key" >
+                                    <template v-for="(item, key) in getTimeBlocks" :key="key" >
                                         <tr class="vert" v-if="key < timeBlockList">
                                             <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
                                             <td class="vert" :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
@@ -193,8 +193,10 @@
                         <div class="col">
                             <div class="border border-warning text-warning rounded pt-2 pb-1"  >
                                 <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
-                                    <span @click="setVol(1)" class="ml-2" >&#8593</span>
-                                    <span @click="setVol(-1)" class="ml-2">&#8595</span>
+                                    <span v-if="coinOBJ[coin] && coinOBJ[coin]['volsize'].length > 1">
+                                        <span @click="setVol(1)" class="ml-2" >&#8593</span>
+                                        <span @click="setVol(-1)" class="ml-2">&#8595</span>
+                                    </span>
                                 </h3>
                             </div>
                             <table class="table table-dark table-sm vert">
@@ -212,7 +214,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="vert" id='volTableVert'>
-                                    <template v-for="(item, key) in volumeBlocks.slice(volumeBlocks.length - 10)" :key="key" >
+                                    <template v-for="(item, key) in getVolBlocks" :key="key" >
                                     <tr class="vert">
                                         <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
                                         <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
@@ -423,6 +425,7 @@ let vue = new Vue({
         showVertical: true,
         coin : 'BTC',
         coins : ['BTC', 'ETH', 'GALA'],
+        coinOBJ : {},
         user : '',
         login : false,
         history : {},
@@ -511,7 +514,7 @@ let vue = new Vue({
             let x = this.coins.indexOf(this.coin)
 
             let n = x + 1
-            if (n > this.coins.length) {
+            if (n > this.coins.length - 1) {
                 n = 0
             }
 
@@ -659,7 +662,14 @@ let vue = new Vue({
 
         },
         setVol: function (n) {
-            this.volumeBlockSize += n
+            let sizes = this.coinOBJ[this.coin]['volsize']
+            let i = sizes.indexOf(this.volumeBlockSize)
+
+            if (this.volumeBlockSize == sizes.length - 1) {
+                this.volumeBlockSize = sizes[0]
+            } else {
+                this.volumeBlockSize = sizes[i+1]
+            }
         },
         getTickPrices: function (ticks, mode) {
 
@@ -935,6 +945,15 @@ let vue = new Vue({
             this.limitData.price = 0
         },
         getOFData: function (mode) {
+            if (!this.coin) {
+                return false
+            }
+
+            if (this.coinOBJ[this.coin] && !this.coinOBJ[this.coin]['volsize'].includes(this.volumeBlockSize)) {
+                console.log(this.coinOBJ)
+                this.volumeBlockSize = this.coinOBJ[this.coin]['volsize'][0]
+            }
+
             console.log('getOFData')
 
             $.ajax({
@@ -963,11 +982,19 @@ let vue = new Vue({
 
                 //vue.deltaFlow = JSON.parse(data.deltaFlow)
 
-                let et = document.getElementById('timeTableVert')
-                et.scrollLeft = et.scrollWidth
 
+                let et = document.getElementById('timeTableVert')
                 let ev = document.getElementById('volTableVert')
-                ev.scrollLeft = ev.scrollWidth
+                if (et) {
+                    et.scrollLeft = et.scrollWidth
+                    ev.scrollLeft = ev.scrollWidth
+                }
+
+
+
+
+
+
 
                 vue.updateCharts()
 
@@ -976,6 +1003,8 @@ let vue = new Vue({
 
                 vue.login = data.login
                 console.log('LOGIN', data.login)
+
+                vue.coinOBJ = JSON.parse(data.coinDict)
 
 
             })
@@ -1009,29 +1038,6 @@ let vue = new Vue({
             let finalList = newList.concat(newList2)
             return finalList
         },
-        reverseDelta() {
-            let newList = []
-            let newList2 = []
-            let flow = this.deltaFlow
-
-            for (let x in flow) {
-                let s = flow[x]['size']
-                if (s > 1000) {
-                    let ns = Math.round(s/100)/10
-                    if (s >= 100000) {
-                       flow[x]['size'] = '!!' + ns + 'k !!'
-                       newList2.push(flow[x])
-                    } else if ( s >= 10000) {
-                        flow[x]['size'] = ns + 'k'
-                        newList2.push(flow[x])
-                    } else {
-                        newList.push(flow[x])
-                    }
-                }
-            }
-            let finalList = newList.concat(newList2)
-            return finalList
-        },
         getReverseVolumeBlocks() {
             return this.volumeBlocks.slice().reverse()
         },
@@ -1041,6 +1047,22 @@ let vue = new Vue({
         getReverseTimeBlocks() {
             let x = 12*12
             return this.timeBlocks.slice().reverse()
+        },
+        getTimeBlocks() {
+            let tbl = this.timeBlocks.length
+            if (tbl > 10) {
+                return this.timeBlocks.slice(8)
+            } else {
+                return this.timeBlocks
+            }
+        },
+        getVolBlocks() {
+            let vbl = this.volumeBlocks.length
+            if (vbl > 10) {
+                return this.volumeBlocks.slice(8)
+            } else {
+                return this.volumeBlocks
+            }
         }
     },
     watch: {
@@ -1066,13 +1088,7 @@ let vue = new Vue({
             }
         },
         volumeBlockSize: function () {
-            if (this.volumeBlockSize == 3 || this.volumeBlockSize > 5) {
-                this.volumeBlockSize = 5
-            } else if (this.volumeBlockSize == 4) {
-                this.volumeBlockSize = 2
-            } else if (this.volumeBlockSize <= 0) {
-                this.volumeBlockSize = 1
-            }
+
         },
         lookback: function () {
             if (this.lookback > 100) {

@@ -35,7 +35,7 @@ def getOF():
     timeBlockSize = int(request.form ['timeBlockSize'])
     coin = request.form ['coin']
 
-    print('BLOCK SIZES', volumeBlockSize, timeBlockSize)
+    print('BLOCK SIZES', coin, volumeBlockSize, timeBlockSize)
 
 
     stream = r.get('stream_' + coin)
@@ -94,7 +94,8 @@ def getOF():
         # 'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
         'user' : user,
-        'coin' : coin
+        'coin' : coin,
+        'coinDict' : r.get('coinDict')
     }
 
     jx = jsonify(jDict)
