@@ -3,7 +3,6 @@ from celery import Celery
 from celery.utils.log import get_task_logger
 from time import sleep
 from pybit import inverse_perpetual, usdt_perpetual
-# from message import sendMessage
 import datetime as dt
 from datetime import datetime
 import redis
@@ -202,12 +201,12 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
         if deltaOI > stream['oiMarker']:
             message = coin + ' Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
-            r.set('discord_' + coin, message)
+            sendMessage(coin, message, '', 'blue')
             streamAlert(message, 'OI', coin)
 
         if deltaOI < - stream['oiMarker']:
             message = coin + ' Sudden OI DEC: ' + deltaOIstr + ' Buys: ' + deltaBuyStr + ' Sells: ' + deltaSellStr  + ' Price: ' + str(stream['lastPrice'])
-            r.set('discord_' + coin, message)
+            sendMessage(coin, message, '', 'pink')
             streamAlert(message, 'OI', coin)
 
 
@@ -498,12 +497,14 @@ def addBlock(units, blocks, mode, coin):
             print('VOL DIV CHECK 2')
             if newCandle['delta'] < 0 and newCandle['price_delta'] > 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
-                r.set('discord_' + coin, coin + ' BULL VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$')
+                msg = coin + ' BULL VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$'
+                sendMessage(coin, msg, '', 'green')
 
             print('VOL DIV CHECK 3')
             if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
-                r.set('discord_' + coin, coin + ' BEAR VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$')
+                msg = coin + ' BEAR VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$'
+                sendMessage(coin, msg, '', 'red')
 
             print('VOL DIV CHECK COMPLETE')
 
@@ -598,14 +599,15 @@ def getPVAstatus(timeblocks, coin):
         print('RETURN PVA')
 
         if pva200 and flatOI and lastVolume > 1_000_000:
-            r.set('discord_' + coin, coin + ' PVA flatOI  Vol:' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm')
+            msg = coin + ' PVA flatOI  Vol:' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm'
+            sendMessage(coin, msg, '', 'yellow')
             streamAlert('PVA candle with flat OI', 'PVA', coin)
         elif pva200 and divergenceBear and lastVolume > 1_000_000:
             msg = coin + ' PVA divergence Bear: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage'])
-            r.set('discord_' + coin, msg)
+            sendMessage(coin, msg, '', 'red')
         elif pva200 and divergenceBull and lastVolume > 1_000_000:
             msg = coin + ' PVA divergence Bull: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage'])
-            r.set('discord_' + coin, msg)
+            sendMessage(coin, msg, '', 'cyan')
 
         return returnPVA
 
@@ -986,7 +988,7 @@ def historyReset(coin):
                 }
 
         for k in r.keys():
-            if k.includes('blocks') and k.includes(coin):
+            if 'blocks' in k  and coin in k:
                 pdDict[k] = json.loads(r.get(k))
             print(k)
 
@@ -1133,11 +1135,15 @@ def handle_trade_message(msg):
     pair = msg['topic'].split('.')[1]
     coin = pair.split('USD')[0]
 
-    exclusive = json.loads(r.get('exclusive'))
+    coinDict = json.loads(r.get('coinDict'))
 
-    if coin not in exclusive:
+    if not coinDict[coin]['active']:
         return False
 
+    if coinDict[coin]['purge']:
+        for k in r.keys():
+            if coin in k:
+                r.delete(k)
 
     ### check time and reset
     historyReset(coin)
@@ -1153,13 +1159,37 @@ def handle_trade_message(msg):
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    coinList = ['BTC', 'ETH', 'GALA']
+    for coin in coinDict:
+        for vs in coinDict[coin]['volsize']:
+            logVolumeUnit(buyUnit, sellUnit, coin, vs)
 
-    if coin == 'BTC':
-        logVolumeUnit(buyUnit, sellUnit, coin, 2)
 
-    logVolumeUnit(buyUnit, sellUnit, coin, 5)
+def sendMessage(coin, string, bg, text):
+    str1 = "```ansi\n"
 
+    escape =  "\u001b[0;"   ## 0 == normal text  1 bold
+
+    colors = {  ### bg / text
+        '': [''],
+        'grey': ['44;'],
+        'red' : ['45;', '31m'],
+        'green' : ['43;', '32m'],
+        'yellow' : ['41;', '33m'],
+        'blue' : ['40;', '34m'],
+        'pink' : ['45;', '35m'],
+        'cyan' : ['42;', '36m'],
+        'white' : ['47;', '37m']
+    }
+    ## bground first then color
+
+    str2 = "\n```"
+
+    msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
+
+    if not coin:
+        return msg
+    else:
+        r.set('discord_' + coin, msg)
 
 
 def startDiscord():
@@ -1174,7 +1204,8 @@ def startDiscord():
         print(f'{bot.user} is now running!')
         user = bot.get_user(int(DISCORD_USER))
         print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
-        await user.send('Running')
+        msg = sendMessage(None, 'Running', 'yellow', 'white')
+        await user.send(msg)
         checkRedis.start(user)
 
     @tasks.loop(seconds=3)
@@ -1187,18 +1218,19 @@ def startDiscord():
 
             ## need incase redis gets wiped
             if not r.get('discord_' + coin):
-                r.set('discord_' + coin, 'discord set')
+                sendMessage(coin, 'discord set', 'white', 'pink')
 
-            channel = bot.get_channel(coinDict[coin][0])
+            channel = bot.get_channel(int(coinDict[coin]['channel']))
 
             if r.get('discord_' + coin) != 'blank':
-                await channel.send(r.get('discord_' + coin))
+                msg = r.get('discord_' + coin)
+                await channel.send(msg)
                 r.set('discord_' + coin, 'blank')
 
     @bot.event
     async def on_message(msg):
         user = bot.get_user(int(DISCORD_USER))
-        print('MESSAGE DDDDDDDDD', msg.content)
+        # print('MESSAGE DDDDDDDDD', msg.content)
         replyText = 'ho'
 
         if msg.content == 'B':
@@ -1223,21 +1255,20 @@ def runStream():
 
 
     for k in r.keys():
-        if k[0] != '_':
+        if k[0] != '_' and k != 'coinDict':
             r.delete(k)
-        print(k)
 
-    coinDict = {
-        ###  channel, OI
-        'BTC' : [1064447410350329876, 1_000_000 ],
-        'ETH' : [1064447463936765952, 1_000_000 ],
-        'GALA' : [1064447289516638208, 3_000_000 ]
-    }
 
-    exclusive = ['BTC', 'ETH', 'GALA']
+    # 'BTC' : {
+    #         'channel' : 1064447410350329876,
+    #         'oicheck' : 1_000_000,
+    #         'volsize' : [2,5],
+    #         'active' : True,
+    #         'purge' : False
+    #     },
 
-    r.set('coinDict', json.dumps(coinDict))
-    r.set('exclusive', json.dumps(exclusive))
+    coinDict = json.loads(r.get('coinDict'))
+
 
     for c in coinDict:
         rDict = {
@@ -1245,7 +1276,7 @@ def runStream():
             'lastTime' : 0,
             'lastOI' : 0,
             '1mOI' : [],
-            'oiMarker' : coinDict[c][1],
+            'oiMarker' : coinDict[c]['oicheck'],
             'Divs' : {},
             'alerts' : []
         }
