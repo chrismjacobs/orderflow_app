@@ -1125,7 +1125,7 @@ def compiler(message, pair, coin):
     #     print('Large Trade: ' + bString)
     #     r.set('discord_' + coin,  'Large Trade: ' + bString)
 
-    print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) + json.dumps(sellUnit['spread']) + json.dumps(buyUnit['spread']))
+    print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) )
 
 
     return [buyUnit, sellUnit]
