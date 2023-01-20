@@ -35,7 +35,7 @@ def getOF():
     timeBlockSize = int(request.form ['timeBlockSize'])
     coin = request.form ['coin']
 
-    print('BLOCK SIZES', coin, volumeBlockSize, timeBlockSize)
+    # print('BLOCK SIZES', coin, volumeBlockSize, timeBlockSize)
 
 
     stream = r.get('stream_' + coin)
