@@ -43,7 +43,7 @@ tbody.vert, thead.vert { display: inline-block; vertical-align: top; }
 tbody.vert {
   width: 530px;
   overflow-y: hidden;
-  overflow-x: hidden;
+  overflow-x: scroll;
   white-space: nowrap;
 }
 tbody.vert tr.vert { margin-right: -5px;}

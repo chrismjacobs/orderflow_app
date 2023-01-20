@@ -120,27 +120,26 @@
                     <br>
 
                     <h3> App Notes </h3>
+
                     - Data presented is from current day and previous day <br>
-                    - Taken from Bybit API (BTCUSD.perp) <br>
+                    - Taken from Bybit API (BTCUSD.perp ; ETHUSD.perp ; GALAUSDT) <br>
+                    - Data is refreshed every 3 secs <br>
 
                     - Time mode is set to minimum 5 mins and can be 5/15/30/60 mins <br>
                     - PVA candles will be highlighted<br>
-                    - PVA candles that show possible divergence are highlighted in grey<br>
                     - Possible occurance of CVD divergence will also be highlighted in the CVD column<br>
                     <br>
-                    - Volume mode can be set to 1 (default), 2 and 5 mil blocks <br>
-                    - Volume blocks are exactly divisions of 1mil <br>
-                    (this is different from exocharts which doesn't split and carries over trades so a 1mil block is actually more than 1mil) <br>
+                    - Volume mode has different blocks depending on the coin symbol <br>
+                    - Volume blocks are exact divisions eg a 2mil block is exactly 2mil
+                    (this is different from exocharts which doesn't split and carries over trades so a 2mil block is actually sometimes more than 2mil) <br>
                     Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
-                    - Delta blocks are set to only record differences of 1mil delta (data does differ slightly from exo charts from time to time)<br>
-                    - In Delta and Volume mode you may view all trades greater than 1000 appearing in the current block <br>
-                    <br>
+
                     <br>
                     <h3> Alerts </h3>
 
                     Possible alerts will include: <br>
 
-                    CVD Divergence / Large Trades / High volume candle with flat OI / Sudden delta switch ups / Sudden dramatic changes in OI
+                    CVD Divergence / Large Trades / High volume candle with flat OI / Sudden dramatic changes in OI
 
                 </div>
 
@@ -173,7 +172,7 @@
                                 <tbody class="vert" id='timeTableVert'>
                                     <template v-for="(item, key) in getTimeBlocks" :key="key" >
                                         <tr class="vert" v-if="key < timeBlockList">
-                                            <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
+                                            <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                             <td class="vert" :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
                                             <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
@@ -216,7 +215,7 @@
                                 <tbody class="vert" id='volTableVert'>
                                     <template v-for="(item, key) in getVolBlocks" :key="key" >
                                     <tr class="vert">
-                                        <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]]</span> </th>
+                                        <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                         <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                         <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta)">[[roundData(item.total)]]</td>
                                         <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
@@ -970,13 +969,31 @@ let vue = new Vue({
                 console.log('OF data received')
                 vue.volumeFlow = JSON.parse(data.volumeFlow)
 
-                vue.volumeBlocks = JSON.parse(data.volumeBlocks)
+                let newVblocks = JSON.parse(data.volumeBlocks)
+
+                vScroll = false
+
+                if (newVblocks.length > vue.volumeBlocks.length) {
+                    vScroll = true
+                }
+
+                vue.volumeBlocks = newVblocks
 
                 vue.stream = JSON.parse(data.stream)
 
-                vue.timeBlocks = JSON.parse(data.timeBlocks)
-
                 vue.timeFlow = JSON.parse(data.timeFlow)
+
+                let newTblocks = JSON.parse(data.timeBlocks)
+
+                tScroll = false
+
+                if (newTblocks.length > vue.timeBlocks.length) {
+                    tScroll = true
+                }
+
+                vue.timeBlocks = newTblocks
+
+
 
                 //vue.deltaBlocks = JSON.parse(data.deltaBlocks)
 
@@ -986,8 +1003,12 @@ let vue = new Vue({
                 let et = document.getElementById('timeTableVert')
                 let ev = document.getElementById('volTableVert')
                 if (et) {
-                    et.scrollLeft = et.scrollWidth
-                    ev.scrollLeft = ev.scrollWidth
+                    if (et.scrollLeft == 0 || tScroll) {
+                       et.scrollLeft = et.scrollWidth
+                    }
+                    if (ev.scrollLeft == 0 || vScroll) {
+                       ev.scrollLeft = ev.scrollWidth
+                    }
                 }
 
 
@@ -1050,16 +1071,16 @@ let vue = new Vue({
         },
         getTimeBlocks() {
             let tbl = this.timeBlocks.length
-            if (tbl > 10) {
-                return this.timeBlocks.slice(8)
+            if (tbl > 30) {
+                return this.timeBlocks.slice(-30)
             } else {
                 return this.timeBlocks
             }
         },
         getVolBlocks() {
             let vbl = this.volumeBlocks.length
-            if (vbl > 10) {
-                return this.volumeBlocks.slice(8)
+            if (vbl > 30) {
+                return this.volumeBlocks.slice(-30)
             } else {
                 return this.volumeBlocks
             }

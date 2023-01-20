@@ -1006,7 +1006,7 @@ def historyReset(coin):
                 r.set('history_' + coin, json.dumps(history))
 
                 if coin == 'BTC':
-                    tb =json.loads(r.get('timeblocks_BTC'))
+                    tb = json.loads(r.get('timeblocks_BTC'))
                     pd = getPreviousDay(tb)
                     r.set('discord_' + coin, 'history log: ' + pd)
         else:
@@ -1015,10 +1015,8 @@ def historyReset(coin):
             history.append(pdDict)
             r.set('history_' + coin, json.dumps(history))
 
-            pd = getPreviousDay(tb)
-
             if coin == 'BTC':
-                    tb =json.loads(r.get('timeblocks_BTC'))
+                    tb = json.loads(r.get('timeblocks_BTC'))
                     pd = getPreviousDay(tb)
                     r.set('discord_' + coin, 'history log: ' + pd)
 
@@ -1028,7 +1026,7 @@ def historyReset(coin):
             print('REDIS RESET')
 
             for k in r.keys():
-                if k[0] != 'v':
+                if k[0] == 'v':
                     r.delete(k)
                 print(k)
 
