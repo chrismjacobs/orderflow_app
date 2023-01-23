@@ -41,7 +41,6 @@ th.vert, td.vert { display: block; border: 0px solid black; }
 tbody.vert, thead.vert { display: inline-block; vertical-align: top; }
 
 tbody.vert {
-  width: 530px;
   overflow-y: hidden;
   overflow-x: scroll;
   white-space: nowrap;

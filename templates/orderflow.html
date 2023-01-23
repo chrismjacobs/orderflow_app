@@ -122,7 +122,7 @@
                     <h3> App Notes </h3>
 
                     - Data presented is from current day and previous day <br>
-                    - Taken from Bybit API (BTCUSD.perp ; ETHUSD.perp ; GALAUSDT) <br>
+                    - Taken from Bybit API (BTCUSD.perp) <br>
                     - Data is refreshed every 3 secs <br>
 
                     - Time mode is set to minimum 5 mins and can be 5/15/30/60 mins <br>
@@ -133,20 +133,27 @@
                     - Volume blocks are exact divisions eg a 2mil block is exactly 2mil
                     (this is different from exocharts which doesn't split and carries over trades so a 2mil block is actually sometimes more than 2mil) <br>
                     Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
+                    <br>
+
+                    <h3> Notice </h3>
+                    - The webapp is free to use and currently uses the cheapest server set up
+                    - This means if the web app is inactive for 15 min then it may take 1min to reactivate
+                    - Also, if really high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream will catch up in 15-20min
+
 
                     <br>
                     <h3> Alerts </h3>
 
-                    Possible alerts will include: <br>
+                    Alert system is experimental and may include: <br>
 
-                    CVD Divergence / Large Trades / High volume candle with flat OI / Sudden dramatic changes in OI
+                    CVD Divergence / High volume candle with flat OI / Sudden dramatic changes in OI
 
                 </div>
 
 
-                <div v-if="!mobile && showVertical">
+                <div v-if="showVertical">
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col">
                             <div class="border border-info rounded pt-2 pb-1 text-info" >
                                 <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
                                         <span @click="setTime(+1)" class="ml-2" >&#8593</span>
@@ -162,14 +169,14 @@
                                         <th class="vert p-1" v-if="showDelta" scope="col" @click="showDelta = false"> &#x2190</th>
                                         <th class="vert p-1" v-if="showDelta" scope="col">Sells</th>
                                         <th class="vert p-1" v-if="showDelta" scope="col">Buys</th>
-                                        <th class="vert pt-3 pb-3" scope="col">OI</th>
-                                        <th class="vert pt-3 pb-3" scope="col">Candle</th>
+                                        <th class="vert p-1" scope="col">OI</th>
+                                        <th class="vert p-1" scope="col">Candle</th>
                                         <th class="vert p-1" scope="col" style="width:2%">High</th>
                                         <th class="vert p-1" scope="col" style="width:2%">Close</th>
                                         <th class="vert p-1" scope="col" style="width:2%">Low</th>
                                     </tr>
                                     </thead>
-                                <tbody class="vert" id='timeTableVert'>
+                                <tbody class="vert" id='timeTableVert' :style="getVerticalTable()">
                                     <template v-for="(item, key) in getTimeBlocks" :key="key" >
                                         <tr class="vert" v-if="key < timeBlockList">
                                             <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
@@ -178,13 +185,14 @@
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                             <td class="vert" v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
-                                            <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <br> <span v-if="showTable == 'Time' && timeBlockSize == 5">([[roundData(item.oi_range)]])</span></td>
-                                            <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> <br> ([[getRange(item.high, item.low)]]) </span></td>
+                                            <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <br> </td>
+                                            <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]]</td>
                                             <td class="vert" :style="getLocal('high', key)">[[item.high]]</td>
                                             <td class="vert" :style="getCloseStyle(item.close, key, 'time')">[[item.close]]</td>
                                             <td class="vert" :style="getLocal('low', key)">[[item.low]]</td>
                                         </tr>
                                     </template>
+
                                 </tbody>
                             </table>
                         </div>
@@ -204,23 +212,23 @@
                                         <th class="vert p-1"  style="width:10%">Time</th>
                                         <th class="vert p-1" >Sec</th>
                                         <th class="vert p-1" >Vol</th>
-                                        <th class="vert p-1"  @click="showDelta = true">Delta <span v-if="showDelta == false && !mobile" @click="showDelta = true"> &#x2192 </span></th>
+                                        <th class="vert p-1"  @click="showDelta = true">Delta</th>
                                         <th class="vert p-1" >OI</th>
-                                        <th class="vert pt-3 pb-3" >Candle</th>
+                                        <th class="vert p-1" >Candle</th>
                                         <th class="vert p-1"  style="width:2%">High</th>
                                         <th class="vert p-1"  style="width:2%">Close</th>
                                         <th class="vert p-1"  style="width:2%">Low</th>
                                     </tr>
                                 </thead>
-                                <tbody class="vert" id='volTableVert'>
+                                <tbody class="vert" id='volTableVert' :style="getVerticalTable()">
                                     <template v-for="(item, key) in getVolBlocks" :key="key" >
                                     <tr class="vert">
                                         <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                         <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
-                                        <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta)">[[roundData(item.total)]]</td>
+                                        <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
                                         <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
                                         <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                        <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> <br> ([[getRange(item.high, item.low)]]) </span></td>
+                                        <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] </span></td>
                                         <td class="vert">[[item.high]]</td>
                                         <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
                                         <td class="vert">[[item.low]]</td>
@@ -287,7 +295,7 @@
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                 <td v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
-                                <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[item.delta_cumulative]]</td>
+                                <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[roundData(item.delta_cumulative)]]</td>
                                 <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <span v-if="showTable == 'Time' && timeBlockSize == 5">([[roundData(item.oi_range)]])</span></td>
                                 <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[getRange(item.high, item.low)]]) </span></td>
                                 <td :style="getLocal('high', key)">[[item.high]]</td>
@@ -300,7 +308,7 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp [[ roundData(tick.Sell) ]] &nbsp |  &nbsp [[ roundData(tick.Buy) ]] &nbsp  <br></span </td>
+                                            <td colspan="5"> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]] </span> &nbsp |  &nbsp <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp  <br></span </td>
                                         </tr>
 
                                     </template>
@@ -327,7 +335,11 @@
                             </tr>
                                     <template v-if="showCandle == key">
                                         <tr >
-                                            <span> [[ item ]]  </span>
+                                            <td colspan="7">
+                                                <span>
+                                                    [[item]]
+                                                </span>
+                                            </td>
                                         </tr>
                                     </template>
                             </template>
@@ -352,9 +364,11 @@
                             </tr>
                                     <template v-if="showCandle == key">
                                         <tr>
-                                            <span>
-                                                [[item]]
-                                            </span>
+                                            <td colspan="7">
+                                                <span>
+                                                    [[item]]
+                                                </span>
+                                            </td>
                                         </tr>
 
                                     </template>
@@ -496,6 +510,26 @@ let vue = new Vue({
           }
     },
     methods: {
+        getImbalance: function (side, per) {
+            console.log(side, per)
+            let colors ={
+                sell : {background:'red'},
+                buy : {background:'green'}
+            }
+
+            if (per > 369) {
+                return colors[side]
+            }
+
+        },
+        getVerticalTable: function () {
+            if (!this.mobile) {
+                return {width:'530px'}
+            } else {
+                return {width:'300px'}
+            }
+
+        },
         getRange: function (high, low) {
             let abs = Math.abs(high - low)
 
@@ -902,7 +936,13 @@ let vue = new Vue({
 
             return style
         },
-        getVolumeDivStyle: function(price, delta) {
+        getVolumeDivStyle: function(price, delta, item) {
+
+            if (item.volDiv && item.volDiv) {
+                return {background : 'darkpurple'}
+            } else {
+                return false
+            }
 
             let style = {}
 
