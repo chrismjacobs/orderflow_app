@@ -152,7 +152,7 @@
 
 
                 <div v-if="showVertical">
-                    <div class="row">
+                    <div class="row p-0">
                         <div class="col">
                             <div class="border border-info rounded pt-2 pb-1 text-info" >
                                 <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
@@ -308,7 +308,7 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td colspan="5"> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]] </span> &nbsp |  &nbsp <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp  <br></span </td>
+                                            <td colspan="5"> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]] / [[tick.SellPer]]</span> &nbsp |  &nbsp <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]] / [[tick.BuyPer]]</span> &nbsp  <br></span </td>
                                         </tr>
 
                                     </template>
