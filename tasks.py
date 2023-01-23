@@ -982,7 +982,7 @@ def historyReset(coin):
     if r.get('history_' + coin) == None:
         r.set('history_' + coin, json.dumps([]))
 
-    current_time = dt.datetime.utcnow()historyReset
+    current_time = dt.datetime.utcnow()
 
     dt_string = current_time.strftime("%d/%m/%Y")
 
