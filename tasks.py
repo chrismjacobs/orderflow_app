@@ -122,25 +122,29 @@ def getHiLow(timeblocks, coin):
         if tbRev[0]['delta_cumulative'] > LH2h_cvd:
             # Divergence Triggered
             highInfo['div'] = True
-            r.set('discord_' + coin, coin + ' CVD BEAR div: ' + json.dumps(highInfo))
+
             streamAlert('CVD Bear div: ' + json.dumps(highInfo), 'CVD Divergence', coin)
+            if coin == 'BTC':
+                r.set('discord_' + coin, coin + ' CVD BEAR div: ' + json.dumps(highInfo))
 
     if LL2h_index >= 2:
         if tbRev[0]['delta_cumulative'] < LL2h_cvd:
             # Divergence Triggered
             lowInfo['div'] = True
-            r.set('discord_' + coin, coin + ' CVD BULL div: ' + json.dumps(lowInfo))
             streamAlert('CVD Bull div: ' + json.dumps(lowInfo), 'CVD Divergence', coin)
+
+            if coin == 'BTC':
+                r.set('discord_' + coin, coin + ' CVD BULL div: ' + json.dumps(lowInfo))
 
 
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo}
 
 
 def getHistory(coin):
-    # print('GET HISTORY ' + coin, r.get('history_' + coin))
+    # print('GET HISTORY ' + coin)
 
     historyBlocks = json.loads(r.get('history_' + coin))
-    if len(historyBlocks) > 0:
+    if historyBlocks and len(historyBlocks) > 0:
         return historyBlocks[-1]
     else:
         return False
@@ -978,7 +982,7 @@ def historyReset(coin):
     if r.get('history_' + coin) == None:
         r.set('history_' + coin, json.dumps([]))
 
-    current_time = dt.datetime.utcnow()
+    current_time = dt.datetime.utcnow()historyReset
 
     dt_string = current_time.strftime("%d/%m/%Y")
 
@@ -991,9 +995,9 @@ def historyReset(coin):
                 }
 
         for k in r.keys():
-            if 'blocks' in k  and coin in k:
+            if 'blocks' in k and coin in k:
                 pdDict[k] = json.loads(r.get(k))
-            print(k)
+                print('History Loads ' + k)
 
         if len(history) > 0:
             lastHistory = json.loads(r.get('history_' + coin))[len(history)-1]
