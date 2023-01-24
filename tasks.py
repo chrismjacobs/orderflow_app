@@ -137,13 +137,16 @@ def getHiLow(timeblocks, coin):
                 r.set('discord_' + coin, coin + ' CVD BULL div: ' + json.dumps(lowInfo))
 
 
-    return {'highInfo' : highInfo , 'lowInfo' : lowInfo}
+    return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
 
 
 def getHistory(coin):
     # print('GET HISTORY ' + coin)
 
     historyBlocks = json.loads(r.get('history_' + coin))
+    ## -->  each day
+    ## a list of dictionaries
+
     if historyBlocks and len(historyBlocks) > 0:
         return historyBlocks[-1]
     else:
@@ -263,11 +266,15 @@ def addDelta(blocks, coin):
         r.set('discord_' + coin, 'delta switch fail')
         return False
 
-def getImbalances(tickList):
-    print('IMBALANCES')
+def getImbalances(tickList, mode):
+    if LOCAL:
+        print('IMBALANCES')
 
     ticks = len(tickList)
     # 1 2 3
+
+    ## Buys cannot be last
+    ## Sells cannot be at the top
 
     for i in range(ticks):  # 0 1 2
         if i + 1 < ticks:
@@ -281,7 +288,7 @@ def getImbalances(tickList):
             if BIpct > 1000:
                 BIpct = 1000
 
-            tickList[i + 1]['BuyPer'] = BIpct
+            tickList[i]['BuyPer'] = BIpct
 
             SIbuys = tickList[i]['Buy']
             SIsells = tickList[i + 1]['Sell']
@@ -295,7 +302,23 @@ def getImbalances(tickList):
 
             tickList[i + 1]['SellPer'] = SIpct
 
-    return tickList
+    stackBuys = 0
+    stackSells = 0
+
+    if 'block' in mode:
+
+        for t in tickList:
+            if t['SellPer'] > 369:
+                stackSells += 1
+            if t['SellPer'] < 369 and stackSells <= 2:
+                stackSells = 0
+            if t['BuyPer'] > 369:
+                stackBuys += 1
+            if t['BuyPer'] < 369 and stackBuys <= 2:
+                stackBuys = 0
+
+
+    return [tickList, stackBuys, stackSells]
 
 def addBlock(units, blocks, mode, coin):
 
@@ -336,10 +359,12 @@ def addBlock(units, blocks, mode, coin):
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
-    elif 'time' in mode and getHistory(coin):
-        lastCandle = getHistory(coin)['timeblocks'][-1]
-        previousDeltaCum = lastCandle['delta_cumulative']
-        previousOICum = lastCandle['oi_cumulative']
+    elif 'time' in mode:
+        h = getHistory(coin)
+        if h:
+            lastCandle = h['timeblocks_' + coin][-1]
+            previousDeltaCum = lastCandle['delta_cumulative']
+            previousOICum = lastCandle['oi_cumulative']
 
 
     newStart  = units[0]['trade_time_ms']
@@ -410,8 +435,8 @@ def addBlock(units, blocks, mode, coin):
                         'tickPrice' : tickPrice,
                         'Sell'  : 0,
                         'Buy' : 0,
-                        'Sell%' : 0,
-                        'Buy%' : 0
+                        'SellPer' : 0,
+                        'BuyPer' : 0
                     }
 
                 tickDict[tickPrice][d['side']] += d['spread'][str(price)]
@@ -433,7 +458,18 @@ def addBlock(units, blocks, mode, coin):
         for p in tickKeys:
             tickList.append(tickDict[p])
 
-        tickList = getImbalances(tickList)
+        getIMBs = getImbalances(tickList, mode)
+        tickList = getIMBs[0]
+        stackBuys = getIMBs[1]
+        stackSells = getIMBs[2]
+
+        if stackBuys >= 3 or stackSells >= 3:
+            sendMessage(coin, 'Stack IMBS', '', 'white')
+
+        # previousCVDDIV = False
+        # if lastCandle['divergence'] and len(lastCandle['divergence']) > 0:
+        #     if lastCandle['divergence']['highInfo'] or lastCandle['divergence']['lowInfo']
+
 
     oiList.sort()
 
@@ -495,16 +531,22 @@ def addBlock(units, blocks, mode, coin):
 
         if abs(deltaPercent) > 20:
             print('VOL DIV CHECK 2')
+            timeSecs = round(newCandle['time_delta']/1000)
+            oiCheck = round(newCandle['oi_delta']/1000)
+            tots = round(newCandle['total']/1_000_000)
+
             if newCandle['delta'] < 0 and newCandle['price_delta'] > 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
-                msg = coin + ' BULL VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$'
-                sendMessage(coin, msg, '', 'green')
+                msg = coin + ' BULL VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
+                if tots > 2_500_000:
+                    sendMessage(coin, msg, '', 'green')
 
             print('VOL DIV CHECK 3')
             if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
-                msg = coin + ' BEAR VOL ' + str(round(newCandle['total']/1_000_000)) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$'
-                sendMessage(coin, msg, '', 'red')
+                msg = coin + ' BEAR VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
+                if tots > 2_500_000:
+                    sendMessage(coin, msg, '', 'red')
 
             print('VOL DIV CHECK COMPLETE')
 
