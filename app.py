@@ -105,10 +105,12 @@ def getOF():
     return jx
 
 @app.route('/start')
+
 def start():
     return render_template('start.html')
 
 @app.route('/workerAction', methods=['POST'])
+@login_required
 def worker():
     x = int(request.form['x'] or 0)
     print('workerAction', x, START_CODE)
