@@ -420,14 +420,8 @@ def addBlock(units, blocks, mode, coin):
 
                 elif coin == 'ETH':
                     ##  1159.56 --> 1159.25
-                    floor = math.floor(price)
-                    rnd = round(price)
+                    tickPrice = math.floor(price)
 
-
-                    if floor == rnd:
-                        tickPrice = str(floor)
-                    else:
-                        tickPrice = str(floor + 0.5)
 
                 if tickPrice not in tickDict:
 
@@ -463,8 +457,10 @@ def addBlock(units, blocks, mode, coin):
         stackBuys = getIMBs[1]
         stackSells = getIMBs[2]
 
-        if stackBuys >= 3 or stackSells >= 3:
-            sendMessage(coin, 'Stack IMBS', '', 'white')
+        if stackBuys >= 3:
+            sendMessage(coin, 'Stack IMBS BUY', '', 'white')
+        if stackSells >= 3:
+            sendMessage(coin, 'Stack IMBS SELL', '', 'white')
 
         # previousCVDDIV = False
         # if lastCandle['divergence'] and len(lastCandle['divergence']) > 0:

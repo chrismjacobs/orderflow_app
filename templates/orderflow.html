@@ -130,15 +130,15 @@
                     - Possible occurance of CVD divergence will also be highlighted in the CVD column<br>
                     <br>
                     - Volume mode has different blocks depending on the coin symbol <br>
-                    - Volume blocks are exact divisions eg a 2mil block is exactly 2mil
+                    - Volume blocks are exact divisions eg a 2mil block is exactly 2mil <br>
                     (this is different from exocharts which doesn't split and carries over trades so a 2mil block is actually sometimes more than 2mil) <br>
                     Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
                     <br>
 
                     <h3> Notice </h3>
-                    - The webapp is free to use and currently uses the cheapest server set up
-                    - This means if the web app is inactive for 15 min then it may take 1min to reactivate
-                    - Also, if really high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream will catch up in 15-20min
+                    - This webapp is free to use and currently uses the cheapest server set up <br>
+                    - This means if the web app is inactive for 15 min then it may take 1min to reactivate <br>
+                    - Also, if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream may need to catch for about 15-20min <br>
 
 
                     <br>
@@ -181,8 +181,8 @@
                                         <tr class="vert" v-if="key < timeBlockList">
                                             <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                             <td class="vert" :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
-                                            <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
-                                            <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                            <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                            <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                             <td class="vert" v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                             <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <br> </td>
@@ -226,7 +226,7 @@
                                         <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                         <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                         <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
-                                        <td class="vert" :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                        <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                         <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
                                         <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] </span></td>
                                         <td class="vert">[[item.high]]</td>
@@ -291,8 +291,8 @@
                                 <th class="text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                 <td>[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeStyle(item.pva_status, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
-                                <td :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                <td :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                 <td v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'time')">[[roundData(item.delta_cumulative)]]</td>
@@ -308,7 +308,16 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td colspan="5"> <span v-for="(tick, index) in item.tickList"> [[ tick.tickPrice ]] &nbsp &nbsp <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]] / [[tick.SellPer]]</span> &nbsp |  &nbsp <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]] / [[tick.BuyPer]]</span> &nbsp  <br></span </td>
+                                            <td> </td>
+                                            <td colspan="5">
+                                                <span v-for="(tick, index) in item.tickList">
+                                                    <span :style="getCurrent(tick.tickPrice)"> [[ tick.tickPrice ]] </span> &nbsp &nbsp
+                                                    <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
+                                                    &nbsp |  &nbsp
+                                                    <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp
+                                                    <br>
+                                                </span>
+                                            </td>
                                         </tr>
 
                                     </template>
@@ -321,8 +330,8 @@
                                 <th class="text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                 <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
-                                <td :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
+                                <td :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
+                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'vol')">[[item.delta_cumulative]]</td>
@@ -350,8 +359,8 @@
                                 <th class="text-success" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                 <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
-                                <td :style="getDeltaStyle(item.delta, 0)">[[roundData(item.delta, item.total)]]</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0)">[[getPercent(item.delta, item.total)]]%</td>
+                                <td :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                 <td v-if="showDelta"  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                 <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
@@ -510,6 +519,13 @@ let vue = new Vue({
           }
     },
     methods: {
+        getCurrent: function (price) {
+            let pFloor = Math.floor(this.stream['lastPrice']/10)*10
+
+            if (price == pFloor.toString()) {
+                return {background:'gold', color:'black'}
+            }
+        },
         getImbalance: function (side, per) {
             console.log(side, per)
             let colors ={
@@ -832,11 +848,9 @@ let vue = new Vue({
                 if (r == '1000') {
                     return '1m'
                 } else {
-                    return r + 'K'
+                    return r + 'k'
                 }
-
             }
-
         },
         getPercent: function (data, total) {
             //deal with K
@@ -874,26 +888,39 @@ let vue = new Vue({
             }
             return style
         },
-        getDeltaStyle: function(delta, mode) {
+        getDeltaStyle: function(delta, mode, total) {
+            // mode 0 is normal
+            // 1 is Buys
+            // -1 is Sells
+
+            let p = this.getPercent(delta, total)
             let style = {}
             if (mode == 0) {
-                if (delta < 0 ) {
+                if (p < -80 ) {
                     // Orange
-                    style = {background : '#BF360C'}
-                } else if ( delta > 0) {
-                    style = {background : 'DarkCyan'}
-
+                    style = {background : '#FF6F00'}
+                } else if ( p < -40 ) {
+                    style = {background : '#EF6C00'}
+                } else if (p < 0) {
+                    style = {background : '#FB8C00'}
+                } else if (p > 80 ) {
+                    // Orange
+                    style = {background : '#00838F'}
+                } else if ( p > 40 ) {
+                    style = {background : '#0097A7'}
+                } else if (p > 0) {
+                    style = {background : '#00ACC1'}
                 }
             } else if (mode < 0) {
-                if (delta > 500000) {
+                if (delta > 5000000) {
                    style = {background : '#795548'}
-                } else if (delta > 100000) {
+                } else if (delta > 1000000) {
                    style = {background : '#4E342E'}
                 }
             } else if (mode > 0) {
-                if (delta > 500000) {
+                if (delta > 5000000) {
                    style = {background : '#455A64 '}
-                } else if (delta > 100000) {
+                } else if (delta > 1000000) {
                    style = {background : '#263238'}
                 }
             }
