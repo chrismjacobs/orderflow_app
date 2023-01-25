@@ -163,7 +163,7 @@
                             <table class="table table-dark table-sm vert">
                                 <thead class="vert">
                                     <tr class="vert">
-                                        <th class="vert p-1" scope="col">Sec</th>
+                                        <th class="vert p-1" scope="col">Time</th>
                                         <th class="vert p-1" scope="col">Vol</th>
                                         <th class="vert p-1" scope="col" @click="showDelta = true">Delta <span v-if="showDelta == false && !mobile" @click="showDelta = true"> &#x2192 </span></th>
                                         <th class="vert p-1" v-if="showDelta" scope="col" @click="showDelta = false"> &#x2190</th>
@@ -179,7 +179,7 @@
                                 <tbody class="vert" id='timeTableVert' :style="getVerticalTable()">
                                     <template v-for="(item, key) in getTimeBlocks" :key="key" >
                                         <tr class="vert" v-if="key < timeBlockList">
-                                            <th class="vert text-info" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
+                                            <th class="vert text-info" scope="row"><span @click="getManualLookback(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                             <td class="vert" :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
                                             <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
@@ -223,7 +223,7 @@
                                 <tbody class="vert" id='volTableVert' :style="getVerticalTable()">
                                     <template v-for="(item, key) in getVolBlocks" :key="key" >
                                     <tr class="vert">
-                                        <th class="vert text-warning text-xsmall" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
+                                        <th class="vert text-warning text-xsmall" scope="row"><span>[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                         <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                         <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
                                         <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
@@ -308,16 +308,25 @@
                                             <td> </td>
                                             <td> PVA% : [[Math.round(item.pva_status.percentage * 100)]]</td>
                                             <td> </td>
-                                            <td> </td>
-                                            <td colspan="5">
+                                            <td> <span v-for="(tick, index) in item.tickList">
+                                                <span :style="getCurrent(tick.tickPrice)"> [[ tick.tickPrice ]] </span>
+                                                <br>
+                                                </span>
+                                            </td>
+
+                                            <td>
                                                 <span v-for="(tick, index) in item.tickList">
-                                                    <span :style="getCurrent(tick.tickPrice)"> [[ tick.tickPrice ]] </span> &nbsp &nbsp
                                                     <span :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
-                                                    &nbsp |  &nbsp
-                                                    <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp
                                                     <br>
                                                 </span>
                                             </td>
+                                            <td>
+                                                <span v-for="(tick, index) in item.tickList">
+                                                    |  &nbsp  <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp
+                                                    <br>
+                                                </span>
+                                            </td>
+
                                         </tr>
 
                                     </template>
@@ -441,7 +450,10 @@ let vue = new Vue({
         if (localStorage['lookback']) {
             this.lookback = localStorage['lookback']
         }
-        this.lookback = 60
+        if (!this.lookback || this.lookback == 'NaN') {
+            this.lookback = 60
+        }
+
     },
     data: {
         showVertical: true,
@@ -633,14 +645,24 @@ let vue = new Vue({
                 this.showCandle = key
             }
         },
+        getManualLookback: function (key) {
+            let tableTotal = this.getTimeBlocks.length
+            let totalTotal = this.timeBlocks.length
+            let index = tableTotal - key
+            console.log(index, key)
+
+            this.lookback = Math.round((index/totalTotal)*100)
+        },
         setLookBack: function (n) {
-            this.lookback += n
+
+            console.log(n, this.lookback, (this.lookback + n)/10 )
+
+            this.lookback = Math.round((this.lookback + n)/10) * 10
         },
         updateCharts: function () {
             let blockOBJ = {
                 Time : this.timeBlocks,
-                Volume : this.volumeBlocks,
-                Delta : this.deltaBlocks
+                Volume : this.volumeBlocks
             }
 
             if (!blockOBJ[this.showTable]) {
@@ -1103,51 +1125,24 @@ let vue = new Vue({
         }
     },
     computed: {
-        reverseTrades() {
-            let newList = []
-            let newList2 = []
-            let flow = this.volumeFlow
-
-            for (let x in flow) {
-                let s = flow[x]['size']
-                if (s > 1000) {
-                    let ns = Math.round(s/100)/10
-                    if (s >= 100000) {
-                       flow[x]['size'] = '!!' + ns + 'k !!'
-                       newList2.push(flow[x])
-                    } else if ( s >= 10000) {
-                        flow[x]['size'] = ns + 'k'
-                        newList2.push(flow[x])
-                    } else {
-                        newList.push(flow[x])
-                    }
-                }
-            }
-            let finalList = newList.concat(newList2)
-            return finalList
-        },
         getReverseVolumeBlocks() {
             return this.volumeBlocks.slice().reverse()
         },
-        getReverseDeltaBlocks() {
-            return this.deltaBlocks.slice().reverse()
-        },
         getReverseTimeBlocks() {
-            let x = 12*12
             return this.timeBlocks.slice().reverse()
         },
         getTimeBlocks() {
             let tbl = this.timeBlocks.length
-            if (tbl > 30) {
-                return this.timeBlocks.slice(-30)
+            if (tbl > 50) {
+                return this.timeBlocks.slice(-50)
             } else {
                 return this.timeBlocks
             }
         },
         getVolBlocks() {
             let vbl = this.volumeBlocks.length
-            if (vbl > 30) {
-                return this.volumeBlocks.slice(-30)
+            if (vbl > 50) {
+                return this.volumeBlocks.slice(-50)
             } else {
                 return this.volumeBlocks
             }
@@ -1181,7 +1176,7 @@ let vue = new Vue({
         lookback: function () {
             if (this.lookback > 100) {
                 this.lookback = 100
-            } else if (this.lookback < 10) {
+            } else if (this.lookback < 1) {
                 this.lookback = 10
             }
             console.log('lookback')

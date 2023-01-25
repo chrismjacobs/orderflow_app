@@ -72,7 +72,7 @@ def getOF():
     if 'volumeblocks_' + coin + str(volumeBlockSize) in lastHistory:
         ## combine History and current
         currentVolume = json.loads(volumeBlocks)
-        newVolume = lastHistory['volumeblocks'] + currentVolume
+        newVolume = lastHistory['volumeblocks_' + coin + str(volumeBlockSize)] + currentVolume
         volumeBlocks = json.dumps(newVolume)
 
 
