@@ -37,7 +37,7 @@
 
 table.vert { border-collapse: collapse; white-space: nowrap; }
 tr.vert { display: inline-block; }
-th.vert, td.vert { display: block; border: 0px solid black; }
+th.vert, td.vert { display: block; border: 0px solid black; height: 35px }
 tbody.vert, thead.vert { display: inline-block; vertical-align: top; }
 
 tbody.vert {

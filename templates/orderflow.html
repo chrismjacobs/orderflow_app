@@ -19,7 +19,7 @@
 
         <div id="vue-app" :class="getMargin()" >
 
-            <div class="text-white" align="center" >
+            <div class="text-white" align="center">
                 <br>
 
                 <h1>
@@ -148,6 +148,13 @@
 
                     CVD Divergence / High volume candle with flat OI / Sudden dramatic changes in OI
 
+                    <h3> Logged In </h3>
+
+                    [[login]]
+
+                    <br>
+                    <br>
+
                 </div>
 
 
@@ -186,12 +193,13 @@
                                             <td class="vert" v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                             <td class="vert" v-if="showDelta" :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                             <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]  <br> </td>
-                                            <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]]</td>
-                                            <td class="vert" :style="getLocal('high', key)">[[item.high]]</td>
+                                            <td class="vert" :style="getCandleStyle(item.open, item.close)" >[[item.price_delta]]</td>
+                                            <td class="vert" :style="getLocal('high', key, true)">[[item.high]]</td>
                                             <td class="vert" :style="getCloseStyle(item.close, key, 'time')">[[item.close]]</td>
-                                            <td class="vert" :style="getLocal('low', key)">[[item.low]]</td>
+                                            <td class="vert" :style="getLocal('low', key, true)">[[item.low]]</td>
                                         </tr>
                                     </template>
+
 
                                 </tbody>
                             </table>
@@ -228,7 +236,7 @@
                                         <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
                                         <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                         <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                        <td class="vert" :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] </span></td>
+                                        <td class="vert" :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] </span></td>
                                         <td class="vert">[[item.high]]</td>
                                         <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
                                         <td class="vert">[[item.low]]</td>
@@ -322,7 +330,7 @@
                                             </td>
                                             <td>
                                                 <span v-for="(tick, index) in item.tickList">
-                                                    |  &nbsp  <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span> &nbsp
+                                                    <span :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
                                                     <br>
                                                 </span>
                                             </td>
@@ -757,7 +765,7 @@ let vue = new Vue({
             return returnValues[mode]
 
         },
-        getLocal: function (mode, key) {
+        getLocal: function (mode, key, vert) {
             let sets = {
                     high : this.localHigh,
                     low : this.localLow,
@@ -768,7 +776,10 @@ let vue = new Vue({
                 }
 
             if (this.timeBlockSize == 5) {
-                if (key == sets[mode] + 1) {
+                if (key == sets[mode] + 1 && !vert) {
+                return { background: colors[mode]}
+                }
+                if (key == this.getTimeBlocks.length - sets[mode] - 2 && vert) {
                 return { background: colors[mode]}
                 }
             }
@@ -887,6 +898,8 @@ let vue = new Vue({
         timeStyle: function (ms) {
             if (Math.round((ms/1000)) <= 60) {
                 return {background: '#2C3E50' }
+            } else {
+                return {background: '#1B2631' }
             }
 
         },
@@ -916,7 +929,7 @@ let vue = new Vue({
             // -1 is Sells
 
             let p = this.getPercent(delta, total)
-            let style = {}
+            let style = {background : '#1B2631'}
             if (mode == 0) {
                 if (p < -80 ) {
                     // Orange
@@ -950,7 +963,7 @@ let vue = new Vue({
         },
         getVolumeStyle: function(pva_status, key, price) {
 
-            let style = {}
+            let style = {background : '#1B2631'}
 
 
             if (pva_status['pva150']) {
