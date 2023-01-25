@@ -534,14 +534,14 @@ def addBlock(units, blocks, mode, coin):
             if newCandle['delta'] < 0 and newCandle['price_delta'] > 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
                 msg = coin + ' BULL VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
-                if tots > 2_500_000:
+                if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'green')
 
             print('VOL DIV CHECK 3')
             if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
                 msg = coin + ' BEAR VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
-                if tots > 2_500_000:
+                if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'red')
 
             print('VOL DIV CHECK COMPLETE')
@@ -1231,6 +1231,10 @@ def sendMessage(coin, string, bg, text):
     str2 = "\n```"
 
     msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
+
+    noAnsi = True
+    if noAnsi:
+        msg = string
 
     if not coin:
         return msg
