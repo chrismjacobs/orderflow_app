@@ -50,10 +50,10 @@
                 <br>
                 <button style="display:none" @click="showChart += 1" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
                 <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
-                <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
-                <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
-                <button v-if="user" @click="goTo('journal')" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Journal</button>
-                <button v-if="user" @click="goTo('trade')" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Trade</button>
+                <button style="display:none" @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
+                <button style="display:none" @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
+                <button v-if="user" @click="goTo('journal')" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off">Journal</button>
+                <button v-if="user" @click="goTo('trade')" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Trade</button>
                 <button @click="showTable='Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">&#x2699;</button>
 
 
@@ -113,6 +113,14 @@
                     <br>
                     <br>
 
+                    <h3> TLB </h3>
+
+                    <br>
+                    <input type="number" v-model="tickLookback" style="width:10%" align='center'>
+
+                    <br>
+                    <br>
+
                     <h3> Alert Sound </h3>
 
                     <button @click="alertOn = !alertOn" type="button" class="btn btn-secondary" data-bs-toggle="button">[[alertOn]]</button>
@@ -157,6 +165,38 @@
                     <br>
 
                 </div>
+                <br>
+
+                <div style="color:white" class="table-responsive">
+                    <table class="table table-dark table-sm table-fixed">
+
+                        <thead>
+                            <tr>
+                                <td></td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                        <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="(item, key) in getTicksReversed" :key="key" >
+                                        <tr>
+                                            <th class="text-info" scope="row"> [[item]] </th>
+                                            <template v-for="(tick, index) in getTickCandles[item]" :key="index">
+                                                <td>
+                                                    <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
+                                                </td>
+                                                <td>
+                                                    <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
+                                                </td>
+                                        </template>
+                                        </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+
 
 
                 <div v-if="showVertical">
@@ -247,36 +287,6 @@
                             </table>
                         </div>
                     </div>
-                </div>
-
-
-                <div style="color:white" class="table-responsive">
-                <table class="table table-dark table-sm table-fixed">
-
-                    <thead>
-                        <tr>
-                            <td></td>
-                            <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
-                            </template>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template v-for="(item, key) in getTicksReversed" :key="key" >
-                                    <tr>
-                                        <th class="text-info" scope="row"> [[item]] </th>
-                                        <template v-for="(tick, index) in getTickCandles[item]" :key="index">
-                                            <td>
-                                                <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
-                                            </td>
-                                            <td>
-                                                <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
-                                            </td>
-                                    </template>
-                                    </tr>
-                        </template>
-                    </tbody>
-                </table>
                 </div>
 
 
