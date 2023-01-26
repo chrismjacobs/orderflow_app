@@ -52,7 +52,8 @@
                 <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
                 <button @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
                 <button @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
-                <button style="display:none" @click="showTable='Delta'" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Delta</button>
+                <button v-if="user" @click="goTo('journal')" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Journal</button>
+                <button v-if="user" @click="goTo('trade')" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Trade</button>
                 <button @click="showTable='Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">&#x2699;</button>
 
 
@@ -249,7 +250,34 @@
                 </div>
 
 
+                <div style="color:white; overflow-x: scroll" class="table-responsive">
+                <table class="table table-dark table-sm table-fixed">
 
+                    <thead>
+                        <tr>
+                            <td></td>
+                            <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                    <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-for="(item, key) in getTicksReversed" :key="key" >
+                                    <tr>
+                                        <th class="text-info" scope="row"> [[item]] </th>
+                                        <template v-for="(tick, index) in getTickCandles[item]" :key="index">
+                                            <td>
+                                                <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
+                                            </td>
+                                            <td>
+                                                <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
+                                            </td>
+                                    </template>
+                                    </tr>
+                        </template>
+                    </tbody>
+                </table>
+                </div>
 
 
                 <div v-if="showTable == 'Time'" align="center">
@@ -464,6 +492,7 @@ let vue = new Vue({
 
     },
     data: {
+        tickLookback: 10,
         showVertical: true,
         coin : 'BTC',
         coins : ['BTC', 'ETH', 'GALA'],
@@ -539,6 +568,17 @@ let vue = new Vue({
           }
     },
     methods: {
+        goTo: function(link){
+
+
+            var str = window.location.href
+
+            let url = str + link
+
+            console.log('goTO', url);
+            window.location = url
+
+        },
         getCurrent: function (price) {
             let pFloor = Math.floor(this.stream['lastPrice']/10)*10
 
@@ -877,7 +917,7 @@ let vue = new Vue({
                 let x = data/1000
                 let y = Math.round(x)
                 let r = y.toString()
-                return r + 'K'
+                return r + 'k'
                 if (r == '1000') {
                     return '1m'
                 } else {
@@ -1129,7 +1169,6 @@ let vue = new Vue({
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
 
-
             })
             .fail(function(){
                   console.log('error has occurred gData')
@@ -1138,6 +1177,54 @@ let vue = new Vue({
         }
     },
     computed: {
+        getTicksReversed() {
+            const reversedTicks = Object.keys(this.getTickCandles).reverse();
+            return reversedTicks
+        },
+        getTickCandles() {
+            if (vue.getReverseTimeBlocks.length == 0) {
+                return {}
+            }
+
+            let candleLookback = this.tickLookback
+            let candles = []
+            for (let i = 0; i < candleLookback; i++) {
+                console.log(i)
+                candles.push(vue.getReverseTimeBlocks[i]['tickList'])
+            }
+            console.log('candles', candles)
+
+            let tickOBJ = {}
+
+            for (let c in candles) {
+                for (let t in candles[c]) {
+                    let tick = candles[c][t]['tickPrice']
+                    if (!tickOBJ[tick]) {
+                        tickOBJ[tick] = []
+                    }
+                }
+            }
+            for (let tickLevel in tickOBJ) {
+                for (let i = 0; i < candleLookback; i++) {
+                    tickOBJ[tickLevel].push({})
+                }
+            }
+
+            for (let tickLevel in tickOBJ) {
+                for (let c in candles) {
+                    for (let t in candles[c]) {
+                        let info = candles[c][t]
+                        let tick = info['tickPrice']
+                        let candle = candleLookback - c - 1
+                        if (tickLevel == tick) {
+                            tickOBJ[tickLevel][candle] = info
+                        }
+                    }
+                }
+            }
+
+            return tickOBJ
+        },
         getReverseVolumeBlocks() {
             return this.volumeBlocks.slice().reverse()
         },
