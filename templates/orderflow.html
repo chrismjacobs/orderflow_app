@@ -104,6 +104,9 @@
 
                 <div v-if="showTable == 'Notes'" class="text-white p-3">
 
+                    <button @click="showTable='Time'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Back</button>
+
+
                     <h3> Time Adjust </h3>
 
                     Time adjusted from UTC
@@ -174,13 +177,13 @@
                             <tr>
                                 <td></td>
                                 <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                        <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
+                                        <td colspan="2" class="text-info" align="center"> [[getTime(item.timestamp, 'v')]]</td>
                                 </template>
                             </tr>
                         </thead>
                         <tbody>
                             <template v-for="(item, key) in getTicksReversed" :key="key" >
-                                        <tr>
+                                        <tr :style="getCurrent(item)">
                                             <th class="text-info" scope="row"> [[item]] </th>
                                             <template v-for="(tick, index) in getTickCandles[item]" :key="index">
                                                 <td>
@@ -189,7 +192,8 @@
                                                 <td>
                                                     <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
                                                 </td>
-                                        </template>
+                                            </template>
+                                            <th class="text-info" scope="row"> [[item]] </th>
                                         </tr>
                             </template>
                         </tbody>
@@ -593,7 +597,7 @@ let vue = new Vue({
             let pFloor = Math.floor(this.stream['lastPrice']/10)*10
 
             if (price == pFloor.toString()) {
-                return {background:'gold', color:'black'}
+                return {background:'#212F3C'}
             }
         },
         getImbalance: function (side, per) {
