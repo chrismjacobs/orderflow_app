@@ -34,12 +34,10 @@ def logoutAction():
 @app.route('/login', methods=['POST', 'GET'])
 def login():
 
-
     return render_template('login.html')
 
 @app.route('/logout', methods=['POST', 'GET'])
 @login_required
 def account():
-
 
     return render_template('logout.html')

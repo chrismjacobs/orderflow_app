@@ -105,7 +105,7 @@ def getOF():
     return jx
 
 @app.route('/start')
-
+@login_required
 def start():
     return render_template('start.html')
 

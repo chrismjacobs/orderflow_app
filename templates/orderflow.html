@@ -1204,7 +1204,9 @@ let vue = new Vue({
             let candles = []
             for (let i = 0; i < candleLookback; i++) {
                 console.log(i)
-                candles.push(vue.getReverseTimeBlocks[i]['tickList'])
+                if (vue.getReverseTimeBlocks[i]) {
+                   candles.push(vue.getReverseTimeBlocks[i]['tickList'])
+                }
             }
             console.log('candles', candles)
 
