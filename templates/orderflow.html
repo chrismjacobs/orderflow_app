@@ -150,7 +150,7 @@
                     <h3> Notice </h3>
                     - This webapp is free to use and currently uses the cheapest server set up <br>
                     - This means if the web app is inactive for 15 min then it may take 1min to reactivate <br>
-                    - Also, if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream may need to catch for about 15-20min <br>
+                    - Also, if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream may need to catch up for about 15-20min <br>
 
 
                     <br>
@@ -159,6 +159,7 @@
                     Alert system is experimental and may include: <br>
 
                     CVD Divergence / High volume candle with flat OI / Sudden dramatic changes in OI
+                    <br>
 
                     <h3> Logged In </h3>
 
@@ -170,32 +171,74 @@
                 </div>
                 <br>
 
+                <div class="border border-light text-light rounded pt-2 pb-1" >
+                    <h3> <span> Order Flow ([[tickLookback]]) </span>
+                            <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
+                            <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
+                    </h3>
+                </div>
+
                 <div style="color:white" class="table-responsive">
                     <table class="table table-dark table-sm table-fixed">
 
-                        <thead>
-                            <tr>
-                                <td></td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                        <td colspan="2" class="text-info" align="center"> [[getTime(item.timestamp, 'v')]]</td>
-                                </template>
-                            </tr>
-                        </thead>
                         <tbody>
                             <template v-for="(item, key) in getTicksReversed" :key="key" >
                                         <tr :style="getCurrent(item)">
                                             <th class="text-info" scope="row"> [[item]] </th>
                                             <template v-for="(tick, index) in getTickCandles[item]" :key="index">
-                                                <td>
-                                                    <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)"> [[ roundData(tick.Sell) ]]</span>
+                                                <td :style="getBorders(index, 'left', item, tick.Sell)">
+                                                    <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)">[[ roundData(tick.Sell) ]]</span>
                                                 </td>
-                                                <td>
+                                                <td :style="getBorders(index, 'right', item, tick.Buy )">
                                                     <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
                                                 </td>
                                             </template>
                                             <th class="text-info" scope="row"> [[item]] </th>
                                         </tr>
                             </template>
+
+                            <tr>
+                                <td> - </td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                        <td colspan="2" class="text-info"></td>
+                                </template>
+                                <td></td>
+                            </tr>
+
+                            </tr>
+
+                            <tr>
+                                <td>Time</td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                        <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
+                                </template>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td>Vol</td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                    <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                                </template>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td>Delta</td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                    <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                </template>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td>OI</td>
+                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
+                                    <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]] </td>
+                                </template>
+                                <td></td>
+                            </tr>
+
                         </tbody>
                     </table>
                 </div>
@@ -593,6 +636,70 @@ let vue = new Vue({
             window.location = url
 
         },
+        getBorders: function (key, side, tick, order) {
+
+            let close = 0
+            let open = 0
+            let color = '#0B5345'
+            let candle = 'green'
+
+            let block = this.getTimeBlocks.slice(-this.tickLookback)[key]
+
+            if (block) {
+                if (block['price_delta'] < 0) {
+                    color = '#641E16'
+                    candle = 'red'
+                }
+                close = block['close']
+                open = block['open']
+
+            }
+
+            let candleKey = side + '-' + candle
+
+            let sides = {
+                'left-red-bottom' : {'border-left': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color},
+                'left-red-top' : {'border-left': 'solid 5px' + color, 'border-top': 'solid 5px' + color },
+
+                'left-green-top' : {'border-left': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color },
+                'left-green-bottom' : {'border-left': 'solid 5px' + color, 'border-top': 'solid 5px' + color },
+
+                'left-square' : {'border-left': 'solid 5px' + color, 'border-top': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color },
+                'right-square' : {'border-right': 'solid 5px' + color, 'border-top': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color },
+
+                'left-side' : {'border-left': 'solid 5px' + color},
+                'left-oside' : {'border-right': 'solid 5px' + color},
+
+                'right-red-top' : {'border-right': 'solid 5px' + color, 'border-top': 'solid 5px' + color },
+                'right-red-bottom' : {'border-right': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color },
+
+                'right-green-bottom' : {'border-right': 'solid 5px' + color, 'border-top': 'solid 5px' + color },
+                'right-green-top' : {'border-right': 'solid 5px' + color, 'border-bottom': 'solid 5px' + color },
+
+                'right-side' : {'border-right': 'solid 5px' + color},
+                'right-oside' : {'border-left': 'solid 5px' + color},
+            }
+
+            let closeTick = (Math.round(close/10))*10
+            let openTick = (Math.round(open/10))*10
+
+
+            if (closeTick == tick && openTick == tick) {
+                return sides[side + '-square']
+            } else if (closeTick == tick) {
+                return sides[candleKey + '-bottom']
+            } else if (openTick == tick) {
+                return sides[candleKey + '-top']
+            } else if (candle == 'green' && tick > openTick && tick < closeTick ) {
+                return sides[side + '-side']
+            } else if (candle == 'red' && tick < openTick && tick > closeTick ) {
+                return sides[side + '-side']
+            } else if (order){
+                return sides[side + '-oside']
+            }
+
+
+        },
         getCurrent: function (price) {
             let pFloor = Math.floor(this.stream['lastPrice']/10)*10
 
@@ -793,6 +900,13 @@ let vue = new Vue({
             this.timeBlockSize = this.timeSizes[this.timeMarker]
 
 
+        },
+        setTickLookBack: function (n) {
+            this.tickLookback += n
+
+            if (this.tickLookback > 50 || this.tickLookback < 10 ) {
+                this.tickLookback = 10
+            }
         },
         setVol: function (n) {
             let sizes = this.coinOBJ[this.coin]['volsize']
