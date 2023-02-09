@@ -76,6 +76,17 @@ let vue = new Vue({
         passcode : ''
     },
     methods: {
+        goTo: function(link){
+
+
+            var str = window.location.href.split('login')[0]
+
+            let url = str + link
+
+            console.log('goTO', url);
+            window.location = url
+
+        },
         login: function () {
             console.log('login')
 
@@ -90,7 +101,8 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log(data)
-                alert('Login Status is ', data.status)
+                vue.goTo('')
+
             })
             .fail(function(){
                   alert('error has occurred with login');

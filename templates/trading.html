@@ -18,7 +18,7 @@
         <div id="vue-app">
             <div :class="getMargin()">
 
-                <h1 class="m-3 text-white"> Trading Desk </h1>
+                <h1 class="m-3 text-white" @click="goTo('')"> Trading Desk </h1>
 
                 <div :class="getTradeDiv()">
 
@@ -258,6 +258,16 @@ let vue = new Vue({
 
     },
     methods: {
+        goTo: function(link){
+
+            var str = window.location.href.split('trade')[0]
+
+            let url = str + link
+
+            console.log('goTO', url);
+            window.location = url
+
+        },
         checkChange: function (c) {
             this.checkBTN[c] = !this.checkBTN[c]
             this.checkBTN = {...this.checkBTN}

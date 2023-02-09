@@ -22,7 +22,7 @@
         <div class="col-5">
 
             <div class="content-section" >
-                <h1> Trade Journal [[currentTrade()]] <span v-if="loaded > 0">(loaded)</span> </h1>
+                <h1  @click="goTo('')"> Trade Journal [[currentTrade()]] <span v-if="loaded > 0">(loaded)</span> </h1>
             </div>
             <div>
                 <select class="form-select" id="entrySelect">
@@ -202,6 +202,16 @@ let vue = new Vue({
         notesTemp: ''
     },
     methods: {
+        goTo: function(link){
+
+            var str = window.location.href.split('journal')[0]
+
+            let url = str + link
+
+            console.log('goTO', url);
+            window.location = url
+
+        },
         getSplit: function (x) {
             return x.split('/')
         },
