@@ -322,6 +322,15 @@ def getImbalances(tickList, mode):
 
 def addBlock(units, blocks, mode, coin):
 
+
+    modeSplit = mode.split('_')
+    mode = modeSplit[0]
+    size = 0
+    if 'vol' in mode:
+        size = int(modeSplit[1])
+
+    print('size', size, coin)
+
     CVDdivergence = {}
 
     if mode == 'timeblock':
@@ -413,7 +422,7 @@ def addBlock(units, blocks, mode, coin):
 
             # print('CHECK SPREAD TICKS', price, type(price) )
 
-            if coin in tickCoins and 'time' in mode:
+            if coin in tickCoins and size != 2:
                 # print('TICKES', tickDict, tickPrice)
                 if coin == 'BTC':
                     tickPrice = str(trunc(price/10)*10)
@@ -441,8 +450,8 @@ def addBlock(units, blocks, mode, coin):
 
     tickList = []
 
-    if coin in tickCoins and 'time' in mode:
-        # print('TICKS SORT')
+    if coin in tickCoins and size != 2:
+        print('TICKS SORT', mode, size)
 
         tickKeys = list(tickDict.keys())
         tickKeys.sort(reverse = True)
@@ -457,9 +466,9 @@ def addBlock(units, blocks, mode, coin):
         stackBuys = getIMBs[1]
         stackSells = getIMBs[2]
 
-        if stackBuys >= 3:
+        if stackBuys >= 3 and 'time' in mode:
             sendMessage(coin, 'Stack IMBS BUY', '', 'white')
-        if stackSells >= 3:
+        if stackSells >= 3 and 'time' in mode:
             sendMessage(coin, 'Stack IMBS SELL', '', 'white')
 
         # previousCVDDIV = False
@@ -862,7 +871,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         ### Deal with the uncomman event where the last function left an excess on volume flow
         print('VOL FLOW EXCESS ' + str(volumeflowTotal))
         volumeblocks = json.loads(r.get(vBlocks))
-        currentCandle = addBlock(volumeflow, volumeblocks, 'volblock', coin)
+        currentCandle = addBlock(volumeflow, volumeblocks, 'volblock_' + str(size), coin)
 
         volumeblocks[-1] = currentCandle
 
@@ -873,7 +882,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         if sellUnit['size'] > 1:
             volumeflow.append(sellUnit)
 
-        currentCandle = addBlock(volumeflow, volumeblocks, 'vol', coin)
+        currentCandle = addBlock(volumeflow, volumeblocks, 'vol_' + str(size), coin)
 
         volumeblocks.append(currentCandle)
 
@@ -891,7 +900,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
 
 
         volumeblocks = json.loads(r.get(vBlocks))
-        currentCandle = addBlock(volumeflow, volumeblocks, 'vol', coin)
+        currentCandle = addBlock(volumeflow, volumeblocks, 'vol_' + str(size), coin)
 
         LastIndex = len(volumeblocks) - 1
         if LastIndex < 0:
@@ -936,7 +945,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         volumeblocks = json.loads(r.get(vBlocks))
         LastIndex = len(volumeblocks) - 1
         # print('VOL BLOCK BREAK')
-        newCandle = addBlock(volumeflow, volumeblocks, 'volblock', coin)
+        newCandle = addBlock(volumeflow, volumeblocks, 'volblock_' + str(size), coin)
         volumeblocks[LastIndex] = newCandle  # replace last candle (current) with completed
 
         r.set(vBlocks, json.dumps(volumeblocks))
@@ -951,7 +960,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
             newUnit = buyUnit.copy()
             newUnit['size'] = block
             buyUnit['size'] = buyUnit['size'] - block
-            newCandle = addBlock([newUnit], volumeblocks, 'carry', coin)
+            newCandle = addBlock([newUnit], volumeblocks, 'carry_' + str(size), coin)
             volumeblocks.append(newCandle)
             r.set(vBlocks, json.dumps(volumeblocks))
 
@@ -962,7 +971,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
             newUnit = sellUnit.copy()
             newUnit['size'] = block
             sellUnit['size'] = sellUnit['size'] - block
-            newCandle = addBlock([newUnit], volumeblocks, 'carry', coin)
+            newCandle = addBlock([newUnit], volumeblocks, 'carry_' + str(size), coin)
             volumeblocks.append(newCandle)
             r.set(vBlocks, json.dumps(volumeblocks))
 
@@ -978,7 +987,7 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
             volumeflow.append(sellUnit)
 
         volumeblocks = json.loads(r.get(vBlocks))
-        currentCandle = addBlock(volumeflow, volumeblocks, 'vol', coin)
+        currentCandle = addBlock(volumeflow, volumeblocks, 'vol_' + str(size), coin)
         volumeblocks.append(currentCandle)
         r.set(vBlocks, json.dumps(volumeblocks))
         r.set(vFlow, json.dumps(volumeflow))
