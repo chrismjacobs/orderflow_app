@@ -89,7 +89,7 @@
 
             <div v-if="showChart == 2 && showTable !='Notes'" style="width: 100%;color:#9E9E9E">
                 <h4 class="ml-2">
-                    <span v-if="!mobile"> Price </span>
+                    <span v-if="!mobile"> Lookback </span>
                     <span @click="setLookBack(+2)" class="ml-2 mr-2" >&#x2190</span>
                     <span >[[lookback]]Hrs</span>
                     <span @click="setLookBack(-2)" class="ml-2">&#x2192</span>
@@ -117,8 +117,8 @@
                         <h3 style="color:Hotpink"> Important Notes for User </h3>
 
                         <h5> This webapp may undergo maintanance on Sundays and may be unusable for a period </h5>
-                        <h5> This webapp is free to use and currently uses the cheapest server set up; <br> if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out <br> and the data stream will lag for sometime making the webapp unusable as a live orderflow reference</h5>
-                        <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer)</h5>
+                        <h5> This webapp is free to use and currently uses the cheapest server set up; <br> if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and the data stream will lag for sometime making the webapp unusable as a live orderflow reference</h5>
+                        <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer on discord)</h5>
 
                     </div>
 
@@ -167,7 +167,7 @@
 
                     <h3> Display Notes </h3>
 
-                    - When viewing on mobile setting the browser to desktop view fits more data on the page <br>
+                    - When viewing on mobile, setting the browser to desktop view fits more data on the page <br>
                     - Clicking orderflow charts makes them larger <br>
                     - This webapp has not been tested on all device sizes and not display well on some devices <br>
 
