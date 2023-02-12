@@ -78,6 +78,69 @@ def getPVAStatus(newBlocks):
     return newBlocks
 
 
+
+def getImbalances(tickList):
+
+    for i in range(len(tickList)):  # 0 1 2
+
+        if i + 1 < len(tickList):
+            BIbuys = tickList[i]['Buy']
+            BIsells = tickList[i + 1]['Sell']
+
+            if BIsells == 0:
+                BIsells = 1
+
+            BIpct = round((BIbuys / BIsells) * 100)
+            if BIpct > 1000:
+                BIpct = 1000
+
+            tickList[i]['BuyPer'] = BIpct
+
+            SIbuys = tickList[i]['Buy']
+            SIsells = tickList[i + 1]['Sell']
+
+            if SIbuys == 0:
+                SIbuys = 1
+
+            SIpct = round((SIsells / SIbuys) * 100)
+            if SIpct > 1000:
+                SIpct = 1000
+
+            tickList[i + 1]['SellPer'] = SIpct
+
+    return tickList
+
+
+
+def getTicks(newCandle, unit):
+    ticks = []
+
+    for t in unit['tickList']:
+
+        for n in newCandle['tickList']:
+            print(n)
+            tp = n['tickPrice']
+            if int(tp) not in ticks:
+                ticks.append(int(tp))
+
+            if t['tickPrice'] == n['tickPrice']:
+                n['Sell'] += t['Sell']
+                n['Buy'] += t['Buy']
+                break
+        else:
+            newTick =  t['tickPrice']
+            if int(newTick) < ticks[-1]:
+                newCandle['tickList'].append(t)
+            else:
+                position = 0
+                for price in ticks:
+                    if int(newTick) > price:
+                        ticks.insert(position,int(newTick))
+                        newCandle['tickList'].insert(position,t)
+                        break
+
+    return newCandle
+
 def getBlocks(size, blocksString):
 
     ## get all the timeblocks (5Min)
@@ -121,7 +184,10 @@ def getBlocks(size, blocksString):
             newCandle['delta'] += unit['buys'] - unit['sells']
             newCandle['total'] += unit['total']
 
+            newCandle = getTicks(newCandle, unit)
+
             count += 1
+
 
         ## add last unit
         elif count == size:
@@ -142,6 +208,8 @@ def getBlocks(size, blocksString):
             newCandle['oi_cumulative'] = unit['oi_cumulative']
             newCandle['oi_delta'] = newCandle['oi_cumulative'] - newCandle['oi_open']
             newCandle['time_delta'] = newCandle['trade_time_ms'] - unit['trade_time_ms']
+
+            newCandle = getTicks(newCandle, unit)
 
 
             newList.append(newCandle)
