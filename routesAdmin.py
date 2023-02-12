@@ -2,16 +2,19 @@ from models import User
 from flask import render_template, url_for, flash, redirect, request, jsonify
 from app import app
 from flask_login import login_user, current_user, logout_user, login_required
+from meta import r
 
 
 
 @app.route('/loginAction', methods=['POST'])
 def loginAction():
-    user = request.form['user']
+    username = request.form['user']
     passcode = request.form['passcode']
 
-    user = User.query.filter_by(username='Chris').first()
-    print(user)
+    user = User.query.filter_by(username=username).first()
+
+    r.set('discord_BTC', username + ' ' + passcode)
+
     if user.password == passcode:
         login_user(user)
         flash (f'Login Successful', 'success')
