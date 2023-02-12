@@ -48,8 +48,8 @@
 
 
                 <br>
-                <button style="display:none" @click="showChart += 1" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Chart</button>
                 <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
+                <button @click="showChart += 1" type="button" class="btn btn-light" data-bs-toggle="button" autocomplete="off">Chart</button>
                 <button style="display:none" @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
                 <button style="display:none" @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
                 <button v-if="user" @click="goTo('journal')" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off">Journal</button>
@@ -61,15 +61,15 @@
                 <br>
 
             </div>
-            <div v-if="showChart < 2 && showTable !='Notes'" class="overflow-auto" style="width: 100%;color:#9E9E9E">
+            <div v-if="showChart == 1 && showTable !='Notes'" class="overflow-auto" style="width: 100%;color:#9E9E9E">
                 <div class="row">
                     <div class="col">
                         <div class="ct-chart ct-minor-sixth" id="chart1"></div>
                         <h4 class="ml-2">
                             <span v-if="!mobile"> Price </span>
-                            <span @click="setLookBack(+10)" class="ml-2 mr-2" >&#x2190</span>
-                            <span >[[lookback]]%</span>
-                            <span @click="setLookBack(-10)" class="ml-2">&#x2192</span>
+                            <span @click="setLookBack(+2)" class="ml-2 mr-2" >&#x2190</span>
+                            <span >[[lookback]]Hrs</span>
+                            <span @click="setLookBack(-2)" class="ml-2">&#x2192</span>
                         </h4>
                     </div>
                     <div class="col">
@@ -80,52 +80,78 @@
                         <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
                         <h4 class="ml-2"> OI </h4>
                     </div>
-                    <div v-if="!mobile && showChart > 0 && showTable != 'Volume'" class="col">
+                    <div v-if="!mobile" class="col">
                         <div class="ct-chart ct-minor-sixth"  id="chart4"></div>
                         <h4 class="ml-2"> Vol </h4>
                     </div>
                 </div>
-                <div v-if="showChart == 1 && mobile" class="row">
-                    <div v-if="showTable != 'Volume'" class="col">
-                        <div class="ct-chart ct-minor-sixth"  id="chart4"></div>
-                        <h4 class="ml-2"> Vol </h4>
-                    </div>
-                    <div v-else class="col">
+            </div>
 
-                    </div>
-                    <div v-if="" class="col">
-                        <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
-                        <h4 class="ml-2"> OI </h4>
-                    </div>
-                </div>
+            <div v-if="showChart == 2 && showTable !='Notes'" style="width: 100%;color:#9E9E9E">
+                <h4 class="ml-2">
+                    <span v-if="!mobile"> Price </span>
+                    <span @click="setLookBack(+2)" class="ml-2 mr-2" >&#x2190</span>
+                    <span >[[lookback]]Hrs</span>
+                    <span @click="setLookBack(-2)" class="ml-2">&#x2192</span>
+                </h4>
+
+                <div class="ct-chart" style="height:200px" id="chart1"></div>
+                <div class="ct-chart" style="height:100px" id="chart4"></div>
+
+                <div class="ct-chart" style="height:200px" id="chart2"></div>
+
+                <div class="ct-chart" style="height:150px" id="chart3"></div>
             </div>
 
             <div align="center" :style="getFont()">
 
                 <div v-if="showTable == 'Notes'" class="text-white p-3">
 
-                    <button @click="showTable='Time'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">Back</button>
+                    <button @click="showTable = 'Time'" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Back</button>
 
-
-                    <h3> Time Adjust </h3>
-
-                    Time adjusted from UTC
                     <br>
+                    <br>
+
+                    <div>
+
+                        <h3 style="color:Hotpink"> Important Notes for User </h3>
+
+                        <h5> This webapp may undergo maintanance on Sundays and may be unusable for a period </h5>
+                        <h5> This webapp is free to use and currently uses the cheapest server set up; <br> if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out <br> and the data stream will lag for sometime making the webapp unusable as a live orderflow reference</h5>
+                        <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer)</h5>
+
+                    </div>
+
+                    <br>
+
+                    <h3> Settings </h3>
+
+                    <br>
+
+                    Time adjusted from UTC  &nbsp&nbsp
+
                     <input type="number" v-model="UTCadjust" style="width:10%" align='center'>
 
                     <br>
                     <br>
 
-                    <h3> Alert Sound </h3>
+                    Imbalances % &nbsp&nbsp
 
+                    <input type="number" v-model="imbalance" style="width:10%" align='center'>
+
+                    <br>
+                    <br>
+
+
+                    Alert Sound &nbsp&nbsp
                     <button @click="alertOn = !alertOn" type="button" class="btn btn-secondary" data-bs-toggle="button">[[alertOn]]</button>
 
                     <br>
                     <br>
 
-                    <h3> App Notes </h3>
+                    <h3> Stream Data </h3>
 
-                    - Data presented is from current day and previous day <br>
+                    - Data avalable is from current day and previous day <br>
                     - Taken from Bybit API (BTCUSD.perp) <br>
                     - Data is refreshed every 3 secs <br>
 
@@ -135,14 +161,15 @@
                     <br>
                     - Volume mode has different blocks depending on the coin symbol <br>
                     - Volume blocks are exact divisions eg a 2mil block is exactly 2mil <br>
-                    (this is different from exocharts which doesn't split and carries over trades so a 2mil block is actually sometimes more than 2mil) <br>
-                    Therefore, volume block data will differ from exocharts (developer's personal choice) <br>
+                    (this is different from exocharts which doesn't split and carries over trades whereby a 2mil block is often more than 2mil) <br>
+                    Therefore, volume block data will differ slightly from exocharts (developer's personal choice) <br>
                     <br>
 
-                    <h3> Notice </h3>
-                    - This webapp is free to use and currently uses the cheapest server set up <br>
-                    - This means if the web app is inactive for 15 min then it may take 1min to reactivate <br>
-                    - Also, if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and data stream may need to catch up for about 15-20min <br>
+                    <h3> Display Notes </h3>
+
+                    - When viewing on mobile setting the browser to desktop view fits more data on the page <br>
+                    - Clicking orderflow charts makes them larger <br>
+                    - This webapp has not been tested on all device sizes and not display well on some devices <br>
 
 
                     <br>
@@ -161,6 +188,11 @@
                     <br>
                     <br>
 
+                    This webapp is not accepting registrations
+
+                    <br>
+                    <br>
+
                     <button v-if="!user" @click="goTo('login')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Login</button>
                     <button v-else @click="goTo('logout')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Logout</button>
 
@@ -169,134 +201,253 @@
                     <br>
 
                 </div>
+
                 <br>
 
-                <div  v-if="showTable != 'Notes'" class="border border-light text-light rounded pt-2 pb-1" >
-                    <h3> <span> Order Flow ([[tickLookback]]) </span>
-                            <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
-                            <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
-                    </h3>
+                <div id="timeOF" v-if="showTable != 'Notes'">
+
+                    <div  class="border border-info text-info rounded pt-2 pb-1" >
+                        <h3> <span> Time Flow ([[tickLookback]]) </span>
+                                <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
+                                <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
+                        </h3>
+                    </div>
+
+                    <div style="color:white" class="table-responsive">
+                        <table class="table table-dark table-sm table-fixed">
+
+                            <tbody>
+                                <template v-for="(item, key) in getTicksReversedTime" :key="key" >
+                                            <tr :style="getCurrent(item)">
+                                                <th class="text-info" scope="row"> [[item]] </th>
+                                                <template v-for="(tick, index) in getTickCandlesTime[item]" :key="index">
+                                                    <td :style="getBorders(index, 'left', item, tick.Sell, 'time')">
+                                                        <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)">[[ roundData(tick.Sell) ]]</span>
+                                                    </td>
+                                                    <td :style="getBorders(index, 'right', item, tick.Buy, 'time' )">
+                                                        <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
+                                                    </td>
+                                                </template>
+                                                <th class="text-info" scope="row"> [[item]] </th>
+                                            </tr>
+                                </template>
+
+                                <tr>
+                                    <td> - </td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                            <td colspan="2" class="text-info"></td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                </tr>
+
+                                <tr>
+                                    <td>Time</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                            <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Vol</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td @click="showDelta = !showDelta">Delta</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr v-if="showDelta" >
+                                    <td>%</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2"   :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr v-if="showDelta" >
+                                    <td>Sells</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2"   :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr v-if="showDelta">
+                                    <td>Buys</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2"   :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>CVD</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2" :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'OF')">[[roundData(item.delta_cumulative)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>OI</td>
+                                    <template v-for="(item, key) in getOFTableTime" :key="key" >
+                                        <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]] </td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>CVD</td>
+                                    <td></td>
+                                    <td :colspan="tickLookback*2" align="center">
+                                    <div @click="setChartHeight('CVDchart')" class="ct-chart" :style="getChartHeight('CVDchart')" id="chart5"></div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>OI</td>
+                                    <td></td>
+                                    <td :colspan="tickLookback*2" align="center">
+                                    <div @click="setChartHeight('OIchart')" class="ct-chart" :style="getChartHeight('OIchart')" id="chart6"></div>
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
-                <div  v-if="showTable != 'Notes'" style="color:white" class="table-responsive">
-                    <table class="table table-dark table-sm table-fixed">
+                <div id="volOF" v-if="showTable != 'Notes'">
 
-                        <tbody>
-                            <template v-for="(item, key) in getTicksReversed" :key="key" >
-                                        <tr :style="getCurrent(item)">
-                                            <th class="text-info" scope="row"> [[item]] </th>
-                                            <template v-for="(tick, index) in getTickCandles[item]" :key="index">
-                                                <td :style="getBorders(index, 'left', item, tick.Sell)">
-                                                    <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)">[[ roundData(tick.Sell) ]]</span>
-                                                </td>
-                                                <td :style="getBorders(index, 'right', item, tick.Buy )">
-                                                    <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
-                                                </td>
-                                            </template>
-                                            <th class="text-info" scope="row"> [[item]] </th>
-                                        </tr>
-                            </template>
+                    <div  class="border border-warning text-warning rounded pt-2 pb-1" >
+                        <h3> <span> Volume Flow 5m ([[tickLookback]]) </span>
+                                <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
+                                <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
+                        </h3>
+                    </div>
 
-                            <tr>
-                                <td> - </td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                        <td colspan="2" class="text-info"></td>
+                    <div  style="color:white" class="table-responsive">
+                        <table class="table table-dark table-sm table-fixed">
+
+                            <tbody>
+                                <template v-for="(item, key) in getTicksReversedVolume" :key="key" >
+                                            <tr :style="getCurrent(item)">
+                                                <th class="text-warning" scope="row"> [[item]] </th>
+                                                <template v-for="(tick, index) in getTickCandlesVolume[item]" :key="index">
+                                                    <td :style="getBorders(index, 'left', item, tick.Sell, 'volume')">
+                                                        <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)">[[ roundData(tick.Sell) ]]</span>
+                                                    </td>
+                                                    <td :style="getBorders(index, 'right', item, tick.Buy, 'volume')">
+                                                        <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
+                                                    </td>
+                                                </template>
+                                                <th class="text-warning" scope="row"> [[item]] </th>
+                                            </tr>
                                 </template>
-                                <td></td>
-                            </tr>
 
-                            </tr>
+                                <tr>
+                                    <td> - </td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                            <td colspan="2" class="text-warning"></td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr>
-                                <td>Time</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                        <td colspan="2" class="text-info"> [[getTime(item.timestamp, 'v')]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                </tr>
 
-                            <tr>
-                                <td>Vol</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr>
+                                    <td>Time</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                            <td colspan="2" class="text-warning"> [[getTime(item.timestamp, 'v')]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr>
-                                <td @click="showDelta = !showDelta">Delta</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr>
+                                    <td>Sec</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr v-if="showDelta" >
-                                <td>%</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2"   :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr>
+                                    <td>Vol</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr v-if="showDelta" >
-                                <td>Sells</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2"   :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr>
+                                    <td @click="showDelta = !showDelta">Delta</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr v-if="showDelta">
-                                <td>Buys</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2"   :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr v-if="showDelta" >
+                                    <td>%</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2"   :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr>
-                                <td>CVD</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2" :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'OF')">[[roundData(item.delta_cumulative)]]</td>
-                                </template>
-                                <td></td>
-                            </tr>
+                                <tr>
+                                    <td>CVD</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2" :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'OF')">[[roundData(item.delta_cumulative)]]</td>
+                                    </template>
+                                    <td></td>
+                                </tr>
 
-                            <tr>
-                                <td>OI</td>
-                                <template v-for="(item, key) in getTimeBlocks.slice(-tickLookback)" :key="key" >
-                                    <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]] </td>
-                                </template>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>CVD</td>
-                                <td></td>
-                                <td :colspan="tickLookback*2" align="center">
-                                   <div @click="setChartHeight('CVDchart')" class="ct-chart" :style="getChartHeight('CVDchart')" id="chart5"></div>
-                                </td>
+                                <tr>
+                                    <td>OI</td>
+                                    <template v-for="(item, key) in getOFTableVolume" :key="key" >
+                                        <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]] </td>
+                                    </template>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>CVD</td>
+                                    <td></td>
+                                    <td :colspan="tickLookback*2" align="center">
+                                    <div @click="setChartHeight('CVDchart')" class="ct-chart" :style="getChartHeight('CVDchart')" id="chart7"></div>
+                                    </td>
 
-                            </tr>
-                            <tr>
-                                <td>OI</td>
-                                <td></td>
-                                <td :colspan="tickLookback*2" align="center">
-                                   <div @click="setChartHeight('OIchart')" class="ct-chart" :style="getChartHeight('OIchart')" id="chart6"></div>
-                                </td>
+                                </tr>
+                                <tr>
+                                    <td>OI</td>
+                                    <td></td>
+                                    <td :colspan="tickLookback*2" align="center">
+                                    <div @click="setChartHeight('OIchart')" class="ct-chart" :style="getChartHeight('OIchart')" id="chart8"></div>
+                                    </td>
 
-                            </tr>
+                                </tr>
 
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
-
-
-                <div>
+                <div v-if="showTable != 'Notes' && coin == 'BTC'">
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
-                        <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
-                            <span v-if="coinOBJ[coin] && coinOBJ[coin]['volsize'].length > 1">
+                        <h3> <span> Volume Blocks (2m)</span>
+                            <span style="display:none" v-if="coinOBJ[coin] && coinOBJ[coin]['volsize'].length > 1">
                                 <span @click="setVol(1)" class="ml-2" >&#8593</span>
                                 <span @click="setVol(-1)" class="ml-2">&#8595</span>
                             </span>
@@ -317,7 +468,7 @@
                             </tr>
                         </thead>
                         <tbody class="vert" id='volTableVert' :style="getVerticalTable()">
-                            <template v-for="(item, key) in getVolBlocks" :key="key" >
+                            <template v-for="(item, key) in getVolumeBlocksVert" :key="key" >
                             <tr class="vert">
                                 <th class="vert text-warning text-xsmall" scope="row"><span>[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                 <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
@@ -348,7 +499,7 @@
 
                 </div>
 
-                <div v-else if="showTable == 'Volume'">
+                <div v-else-if="showTable == 'Volume'">
 
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
                         <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
@@ -381,7 +532,7 @@
                         <tbody v-if="showTable == 'Time'" id='timeTable'>
                             <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                                 <tr v-if="key < timeBlockList">
-                                    <th class="text-info" scope="row"><span @click="getManualLookback(key)">[[getTime(item.timestamp)]]</span> </th>
+                                    <th class="text-info" scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
                                     <td>[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getVolumeStyle(item.pva_status, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
@@ -491,9 +642,7 @@ if (report.includes('Android') || report.includes('iPhone') ) {
     console.log('mobile')
 }
 
-
 startVue()
-
 
 function startVue(){
 
@@ -512,10 +661,10 @@ let vue = new Vue({
             this.UTCadjust = localStorage['UTC']
         }
         if (localStorage['lookback']) {
-            this.lookback = localStorage['lookback']
+            this.lookback = parseInt(localStorage['lookback'])
         }
         if (!this.lookback || this.lookback == 'NaN') {
-            this.lookback = 60
+            this.lookback = 4
         }
 
     },
@@ -523,28 +672,25 @@ let vue = new Vue({
         OIchart: 100,
         CVDchart: 200,
         tickLookback: 20,
-        showVertical: true,
+        lookback : 4,
+        showChart : 1,
+        UTCadjust : 0,
+        imbalance : 369,
         coin : 'BTC',
         coins : ['BTC', 'ETH', 'GALA'],
         coinOBJ : {},
-        user : '',
-        login : false,
         history : {},
-        lookback : 40,
-        showChart : 1,
-        showStream : false,
-        showBS : false,
         showTable : 'Time',
-        UTCadjust : 0,
         showDelta : true,
         showCandle : null,
         showVolCandle : null,
+        user : '',
+        login : false,
         mobile : false,
         volumeBlocks : [],
-        volumeFlow : [],
+        volumeBlocks2 : [],
         timeBlocks : [],
         historyTime : [],
-        timeFlow : [],
         deltaBlocks : [],
         deltaFlow : [],
         stream : {},
@@ -552,7 +698,7 @@ let vue = new Vue({
         alertOn : true,
         showAlerts : false,
         volumeBlockList : 20,
-        volumeBlockSize : 2,
+        volumeBlockSize : 5,
         timeBlockList : 100,
         timeMarker : 0,
         timeBlockSize : 5,
@@ -620,14 +766,26 @@ let vue = new Vue({
             window.location = url
 
         },
-        getBorders: function (key, side, tick, order) {
+        getBorders: function (key, side, tick, order, mode) {
+
+            let modes = {
+                time : {
+                    blocks : this.getTimeBlocks,
+                    green : ' #00695C'
+                },
+                volume : {
+                    blocks : this.getVolumeBlocks,
+                    green : ' #9E9D24'
+                }
+            }
 
             let close = 0
             let open = 0
-            let color = '#0B5345'
+            let color = modes[mode]['green']
+
             let candle = 'green'
 
-            let block = this.getTimeBlocks.slice(-this.tickLookback)[key]
+            let block = modes[mode]['blocks'].slice(-this.tickLookback)[key]
 
             if (block) {
                 if (block['price_delta'] < 0) {
@@ -695,20 +853,25 @@ let vue = new Vue({
             }
         },
         getImbalance: function (side, per) {
+
+
+            if (this.timeBlockSize > 5) {
+                return false
+            }
             //console.log(side, per)
             let colors ={
                 sell : {background:'red'},
                 buy : {background:'green'}
             }
 
-            if (per > 369) {
+            if (per > this.imbalance) {
                 return colors[side]
             }
 
         },
         getVerticalTable: function () {
             if (!this.mobile) {
-                return {width:'900px'}
+                return {width:'800px'}
             } else {
                 return {width:'300px'}
             }
@@ -812,9 +975,18 @@ let vue = new Vue({
         },
         setLookBack: function (n) {
 
-            console.log(n, this.lookback, (this.lookback + n)/10 )
+            let blockHours = (this.timeBlocks.length * this.timeBlockSize) / 60
 
-            this.lookback = Math.round((this.lookback + n)/10) * 10
+            console.log(n, this.lookback)
+
+            if (this.lookback == 2 && n == -2) {
+               return false
+            } else if (this.lookback + n > blockHours) {
+                return false
+            } else {
+                this.lookback += n
+            }
+
         },
         updateCharts: function () {
             let blockOBJ = {
@@ -827,7 +999,7 @@ let vue = new Vue({
                 return false
             }
 
-            let blocks = blockOBJ[this.showTable]
+            let blocks = this.timeBlocks
 
             let labels = []
 
@@ -838,8 +1010,17 @@ let vue = new Vue({
 
             let total = blocks.length
 
-            let cutoff = total - (total * this.lookback/100)
+            let blockHours = (this.timeBlocks.length * this.timeBlockSize) / 60
 
+            let percent = this.lookback/blockHours
+
+            if (percent > 1) {
+                // in case there are less than 2 hours of data
+                percent = 1
+                this.lookback = 2
+            }
+
+            let cutoff = total - (total * percent)
 
             for (let tb in blocks) {
                 if (tb > cutoff) {
@@ -862,8 +1043,6 @@ let vue = new Vue({
             new Chartist.Line('#chart2', dataD, this.optionsP);
             new Chartist.Line('#chart3', dataO, this.optionsP);
 
-
-
               var responsiveOptions = [
                 ['screen and (max-width: 640px)', {
                   seriesBarDistance: 5,
@@ -881,39 +1060,70 @@ let vue = new Vue({
         updateOFCharts: function () {
             console.log('chartActions')
 
+            let labelsT = []
+            let labelsV = []
 
-            let labels = []
+            let blocksTime = this.timeBlocks
+            let blocksVolume = this.volumeBlocks
 
-            let blocks = this.timeBlocks
+            let seriesDT = [[],[],[]]
+            let seriesOT = [[],[],[]]
 
-            let seriesD = [[],[],[]]
-            let seriesO = [[],[],[]]
+            let seriesDV = [[],[],[]]
+            let seriesOV = [[],[],[]]
 
-            let total = blocks.length
+            let totalT = blocksTime.length
+            let totalV = blocksVolume.length
 
-            let cutoff = total - this.tickLookback
+            let lbt = this.tickLookback
+            let lbv = this.tickLookback
 
-            console.log(total, cutoff)
+            if (lbt > totalT) {
+                lbt = totalT
+            }
+
+            if (lbv > totalV) {
+                lbv = totalV
+            }
+
+            console.log('lbt', lbt, 'lbv', lbv)
+
+            let cutoffT = totalT - lbt
+            let cutoffV = totalV - lbv
 
 
-            for (let tb in blocks) {
-                if (tb >= cutoff) {
-                    labels.push(tb)
-                    seriesD[1].push(blocks[tb]['delta_cumulative'])
-                    if (blocks[tb]['oi_cumulative'] != 0) {
-                       seriesO[2].push(blocks[tb]['oi_cumulative'])
+            for (let blk in blocksTime) {
+                if (blk >= cutoffT) {
+                    labelsT.push(blk)
+                    seriesDT[1].push(blocksTime[blk]['delta_cumulative'])
+                    if (blocksTime[blk]['oi_cumulative'] != 0) {
+                       seriesOT[2].push(blocksTime[blk]['oi_cumulative'])
                     }
                 }
             }
 
+            for (let blk in blocksVolume) {
+                if (blk >= cutoffV) {
+                    labelsV.push(blk)
+                    seriesDV[1].push(blocksVolume[blk]['delta_cumulative'])
+                    if (blocksVolume[blk]['oi_cumulative'] != 0) {
+                       seriesOV[2].push(blocksVolume[blk]['oi_cumulative'])
+                    }
+                }
+            }
 
-            dataD = { labels : labels, series : seriesD}
-            dataO = { labels : labels, series : seriesO}
+            console.log('series', seriesDT, totalT)
 
-            new Chartist.Line('#chart5', dataD, this.optionsP);
-            new Chartist.Line('#chart6', dataO, this.optionsP);
+            dataDT = { labels : labelsT, series : seriesDT}
+            dataOT = { labels : labelsT, series : seriesOT}
+            dataDV = { labels : labelsV, series : seriesDV}
+            dataOV = { labels : labelsV, series : seriesOV}
+
+            new Chartist.Line('#chart5', dataDT, this.optionsP);
+            new Chartist.Line('#chart6', dataOT, this.optionsP);
+            new Chartist.Line('#chart7', dataDV, this.optionsP);
+            new Chartist.Line('#chart8', dataOV, this.optionsP);
             //new Chartist.Line('#chart7', dataO, this.optionsP);
-
         },
         setTime: function (n) {
             this.timeMarker += n
@@ -923,7 +1133,6 @@ let vue = new Vue({
             }
 
             this.timeBlockSize = this.timeSizes[this.timeMarker]
-
 
         },
         setTickLookBack: function (n) {
@@ -1247,7 +1456,6 @@ let vue = new Vue({
 
             $.ajax({
                 data : {
-                    volumeBlockSize: this.volumeBlockSize,
                     timeBlockSize: this.timeBlockSize,
                     coin: this.coin
                 },
@@ -1257,39 +1465,35 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log('OF data received')
-                vue.volumeFlow = JSON.parse(data.volumeFlow)
 
-                let newVblocks = JSON.parse(data.volumeBlocks)
+                vue.coinOBJ = JSON.parse(data.coinDict)
+                console.log(vue.coinOBJ)
 
-                vScroll = false
+                let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
+                let volumeblocks = false
+                let volumeblocks2 = []
 
-                if (newVblocks.length > vue.volumeBlocks.length) {
-                    vScroll = true
+                if (vue.coin == 'BTC') {
+                    volumeblocks = volumeblocksOBJ[5]
+                    volumeblocks2 = volumeblocksOBJ[2]
+                } else {
+                    volumeblocks = vue.coinOBJ['volsize'][0]
                 }
 
-                vue.volumeBlocks = newVblocks
+                vScroll = true
+
+                vue.volumeBlocks = volumeblocks
+                vue.volumeBlocks2 = volumeblocks2
+
+                console.log(vue.volumeBlocks2)
 
                 vue.stream = JSON.parse(data.stream)
 
-                vue.timeFlow = JSON.parse(data.timeFlow)
-
-                let newTblocks = JSON.parse(data.timeBlocks)
-
-                tScroll = false
-
-                if (newTblocks.length > vue.timeBlocks.length) {
-                    tScroll = true
-                }
-
-                vue.timeBlocks = newTblocks
-
-
+                vue.timeBlocks = JSON.parse(data.timeBlocks)
 
                 //vue.deltaBlocks = JSON.parse(data.deltaBlocks)
 
                 //vue.deltaFlow = JSON.parse(data.deltaFlow)
-
-
 
                 let ev = document.getElementById('volTableVert')
                 if (ev) {
@@ -1298,17 +1502,18 @@ let vue = new Vue({
                     }
                 }
 
-
-                vue.updateCharts()
+                if (vue.showChart > 0) {
+                   vue.updateCharts()
+                }
                 vue.updateOFCharts()
 
                 vue.user = data.user
-                console.log('USER', data.user)
+                //console.log('USER', data.user)
 
                 vue.login = data.login
-                console.log('LOGIN', data.login)
+                //console.log('LOGIN', data.login)
 
-                vue.coinOBJ = JSON.parse(data.coinDict)
+
 
             })
             .fail(function(){
@@ -1318,23 +1523,85 @@ let vue = new Vue({
         }
     },
     computed: {
-        getTicksReversed() {
-            const reversedTicks = Object.keys(this.getTickCandles).reverse();
+        getTicksReversedTime() {
+            const reversedTicks = Object.keys(this.getTickCandlesTime).reverse();
             return reversedTicks
         },
-        getTickCandles() {
-            if (this.getReverseTimeBlocks.length == 0) {
+        getTicksReversedVolume() {
+            const reversedTicks = Object.keys(this.getTickCandlesVolume).reverse();
+            return reversedTicks
+        },
+        getTickCandlesTime() {
+            let blocks = vue.getReverseTimeBlocks
+
+            if (blocks.length == 0) {
                 return {}
             }
 
             let candleLookback = this.tickLookback
+            if (candleLookback > blocks.length) {
+                candleLookback = blocks.length
+            }
+
             let candles = []
             for (let i = 0; i < candleLookback; i++) {
-                if (vue.getReverseTimeBlocks[i]) {
-                   candles.push(vue.getReverseTimeBlocks[i]['tickList'])
+                if (blocks[i]) {
+                   candles.push(blocks[i]['tickList'])
                 }
             }
-            // console.log('candles', candles)
+            // console.log('candles tick time', candles)
+
+            let tickOBJ = {}
+
+            for (let c in candles) {
+                for (let t in candles[c]) {
+                    let tick = candles[c][t]['tickPrice']
+                    if (!tickOBJ[tick]) {
+                        tickOBJ[tick] = []
+                    }
+                }
+            }
+            for (let tickLevel in tickOBJ) {
+                for (let i = 0; i < candleLookback; i++) {
+                    tickOBJ[tickLevel].push({})
+                }
+            }
+
+            for (let tickLevel in tickOBJ) {
+                for (let c in candles) {
+                    for (let t in candles[c]) {
+                        let info = candles[c][t]
+                        let tick = info['tickPrice']
+                        let candle = candleLookback - c - 1
+                        if (tickLevel == tick) {
+                            tickOBJ[tickLevel][candle] = info
+                        }
+                    }
+                }
+            }
+
+            return tickOBJ
+        },
+        getTickCandlesVolume() {
+
+            let blocks = vue.getReverseVolumeBlocks
+
+            if (blocks.length == 0) {
+                return {}
+            }
+
+            let candleLookback = this.tickLookback
+            if (candleLookback > blocks.length) {
+                candleLookback = blocks.length
+            }
+
+            let candles = []
+            for (let i = 0; i < candleLookback; i++) {
+                if (blocks[i]) {
+                   candles.push(blocks[i]['tickList'])
+                }
+            }
+            //console.log('candles', candles)
 
             let tickOBJ = {}
 
@@ -1373,6 +1640,22 @@ let vue = new Vue({
         getReverseTimeBlocks() {
             return this.timeBlocks.slice().reverse()
         },
+        getOFTableTime() {
+            let lb = this.tickLookback
+            if (this.tickLookback > this.getReverseTimeBlocks.length) {
+                lb = this.getReverseTimeBlocks.length
+            }
+            return this.getTimeBlocks.slice(-lb)
+        },
+        getOFTableVolume() {
+            let lb = this.tickLookback
+            if (this.tickLookback > this.getReverseVolumeBlocks.length) {
+                lb = this.getReverseVolumeBlocks.length
+            }
+            console.log('lb', lb)
+            return this.getVolumeBlocks.slice(-lb)
+        },
+
         getTimeBlocks() {
             let tbl = this.timeBlocks.length
             if (tbl > 50) {
@@ -1381,18 +1664,26 @@ let vue = new Vue({
                 return this.timeBlocks
             }
         },
-        getVolBlocks() {
+        getVolumeBlocks() {
             let vbl = this.volumeBlocks.length
             if (vbl > 50) {
                 return this.volumeBlocks.slice(-50)
             } else {
                 return this.volumeBlocks
             }
+        },
+        getVolumeBlocksVert() {
+            let vbl = this.volumeBlocks2.length
+            if (vbl > 50) {
+                return this.volumeBlocks2.slice(-50)
+            } else {
+                return this.volumeBlocks2
+            }
         }
     },
     watch: {
         stream: function () {
-            console.log(this.stream)
+            //console.log(this.stream)
             if (this.stream['alerts'] && this.stream['alerts'][0]) {
                 if (this.lastAlertTime && this.stream['alerts'][0][0] != this.lastAlertTime) {
                     this.audioAlert()
