@@ -31,21 +31,19 @@ def home():
 @app.route('/getOF', methods=['POST'])
 def getOF():
 
-    volumeBlockSize = int(request.form ['volumeBlockSize'])
     timeBlockSize = int(request.form ['timeBlockSize'])
     coin = request.form ['coin']
 
     # print('BLOCK SIZES', coin, volumeBlockSize, timeBlockSize)
 
+    coinDict = r.get('coinDict')
+    coinInfo = json.loads(coinDict)[coin]
 
     stream = r.get('stream_' + coin)
 
     timeBlocks = r.get('timeblocks_' + coin)
     timeFlow = r.get('timeflow_' + coin)
 
-
-    volumeBlocks = r.get('volumeblocks_' + coin + str(volumeBlockSize))
-    volumeFlow = r.get('volumeflow_' + coin + str(volumeBlockSize))
 
     # deltaBlocks = r.get('deltablocks_' + coin)
     # deltaFlow = r.get('deltaflow_' + coin)
@@ -56,12 +54,14 @@ def getOF():
     if len(historyBlocks) > 0:
         lastHistory = historyBlocks[-1]
 
-
     if 'timeblocks_' + coin in lastHistory:
         ## combine History and current
         currentTime = json.loads(timeBlocks)
         newTime = lastHistory['timeblocks_' + coin] + currentTime
         timeBlocks = json.dumps(newTime)
+
+    if timeBlockSize > 5:
+        timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
     # if 'deltablocks' in lastHistory:
     #     ## combine History and current
@@ -69,16 +69,18 @@ def getOF():
     #     newDelta = lastHistory['deltablocks'] + currentDelta
     #     deltaBlocks = json.dumps(newDelta)
 
-    if 'volumeblocks_' + coin + str(volumeBlockSize) in lastHistory:
+    volumeBlocks = {}
+    # volumeFlow = {}
+
+    for size in coinInfo['volsize']:
+        volumeBlocks[size] = json.loads(r.get('volumeblocks_' + coin + str(size)))
+        # volumeFlow[size] = json.loads(r.get('volumeflow_' + coin + str(size)))
+
+        if 'volumeblocks_' + coin + str(size) in lastHistory:
         ## combine History and current
-        currentVolume = json.loads(volumeBlocks)
-        newVolume = lastHistory['volumeblocks_' + coin + str(volumeBlockSize)] + currentVolume
-        volumeBlocks = json.dumps(newVolume)
-
-
-    if timeBlockSize > 5:
-        timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
-
+            currentVolume = volumeBlocks[size]
+            newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
+            volumeBlocks[size] = newVolume
 
     user = False
     if current_user.is_authenticated:
@@ -86,16 +88,16 @@ def getOF():
 
     jDict = {
         'stream' : stream,
-        'volumeBlocks' : volumeBlocks,
-        'volumeFlow' : volumeFlow,
+        'volumeBlocks' : json.dumps(volumeBlocks),
+        # 'volumeFlow' : json.dumps(volumeFlow),
         'timeBlocks' : timeBlocks,
-        'timeFlow' : timeFlow,
+        # 'timeFlow' : timeFlow,
         # 'deltaBlocks' : deltaBlocks,
         # 'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
         'user' : user,
         'coin' : coin,
-        'coinDict' : r.get('coinDict')
+        'coinDict' : coinDict
     }
 
     jx = jsonify(jDict)
