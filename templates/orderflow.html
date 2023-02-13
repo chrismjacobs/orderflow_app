@@ -902,20 +902,28 @@ let vue = new Vue({
 
             //console.log(closeTick, openTick)
 
+            let bStyle = {}
+
 
             if (closeTick == tick && openTick == tick) {
-                return sides[side + '-square']
+                bStyle = sides[side + '-square']
             } else if (closeTick == tick) {
-                return sides[candleKey + '-bottom']
+                bStyle = sides[candleKey + '-bottom']
             } else if (openTick == tick) {
-                return sides[candleKey + '-top']
+                bStyle = sides[candleKey + '-top']
             } else if (candle == 'green' && tick > openTick && tick < closeTick ) {
-                return sides[side + '-side']
+                bStyle = sides[side + '-side']
             } else if (candle == 'red' && tick < openTick && tick > closeTick ) {
-                return sides[side + '-side']
+                bStyle = sides[side + '-side']
             } else if (order){
-                return sides[side + '-oside']
+                bStyle = sides[side + '-oside']
             }
+
+            if (block.vwapTick && block.vwapTick == tick) {
+               bStyle['background'] = '#455A64'
+            }
+
+            return bStyle
 
 
         },
@@ -959,10 +967,7 @@ let vue = new Vue({
                 ETH : 100,
                 GALA : 10000
             }
-
             return Math.round(abs*c[this.coin])/c[this.coin]
-
-
         },
         toggleCoin: function () {
             let x = this.coins.indexOf(this.coin)

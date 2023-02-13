@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 import json
-from analysis import getBlocks
+from analysis import getBlocks, getVWAP
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 
 if not LOCAL:
@@ -44,7 +44,9 @@ def getOF():
     stream = r.get('stream_' + coin)
 
     timeBlocks = r.get('timeblocks_' + coin)
-    timeFlow = r.get('timeflow_' + coin)
+    #timeFlow = r.get('timeflow_' + coin)
+
+    timeBlocks = getVWAP(json.loads(timeBlocks), coin)
 
 
     # deltaBlocks = r.get('deltablocks_' + coin)

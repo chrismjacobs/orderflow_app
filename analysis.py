@@ -1,6 +1,8 @@
 import os
 import redis
 import json
+import math
+from math import trunc
 
 try:
     import config
@@ -34,6 +36,25 @@ def createCandle():
     return newCandle
 
 
+def getVWAP(timeblocks, coin):
+
+    volumeCum = 0
+    vwapVolumeCum = 0
+
+    for t in timeblocks:
+
+        volumeCum += t['total']
+        t['pivot'] = (t['high'] + t['low'] + t['close'])/3
+        vwapVolume = t['pivot']*t['total']
+        vwapVolumeCum += vwapVolume
+        vwapPrice = vwapVolumeCum/volumeCum
+        t['vwap'] = vwapPrice
+        if coin == 'BTC':
+            t['vwapTick'] = str(trunc(vwapPrice/10)*10)
+        elif coin == 'ETH':
+            t['vwapTick']  = math.floor(vwapPrice)
+
+    return json.dumps(timeblocks)
 
 def getPVAStatus(newBlocks):
 
@@ -118,7 +139,6 @@ def getTicks(newCandle, unit):
     for t in unit['tickList']:
 
         for n in newCandle['tickList']:
-            print(n)
             tp = n['tickPrice']
             if int(tp) not in ticks:
                 ticks.append(int(tp))
@@ -146,7 +166,7 @@ def getBlocks(size, blocksString):
     ## get all the timeblocks (5Min)
     blocks = json.loads(blocksString)
 
-    print(len(blocks))
+    #print(len(blocks))
 
     # new list of candle blocks
     newList = []
@@ -219,7 +239,7 @@ def getBlocks(size, blocksString):
     newBlocks = getPVAStatus(newList)
 
 
-    print(len(newBlocks))
+    #print(len(newBlocks))
     return json.dumps(newBlocks)
 
 # getVolumeBlock()
