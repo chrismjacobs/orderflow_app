@@ -129,7 +129,7 @@
 
                         <h5> This webapp may undergo maintanance on Sundays and may be unusable for a period </h5>
                         <h5> This webapp is free to use and currently uses the cheapest server set up; <br> if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and the data stream will lag for sometime making the webapp unusable as a live orderflow reference</h5>
-                        <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer on discord)</h5>
+                        <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer on Discord)</h5>
 
                     </div>
 
@@ -1763,10 +1763,13 @@ let vue = new Vue({
     },
     watch: {
         stream: function () {
-            //console.log(this.stream)
+            console.log('stream', this.stream, this.lastAlertTime )
             if (this.stream['alerts'] && this.stream['alerts'][0]) {
                 if (this.lastAlertTime && this.stream['alerts'][0][0] != this.lastAlertTime) {
+                    console.log('aTime', this.lastAlertTime)
                     this.audioAlert()
+                    this.lastAlertTime = this.stream['alerts'][0][0]
+                } else {
                     this.lastAlertTime = this.stream['alerts'][0][0]
                 }
             }
