@@ -239,8 +239,8 @@
 
                     <div  class="border border-info text-info rounded pt-2 pb-1" >
                         <h3> <span @click="flowPosition = !flowPosition"> Time Flow ([[tickLookback]]) </span>
-                                <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
-                                <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
+                                <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
+                                <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
                         </h3>
                     </div>
 
@@ -383,8 +383,8 @@
 
                     <div  class="border border-warning text-warning rounded pt-2 pb-1" >
                         <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[volumeBlockSize]]m ([[tickLookback]]) </span>
-                                <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
-                                <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
+                                <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
+                                <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
                         </h3>
                     </div>
 
@@ -437,7 +437,7 @@
                                     <tr>
                                         <td>Vol</td>
                                         <template v-for="(item, key) in getOFTableVolume" :key="key" >
-                                            <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
+                                            <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]] [[item.volDiv]] </td>
                                         </template>
                                         <td></td>
                                     </tr>
@@ -500,8 +500,6 @@
 
                                     </tr>
                                 </template>
-
-
 
                             </tbody>
                         </table>
@@ -873,6 +871,14 @@ let vue = new Vue({
 
             }
 
+            if (block && block.volDiv && this.user) {
+                if (candle == 'red') {
+                    color = ' hotpink'
+                } else {
+                    color = ' aqua'
+                }
+            }
+
             let candleKey = side + '-' + candle
 
             let sides = {
@@ -931,12 +937,11 @@ let vue = new Vue({
                 bStyle = sides[side + '-oside']
             }
 
-            if (block.vwapTick && block.vwapTick == tick) {
+            if (block && block.vwapTick && block.vwapTick == tick) {
                bStyle['background'] = '#455A64'
             }
 
             return bStyle
-
 
         },
         getCurrent: function (price) {
@@ -969,7 +974,6 @@ let vue = new Vue({
             } else {
                 return {width:'300px'}
             }
-
         },
         getRange: function (high, low) {
             let abs = Math.abs(high - low)
@@ -1747,20 +1751,10 @@ let vue = new Vue({
         },
 
         getTimeBlocks() {
-            let tbl = this.timeBlocks.length
-            if (tbl > 50) {
-                return this.timeBlocks.slice(-50)
-            } else {
-                return this.timeBlocks
-            }
+            return this.timeBlocks
         },
         getVolumeBlocks() {
-            let vbl = this.volumeBlocks.length
-            if (vbl > 50) {
-                return this.volumeBlocks.slice(-50)
-            } else {
-                return this.volumeBlocks
-            }
+            return this.volumeBlocks
         },
         getVolumeBlocksVert() {
             let vbl = this.volumeBlocks2.length
