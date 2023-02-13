@@ -437,7 +437,7 @@
                                     <tr>
                                         <td>Vol</td>
                                         <template v-for="(item, key) in getOFTableVolume" :key="key" >
-                                            <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]] [[item.volDiv]] </td>
+                                            <td colspan="2"  :style="getVolumeStyle(item.pva_status, key, item.price_delta)">[[roundData(item.total)]]</td>
                                         </template>
                                         <td></td>
                                     </tr>
