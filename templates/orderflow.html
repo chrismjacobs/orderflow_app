@@ -172,7 +172,7 @@
                     <br>
                     - Volume mode has different blocks depending on the coin symbol <br>
                     - Volume blocks are exact divisions eg a 2mil block is exactly 2mil <br>
-                    (this is different from exocharts which doesn't split and carries over trades whereby a 2mil block is often more than 2mil) <br>
+                    (this is different from exocharts which doesn't split and carry over large trades whereby a 2mil block is often more than 2mil) <br>
                     Therefore, volume block data will differ slightly from exocharts (developer's personal choice) <br>
                     <br>
 
@@ -180,6 +180,7 @@
 
                     - When viewing on mobile, setting the browser to desktop view fits more data on the page <br>
                     - Clicking orderflow charts makes them larger <br>
+                    - Clicking orderflow header will change the position of FPBS table <br>
                     - This webapp has not been tested on all device sizes and not display well on some devices <br>
 
 
@@ -193,6 +194,25 @@
                     <br>
 
                     <h3> Logged In </h3>
+
+                    [[login]]
+
+                    <br>
+                    <br>
+
+                    This webapp is not accepting registrations
+
+                    <br>
+                    <br>
+
+                    <button v-if="!user" @click="goTo('login')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Login</button>
+                    <button v-else @click="goTo('logout')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Logout</button>
+
+
+                    <br>
+                    <br>
+
+                    <h3> Mo </h3>
 
                     [[login]]
 
@@ -423,25 +443,17 @@
                                     </tr>
 
                                     <tr>
-                                        <td @click="showDelta = !showDelta">Delta</td>
-                                        <template v-for="(item, key) in getOFTableVolume" :key="key" >
-                                            <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
-                                        </template>
-                                        <td></td>
-                                    </tr>
-
-                                    <tr v-if="showDelta" >
-                                        <td>%</td>
+                                        <td  @click="showDelta = !showDelta" >%</td>
                                         <template v-for="(item, key) in getOFTableVolume" :key="key" >
                                             <td colspan="2"   :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                         </template>
                                         <td></td>
                                     </tr>
 
-                                    <tr>
-                                        <td>CVD</td>
+                                    <tr v-if="showDelta">
+                                        <td>Delta</td>
                                         <template v-for="(item, key) in getOFTableVolume" :key="key" >
-                                            <td colspan="2" :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'OF')">[[roundData(item.delta_cumulative)]]</td>
+                                            <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
                                         </template>
                                         <td></td>
                                     </tr>
@@ -1594,12 +1606,10 @@ let vue = new Vue({
                 vue.login = data.login
                 //console.log('LOGIN', data.login)
 
-
-
             })
             .fail(function(){
                   console.log('error has occurred gData')
-                  location.reload()
+                  //location.reload()
             });
         }
     },
@@ -1763,7 +1773,7 @@ let vue = new Vue({
     },
     watch: {
         stream: function () {
-            console.log('stream', this.stream, this.lastAlertTime )
+            //console.log('stream', this.stream, this.lastAlertTime )
             if (this.stream['alerts'] && this.stream['alerts'][0]) {
                 if (this.lastAlertTime && this.stream['alerts'][0][0] != this.lastAlertTime) {
                     console.log('aTime', this.lastAlertTime)
