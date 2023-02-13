@@ -66,7 +66,6 @@
                     <div class="col">
                         <div class="ct-chart ct-minor-sixth" id="chart1"></div>
                         <h4 class="ml-2">
-                            <span v-if="!mobile"> Price </span>
                             <span @click="setLookBack(+2)" class="ml-2 mr-2" >&#x2190</span>
                             <span >[[lookback]]Hrs</span>
                             <span @click="setLookBack(-2)" class="ml-2">&#x2192</span>
@@ -76,11 +75,23 @@
                         <div class="ct-chart ct-minor-sixth"  id="chart2"></div>
                         <h4 class="ml-2"> CVD </h4>
                     </div>
-                    <div v-if="!mobile" class="col">
+
+                    <div class="col" v-if="!mobile">
                         <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
                         <h4 class="ml-2"> OI </h4>
                     </div>
-                    <div v-if="!mobile" class="col">
+                    <div  class="col" v-if="!mobile">
+                        <div class="ct-chart ct-minor-sixth"  id="chart4"></div>
+                        <h4 class="ml-2"> Vol </h4>
+                    </div>
+
+                </div>
+                <div v-if="mobile" class="row">
+                    <div class="col">
+                        <div class="ct-chart ct-minor-sixth"  id="chart3"></div>
+                        <h4 class="ml-2"> OI </h4>
+                    </div>
+                    <div  class="col">
                         <div class="ct-chart ct-minor-sixth"  id="chart4"></div>
                         <h4 class="ml-2"> Vol </h4>
                     </div>
@@ -331,7 +342,7 @@
                 <div id="volOF" v-if="showTable != 'Notes'">
 
                     <div  class="border border-warning text-warning rounded pt-2 pb-1" >
-                        <h3> <span> Volume Flow 5m ([[tickLookback]]) </span>
+                        <h3> <span> Volume Flow [[volumeBlockSize]]m ([[tickLookback]]) </span>
                                 <span @click="setTickLookBack(+5)" class="ml-2" >&#8593</span>
                                 <span @click="setTickLookBack(-5)" class="ml-2">&#8595</span>
                         </h3>
@@ -633,13 +644,13 @@
 
 
 var report = navigator.userAgent
-console.log(report)
+//console.log(report)
 
 let mobile = false
 
 if (report.includes('Android') || report.includes('iPhone') ) {
     mobile = true
-    console.log('mobile')
+    //console.log('mobile')
 }
 
 startVue()
@@ -667,6 +678,7 @@ let vue = new Vue({
             this.lookback = 4
         }
 
+
     },
     data: {
         OIchart: 100,
@@ -677,7 +689,7 @@ let vue = new Vue({
         UTCadjust : 0,
         imbalance : 369,
         coin : 'BTC',
-        coins : ['BTC', 'ETH', 'GALA'],
+        coins : ['BTC', 'ETH'],
         coinOBJ : {},
         history : {},
         showTable : 'Time',
@@ -762,7 +774,7 @@ let vue = new Vue({
 
             let url = str + link
 
-            console.log('goTO', url);
+            //console.log('goTO', url);
             window.location = url
 
         },
@@ -822,11 +834,21 @@ let vue = new Vue({
                 'right-oside' : {'border-left': 'solid 5px' + color},
             }
 
+            tickOBJ = {
+                BTC : {
+                    'close' : (Math.floor(close/10))*10,
+                    'open' : (Math.floor(open/10))*10
+                },
+                ETH : {
+                    'close' : (Math.floor(close)),
+                    'open' : (Math.floor(open))
+                }
+            }
 
-            let closeTick = (Math.floor(close/10))*10
-            let openTick = (Math.floor(open/10))*10
+            let closeTick = tickOBJ[this.coin]['close']
+            let openTick = tickOBJ[this.coin]['open']
 
-
+            console.log(closeTick, openTick)
 
 
             if (closeTick == tick && openTick == tick) {
@@ -921,6 +943,7 @@ let vue = new Vue({
             document.getElementById('xyz').play()
         },
         getAlert: function (mode, key) {
+            console.log(this.stream['alerts'] )
 
 
             let requestAlert = null
@@ -957,7 +980,7 @@ let vue = new Vue({
 
         },
         showCandleToggle: function (key) {
-            console.log(key)
+            //console.log(key)
             if (this.showCandle == key) {
                 this.showCandle = null
             } else {
@@ -969,7 +992,7 @@ let vue = new Vue({
             let tableTotal = this.getTimeBlocks.length
             let totalTotal = this.timeBlocks.length
             let index = tableTotal - newKey
-            console.log(index, key)
+            //console.log(index, key)
 
             this.lookback = Math.round((index/totalTotal)*100)
         },
@@ -977,7 +1000,7 @@ let vue = new Vue({
 
             let blockHours = (this.timeBlocks.length * this.timeBlockSize) / 60
 
-            console.log(n, this.lookback)
+            //console.log(n, this.lookback)
 
             if (this.lookback == 2 && n == -2) {
                return false
@@ -995,7 +1018,7 @@ let vue = new Vue({
             }
 
             if (!blockOBJ[this.showTable]) {
-                console.log('no tables')
+                //console.log('no tables')
                 return false
             }
 
@@ -1058,7 +1081,7 @@ let vue = new Vue({
 
         },
         updateOFCharts: function () {
-            console.log('chartActions')
+            //console.log('chartActions')
 
             let labelsT = []
             let labelsV = []
@@ -1086,8 +1109,6 @@ let vue = new Vue({
                 lbv = totalV
             }
 
-            console.log('lbt', lbt, 'lbv', lbv)
-
             let cutoffT = totalT - lbt
             let cutoffV = totalV - lbv
 
@@ -1112,8 +1133,6 @@ let vue = new Vue({
                 }
             }
 
-            console.log('series', seriesDT, totalT)
-
             dataDT = { labels : labelsT, series : seriesDT}
             dataOT = { labels : labelsT, series : seriesOT}
             dataDV = { labels : labelsV, series : seriesDV}
@@ -1136,10 +1155,11 @@ let vue = new Vue({
 
         },
         setTickLookBack: function (n) {
-            this.tickLookback += n
 
-            if (this.tickLookback > 50 || this.tickLookback < 10 ) {
+            if (this.tickLookback + n > 100 || this.tickLookback + n < 10 ) {
                 this.tickLookback = 10
+            } else {
+                this.tickLookback += n
             }
         },
         setVol: function (n) {
@@ -1434,7 +1454,7 @@ let vue = new Vue({
         },
         ofTimer: function () {
             this.of_timer = setInterval(this.getOFData, 3000)
-            console.log('timer', this.of_timer)
+            //console.log('timer', this.of_timer)
         },
         clearOF: function () {
             clearInterval(this.of_timer)
@@ -1448,11 +1468,11 @@ let vue = new Vue({
             }
 
             if (this.coinOBJ[this.coin] && !this.coinOBJ[this.coin]['volsize'].includes(this.volumeBlockSize)) {
-                console.log(this.coinOBJ)
+                //console.log(this.coinOBJ)
                 this.volumeBlockSize = this.coinOBJ[this.coin]['volsize'][0]
             }
 
-            console.log('getOFData')
+            //console.log('getOFData')
 
             $.ajax({
                 data : {
@@ -1464,10 +1484,10 @@ let vue = new Vue({
 
             })
             .done(function(data) {
-                console.log('OF data received')
+                //console.log('OF data received')
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
-                console.log(vue.coinOBJ)
+                //console.log(vue.coinOBJ)
 
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
                 let volumeblocks = false
@@ -1477,15 +1497,13 @@ let vue = new Vue({
                     volumeblocks = volumeblocksOBJ[5]
                     volumeblocks2 = volumeblocksOBJ[2]
                 } else {
-                    volumeblocks = vue.coinOBJ['volsize'][0]
+                    volumeblocks = volumeblocksOBJ[vue.coinOBJ[vue.coin]['volsize'][0]]
                 }
 
                 vScroll = true
 
                 vue.volumeBlocks = volumeblocks
                 vue.volumeBlocks2 = volumeblocks2
-
-                console.log(vue.volumeBlocks2)
 
                 vue.stream = JSON.parse(data.stream)
 
@@ -1508,6 +1526,12 @@ let vue = new Vue({
                 vue.updateOFCharts()
 
                 vue.user = data.user
+
+                if (vue.user) {
+                    vue.coins = ['BTC', 'ETH']
+                } else {
+                    vue.coins = ['BTC']
+                }
                 //console.log('USER', data.user)
 
                 vue.login = data.login
@@ -1532,7 +1556,7 @@ let vue = new Vue({
             return reversedTicks
         },
         getTickCandlesTime() {
-            let blocks = vue.getReverseTimeBlocks
+            let blocks = this.getReverseTimeBlocks
 
             if (blocks.length == 0) {
                 return {}
@@ -1584,7 +1608,7 @@ let vue = new Vue({
         },
         getTickCandlesVolume() {
 
-            let blocks = vue.getReverseVolumeBlocks
+            let blocks = this.getReverseVolumeBlocks
 
             if (blocks.length == 0) {
                 return {}
@@ -1652,7 +1676,6 @@ let vue = new Vue({
             if (this.tickLookback > this.getReverseVolumeBlocks.length) {
                 lb = this.getReverseVolumeBlocks.length
             }
-            console.log('lb', lb)
             return this.getVolumeBlocks.slice(-lb)
         },
 
@@ -1692,7 +1715,7 @@ let vue = new Vue({
             }
         },
         UTCadjust: function () {
-            console.log('UTC', this.UTCadjust)
+            //console.log('UTC', this.UTCadjust)
             localStorage.setItem('UTC', this.UTCadjust)
         },
         timeBlockSize: function () {
@@ -1712,7 +1735,7 @@ let vue = new Vue({
             } else if (this.lookback < 1) {
                 this.lookback = 10
             }
-            console.log('lookback')
+            //console.log('lookback')
             localStorage.setItem('lookback', this.lookback)
         }
 
