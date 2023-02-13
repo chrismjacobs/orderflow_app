@@ -8,16 +8,33 @@
                 <br>
 
                 <h1>
-                    Login
+                    Developer Access
                 </h1>
+
+                <div>
+
+                    <h3 style="color:Hotpink"> Important Notes for User </h3>
+
+                    <h5> This webapp may undergo maintanance on Sundays and may be unusable for a period </h5>
+                    <h5> This webapp may be closed if excessively high volume occurs suddenly (eg 100 mil in 5 min)  and the CPU is maxed out; <br>
+                        this will allow the data stream to catch up or be reset</h5>
+                    <h5> Apologies for any inconvenince </h5>
+
+                </div>
 
                     User Name
                     <br>
                     <input type="text" v-model="user">
                     <br>
-                    Password
+                    Passcode
                     <br>
                     <input type="text" v-model="passcode">
+
+                    <br>
+
+                    2-Factor_Auth
+                    <br>
+                    <input type="text" v-model="tfa">
 
                     <br>
 
@@ -73,7 +90,8 @@ let vue = new Vue({
     },
     data: {
         user : '',
-        passcode : ''
+        passcode : '',
+        tfa : ''
     },
     methods: {
         goTo: function(link){
@@ -93,7 +111,8 @@ let vue = new Vue({
             $.ajax({
                 data : {
                     user: this.user,
-                    passcode: this.passcode
+                    passcode: this.passcode,
+                    tfa: this.tfa
                 },
                 type : 'POST',
                 url : '/loginAction'

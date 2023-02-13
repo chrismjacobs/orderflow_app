@@ -25,6 +25,8 @@ login_manager.login_message_category = 'info'
 
 @app.route('/')
 def home():
+    if START_CODE == 'block':
+        return redirect('/login')
 
     return render_template('orderflow.html')
 
