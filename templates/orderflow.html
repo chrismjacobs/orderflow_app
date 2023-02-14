@@ -170,9 +170,9 @@
                     - PVA candles will be highlighted<br>
                     - Possible occurance of CVD divergence will also be highlighted in the CVD column<br>
                     <br>
-                    - Volume mode has different blocks depending on the coin symbol <br>
-                    - Volume blocks are exact divisions eg a 2mil block is exactly 2mil <br>
-                    (this is different from exocharts which doesn't split and carry over large trades whereby a 2mil block is often more than 2mil) <br>
+                    - Volume mode has different block size depending on the coin symbol <br>
+                    - Volume blocks are exact divisions eg a 5mil block is exactly 5mil <br>
+                    (this is different from exocharts which doesn't split and carry over large trades whereby a 5mil block is often more than 5mil) <br>
                     Therefore, volume block data will differ slightly from exocharts (developer's personal choice) <br>
                     <br>
 
@@ -193,6 +193,22 @@
                     <br>
                     <br>
 
+
+
+
+
+                    <h3> More from the Developer </h3>
+
+                    Here are some private trading view indicators available to try:
+                    <br>
+                    <br>
+
+                    <a href="https://www.tradingview.com/script/xKXQr74f-Level-Alerts/">Level Alerts - a customized version of the popular key level indicator </a>
+
+
+                    <br>
+                    <br>
+
                     <h3> Logged In </h3>
 
                     [[login]]
@@ -207,26 +223,6 @@
 
                     <button v-if="!user" @click="goTo('login')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Login</button>
                     <button v-else @click="goTo('logout')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Logout</button>
-
-
-                    <br>
-                    <br>
-
-                    <h3> Mo </h3>
-
-                    [[login]]
-
-                    <br>
-                    <br>
-
-                    This webapp is not accepting registrations
-
-                    <br>
-                    <br>
-
-                    <button v-if="!user" @click="goTo('login')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Login</button>
-                    <button v-else @click="goTo('logout')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Logout</button>
-
 
                     <br>
                     <br>
@@ -507,7 +503,7 @@
 
                 </div>
 
-                <div v-if="showTable != 'Notes' && coin == 'BTC'">
+                <div v-if="showTable != 'Notes' && coin == 'BTC'" style="display:none">
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
                         <h3> <span> Volume Blocks (2m)</span>
                             <span style="display:none" v-if="coinOBJ[coin] && coinOBJ[coin]['volsize'].length > 1">
@@ -549,25 +545,12 @@
                 </div>
 
 
-
-
                 <div v-if="showTable == 'Time'" align="center">
 
                     <div class="border border-info rounded pt-2 pb-1 text-info" >
                         <h3> <span> Time Blocks ([[timeBlockSize]]) </span>
                                 <span @click="setTime(+1)" class="ml-2" >&#8593</span>
                                 <span @click="setTime(-1)" class="ml-2">&#8595</span>
-                        </h3>
-                    </div>
-
-                </div>
-
-                <div v-else-if="showTable == 'Volume'">
-
-                    <div class="border border-warning text-warning rounded pt-2 pb-1"  >
-                        <h3> <span> Volume Blocks ([[volumeBlockSize]])</span>
-                            <span @click="setVol(1)" class="ml-2" >&#8593</span>
-                            <span @click="setVol(-1)" class="ml-2">&#8595</span>
                         </h3>
                     </div>
 
@@ -1291,9 +1274,9 @@ let vue = new Vue({
 
             if (this.timeBlockSize == 5  && key != 0) {
                 if (CVDdivergence && CVDdivergence.highInfo && CVDdivergence.highInfo.div) {
-                    return {color: 'pink'}
+                    return {color: 'hotpink'}
                 } else if (CVDdivergence && CVDdivergence.highInfo && CVDdivergence.lowInfo.div) {
-                    return {color: 'lightblue'}
+                    return {color: '#0066FF'}
                 }
             }
 
@@ -1540,11 +1523,6 @@ let vue = new Vue({
                 return false
             }
 
-            if (this.coinOBJ[this.coin] && !this.coinOBJ[this.coin]['volsize'].includes(this.volumeBlockSize)) {
-                //console.log(this.coinOBJ)
-                this.volumeBlockSize = this.coinOBJ[this.coin]['volsize'][0]
-            }
-
             //console.log('getOFData')
 
             $.ajax({
@@ -1566,17 +1544,9 @@ let vue = new Vue({
                 let volumeblocks = false
                 let volumeblocks2 = []
 
-                if (vue.coin == 'BTC') {
-                    volumeblocks = volumeblocksOBJ[5]
-                    volumeblocks2 = volumeblocksOBJ[2]
-                } else {
-                    volumeblocks = volumeblocksOBJ[vue.coinOBJ[vue.coin]['volsize'][0]]
-                }
-
-                vScroll = true
+                volumeblocks = volumeblocksOBJ[vue.coinOBJ[vue.coin]['volsize'][0]]
 
                 vue.volumeBlocks = volumeblocks
-                vue.volumeBlocks2 = volumeblocks2
 
                 vue.stream = JSON.parse(data.stream)
 
@@ -1585,6 +1555,8 @@ let vue = new Vue({
                 //vue.deltaBlocks = JSON.parse(data.deltaBlocks)
 
                 //vue.deltaFlow = JSON.parse(data.deltaFlow)
+
+                vScroll = true
 
                 let ev = document.getElementById('volTableVert')
                 if (ev) {
