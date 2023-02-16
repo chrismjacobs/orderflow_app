@@ -154,7 +154,7 @@ def getHistory(coin):
 
 
 def streamAlert(message, mode, coin):
-    print('Alert Stream')
+    print('Alert Stream ' + mode + ' ' + coin)
     stream = json.loads(r.get('stream_' + coin))
 
     current_time = dt.datetime.utcnow()
@@ -322,6 +322,10 @@ def getImbalances(tickList, mode):
 
 def addBlock(units, blocks, mode, coin):
 
+    coinDict = json.loads(r.get('coinDict'))
+
+    pause = coinDict[coin]['pause']
+
 
     modeSplit = mode.split('_')
     mode = modeSplit[0]
@@ -329,11 +333,10 @@ def addBlock(units, blocks, mode, coin):
     if 'vol' in mode:
         size = int(modeSplit[1])
 
-    print('size', size, coin)
 
     CVDdivergence = {}
 
-    if mode == 'timeblock':
+    if mode == 'timeblock' and pause == False:
         CVDdivergence = getHiLow(blocks, coin)
         stream = json.loads(r.get('stream_' + coin))
         stream['Divs'] = CVDdivergence
@@ -385,6 +388,8 @@ def addBlock(units, blocks, mode, coin):
     timeDelta = newClose - newStart
     timeDelta2 = newClose - previousTime
 
+
+
     buyCount = 0
     sellCount = 0
     highPrice = 0
@@ -422,7 +427,7 @@ def addBlock(units, blocks, mode, coin):
 
             # print('CHECK SPREAD TICKS', price, type(price) )
 
-            if coin in tickCoins and size != 2:
+            if coin in tickCoins:
                 # print('TICKES', tickDict, tickPrice)
                 if coin == 'BTC':
                     tickPrice = str(trunc(price/10)*10)
@@ -450,8 +455,8 @@ def addBlock(units, blocks, mode, coin):
 
     tickList = []
 
-    if coin in tickCoins and size != 2:
-        print('TICKS SORT', mode, size)
+    if coin in tickCoins and pause == False:
+        #print('TICKS SORT', mode, size)
 
         tickKeys = list(tickDict.keys())
         tickKeys.sort(reverse = True)
@@ -521,8 +526,8 @@ def addBlock(units, blocks, mode, coin):
         'tradecount': tradecount,
     }
 
-    if 'block' in mode:
-        print('NEW CANDLE: ' + mode + ' ' + coin)
+    # if 'block' in mode:
+    #     print('NEW CANDLE: ' + mode + ' ' + coin)
 
     if mode == 'volblock' or mode == 'carry':
         print('VOL DIV CHECK')
@@ -554,6 +559,16 @@ def addBlock(units, blocks, mode, coin):
                     sendMessage(coin, msg, '', 'red')
 
             print('VOL DIV CHECK COMPLETE')
+
+    if newCandle['total'] > 50_000_000 and pause == False:
+        if coinDict['ETH']:
+            coinDict['ETH']['active'] = False
+        coinDict['BTC']['pause'] = True
+        r.set('coinDict', json.dumps(coinDict))
+    elif pause == True and newCandle['total'] < 50_000_000:
+        coinDict['BTC']['pause'] = False
+        r.set('coinDict', json.dumps(coinDict))
+
 
     return newCandle
 
@@ -1095,6 +1110,16 @@ def compiler(message, pair, coin):
 
     timestamp = message[0]['timestamp']
     ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
+    ts_minute = str(datetime.strptime(timestamp.split('.')[0], "%M"))
+    current_time = dt.datetime.utcnow()
+
+    lag = abs(current_time.minute - int(ts_minute))
+
+    if lag > 5 and coin == 'BTC':
+        message = "Lag on data stream: " + str(lag) + 'min'
+        sendMessage(coin, message, '', 'red')
+        streamAlert(message, 'LAG', coin)
+
 
     sess = session.latest_information_for_symbol(symbol=pair)
 
@@ -1215,8 +1240,9 @@ def handle_trade_message(msg):
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    for vs in coinDict[coin]['volsize']:
-        logVolumeUnit(buyUnit, sellUnit, coin, int(vs))
+    if coinDict[coin]['pause'] == False:
+        for vs in coinDict[coin]['volsize']:
+            logVolumeUnit(buyUnit, sellUnit, coin, int(vs))
 
 
 def sendMessage(coin, string, bg, text):
@@ -1357,16 +1383,16 @@ def runStream():
         handle_trade_message, ["BTCUSD", "ETHUSD"]
     )
 
-    ws_usdtP = usdt_perpetual.WebSocket(
-        test=False,
-        ping_interval=30,  # the default is 30
-        ping_timeout=None,  # the default is 10 # set to None and it will never timeout?
-        domain="bybit"  # the default is "bybit"
-    )
+    # ws_usdtP = usdt_perpetual.WebSocket(
+    #     test=False,
+    #     ping_interval=30,  # the default is 30
+    #     ping_timeout=None,  # the default is 10 # set to None and it will never timeout?
+    #     domain="bybit"  # the default is "bybit"
+    # )
 
-    ws_usdtP.trade_stream(
-        handle_trade_message, ["GALAUSDT"]
-    )
+    # ws_usdtP.trade_stream(
+    #     handle_trade_message, ["GALAUSDT"]
+    # )
 
 
     # ws_inverseP.instrument_info_stream(
