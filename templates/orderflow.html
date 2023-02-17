@@ -375,7 +375,7 @@
                 <div id="volOF" v-if="showTable != 'Notes'">
 
                     <div  class="border border-warning text-warning rounded pt-2 pb-1" >
-                        <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[ coinOBJ[coin]['volsize'] ]]m ([[tickLookback]]) </span>
+                        <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[ coinOBJ[coin]['volsize'][0] ]]m ([[tickLookback]]) </span>
                                 <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
                                 <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
                         </h3>
