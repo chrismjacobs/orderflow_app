@@ -1110,16 +1110,17 @@ def compiler(message, pair, coin):
 
     timestamp = message[0]['timestamp']
     ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
-    ts_minute = str(datetime.strptime(timestamp.split('.')[0], "%M"))
-    current_time = dt.datetime.utcnow()
 
-    lag = abs(current_time.minute - int(ts_minute))
+    # ts_minute = str(datetime.strptime(timestamp.split('.')[0], "%M"))  ERROR: UNconverted Data
+    # current_time = dt.datetime.utcnow()
 
-    if lag > 5 and coin == 'BTC':
-        message = "Lag on data stream: " + str(lag) + 'min'
-        sendMessage(coin, message, '', 'red')
-        streamAlert(message, 'LAG', coin)
+    # print('LAG')
+    # lag = abs(current_time.minute - int(ts_minute))
 
+    # if lag > 5 and coin == 'BTC':
+    #     message = "Lag on data stream: " + str(lag) + 'min'
+    #     sendMessage(coin, message, '', 'red')
+    #     streamAlert(message, 'LAG', coin)
 
     sess = session.latest_information_for_symbol(symbol=pair)
 
@@ -1234,6 +1235,8 @@ def handle_trade_message(msg):
 
 
     compiledMessage = compiler(msg['data'], pair, coin)
+
+    # print('COMPILER DONE')
 
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
