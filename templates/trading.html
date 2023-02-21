@@ -18,7 +18,32 @@
         <div id="vue-app">
             <div :class="getMargin()">
 
-                <h1 class="m-3 text-white" @click="goTo('')"> Trading Desk </h1>
+                <div class="text-white" align="center">
+                    <br>
+
+                    <h1 class="m-3 text-white" @click="goTo('')"> Trading Desk </h1>
+
+                    <br>
+                    <button @click="goTo('')" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">BTC</button>
+                    <button @click="showChart = !showChart" type="button" class="btn btn-light" data-bs-toggle="button" autocomplete="off">Chart</button>
+                    <button @click="goTo('journal')" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off">Journal</button>
+
+
+                    <br>
+                    <br>
+
+                </div>
+
+            <div class="col" v-if="mobile || showChart">
+
+                <!-- TradingView Widget BEGIN -->
+                <div class="tradingview-widget-container">
+                    <div id="tradingview_2c4c6">
+
+                    </div>
+                </div>
+                <!-- TradingView Widget END -->
+            </div>
 
                 <div :class="getTradeDiv()">
 
@@ -175,7 +200,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
 
 
@@ -210,11 +235,13 @@ let vue = new Vue({
             this.checkBTN[c] = false
         }
         console.log(this.checkBTN)
+        this.tradingView()
     },
     data: {
         checklist:{
             GP : 'Is there a GP involved?',
-            PV : 'Is there a Pivot/DW Key Level involved?',
+            PV : 'Do you know location of 1) Pivots 2) Daily Levels 3) Weekly Levels 4) Opens?',
+            PV : 'Do you know location of VA and POCs?',
             SF : 'Is there an SFP involved?',
             RG : 'Is the trade from outside a range (VP/PF/Reg)?',
             OF : 'Have you examined order flow trend OI / CVD / PA / LRA ?',
@@ -222,7 +249,7 @@ let vue = new Vue({
             SP : 'Is there SPX confluence?',
             VT : 'Has volatility been considered?',
             MM : 'Has Macro Momentum, POCs, PFs been analyzed?',
-            NW : 'Has news been marked?'
+            NW : 'Has news and holidays been marked?'
         },
         checkBTN: {},
         lessons:{
@@ -255,10 +282,38 @@ let vue = new Vue({
         },
         btc: 0,
         report: report,
-        mobile: mobile
+        mobile: mobile,
+        showChart: false,
 
     },
     methods: {
+        tradingView: function () {
+            new TradingView.widget(
+                    {
+                    "autosize" : false,
+                    "width": '100%',
+                    "height": 610,
+                    "hide_side_toolbar": true,
+                    "hide_top_toolbar": true,
+                    "symbol": "BYBIT:BTCUSD.P",
+                    "interval": "5",
+                    "timezone": "Asia/Taipei",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_legend": false,
+                    "allow_symbol_change": true,
+                    "container_id": "tradingview_2c4c6",
+                    "studies": [
+                        "STD;Bollinger_Bands",
+                        "STD;VWAP",
+                        "STD;Pivot%1Points%1Standard",
+                    ],
+                }
+            );
+        },
         goTo: function(link){
 
             var str = window.location.href.split('trade')[0]

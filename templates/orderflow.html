@@ -245,10 +245,10 @@
                                             <tr :style="getCurrent(item)">
                                                 <th class="text-info" scope="row"> [[item]] </th>
                                                 <template v-for="(tick, index) in getTickCandlesTime[item]" :key="index">
-                                                    <td :style="getBorders(index, 'left', item, tick.Sell, 'time')">
-                                                        <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)">[[ roundData(tick.Sell) ]]</span>
+                                                    <td :style="getBorders(index, 'left', item, tick.Sell, 'time')"  :id="key + '_' + index + '_sell_' + item" @click="markPosition(key, index, 'sell', item)">
+                                                        <span v-if="tick.Sell" :style="getImbalance('sell', tick.SellPer)" >[[ roundData(tick.Sell) ]]</span>
                                                     </td>
-                                                    <td :style="getBorders(index, 'right', item, tick.Buy, 'time' )">
+                                                    <td :style="getBorders(index, 'right', item, tick.Buy, 'time' )" :id="key + '_' + index + '_buy_' + item" @click="markPosition(key, index, 'buy', item)">
                                                         <span v-if="tick.Buy" :style="getImbalance('buy', tick.BuyPer)">[[ roundData(tick.Buy) ]]</span>
                                                     </td>
                                                 </template>
@@ -291,7 +291,7 @@
                                         <td></td>
                                     </tr>
 
-                                    <tr v-if="showDelta" >
+                                    <tr>
                                         <td>%</td>
                                         <template v-for="(item, key) in getOFTableTime" :key="key" >
                                             <td colspan="2"   :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
@@ -347,7 +347,7 @@
                                     </tr>
                                 </template>
 
-                                <template>
+                                <template >
                                     <tr>
                                         <td>CVD</td>
                                         <td></td>
@@ -362,7 +362,6 @@
                                         <td :colspan="tickLookback*2" align="center">
                                         <div @click="setChartHeight('OIchart')" class="ct-chart" :style="getChartHeight('OIchart')" id="chart6"></div>
                                         </td>
-
                                     </tr>
                                 </template>
 
@@ -475,7 +474,7 @@
                                     </tr>
                                 </template>
 
-                                <template>
+                                <template style="display:none">
                                     <tr>
                                         <td>CVD</td>
                                         <td></td>
@@ -499,6 +498,18 @@
                     </div>
 
                 </div>
+
+                <div class="col" v-if="mobile">
+
+                    <!-- TradingView Widget BEGIN -->
+                    <div class="tradingview-widget-container">
+                        <div id="tradingview_2c4c6">
+
+                        </div>
+                    </div>
+                    <!-- TradingView Widget END -->
+                </div>
+
 
                 <div v-if="showTable != 'Notes' && coin == 'BTC'" style="display:none">
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
@@ -761,6 +772,10 @@ let vue = new Vue({
         ofAlert : 0,
         localHigh : 0,
         localLow : 0,
+        tpElement: '',
+        tpClear: '',
+        stopClear: '',
+        stopElement: '',
         optionsP : {
             showPoint: false,
             showLine: true,
@@ -798,6 +813,61 @@ let vue = new Vue({
           }
     },
     methods: {
+        tradingView: function () {
+            new TradingView.widget(
+                    {
+                    "autosize" : false,
+                    "width": '100%',
+                    "height": 610,
+                    "hide_side_toolbar": true,
+                    "hide_top_toolbar": true,
+                    "symbol": "BYBIT:BTCUSD.P",
+                    "interval": "5",
+                    "timezone": "Asia/Taipei",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_legend": false,
+                    "allow_symbol_change": true,
+                    "container_id": "tradingview_2c4c6",
+                    "studies": [
+                        "STD;Bollinger_Bands",
+                        "STD;VWAP",
+                        "STD;Pivot%1Points%1Standard",
+                    ],
+                }
+            );
+        },
+        markPosition: function (key, index, side, item) {
+            if (!this.user) {
+                return false
+            }
+            console.log(key, index, side, item)
+            let eString = key + '_' + index + '_' + side + '_' + item
+            if (side == 'buy') {
+                if (this.tpElement == eString) {
+                    let elm = document.getElementById(this.tpElement)
+                    elm.innerHTML = ''
+                    elm.style.background = ''
+                    this.tpElement = ''
+                } else {
+                    this.tpClear = this.tpElement
+                    this.tpElement = eString
+                }
+            } else {
+                if (this.stopElement == eString) {
+                    let elm = document.getElementById(this.stopElement)
+                    elm.innerHTML = ''
+                    elm.style.background = ''
+                    this.stopElement = ''
+                } else {
+                    this.stopClear = this.stopElement
+                    this.stopElement = eString
+                }
+            }
+        },
         setChartHeight: function (mode) {
             if (this[mode] != 500) {
                 this[mode] += 100
@@ -918,8 +988,7 @@ let vue = new Vue({
             }
 
             if (block && block.vwapTick && block.vwapTick == tick) {
-                console.log('vwap')
-                //bStyle['background'] = '#455A64'
+                bStyle['background'] = '#455A64'
             }
 
             return bStyle
@@ -1536,7 +1605,7 @@ let vue = new Vue({
                 //console.log('OF data received')
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
-                console.log(vue.coinOBJ)
+                //console.log(vue.coinOBJ)
 
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
                 let volumeblocks = false
@@ -1736,6 +1805,34 @@ let vue = new Vue({
         }
     },
     watch: {
+        tpElement: function () {
+            element = document.getElementById(this.tpElement)
+            if (element) {
+                element.innerHTML = "TP:" + this.tpElement.split('_')[3]
+                element.style.background = '#004D40'
+            }
+        },
+        stopElement: function () {
+            element = document.getElementById(this.stopElement)
+            if (element) {
+                element.innerHTML = 'SL'
+                element.style.background = 'firebrick'
+            }
+        },
+        tpClear: function () {
+            element = document.getElementById(this.tpClear)
+            if (element) {
+                element.innerHTML = ''
+                element.style.background = ''
+            }
+        },
+        stopClear: function () {
+            element = document.getElementById(this.stopCleart)
+            if (element) {
+                element.innerHTML = ''
+                element.style.background = ''
+            }
+        },
         stream: function () {
             //console.log('stream', this.stream, this.lastAlertTime )
             if (this.stream['alerts'] && this.stream['alerts'][0]) {
