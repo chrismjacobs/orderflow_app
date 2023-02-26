@@ -6,11 +6,10 @@ from pybit import inverse_perpetual, usdt_perpetual
 import datetime as dt
 from datetime import datetime
 import redis
-import discord
 import time
-from discord.ext import tasks, commands
-from pythonping import ping
+
 from math import trunc
+from taskAux import actionBIT, actionDELTA, startDiscord
 
 
 session = inverse_perpetual.HTTP(
@@ -202,12 +201,12 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
         deltaBuyStr = str(round(currentBuys/1_000)) + 'k '
         deltaSellStr = str(round(currentSells/1_000)) + 'k '
 
-        if deltaOI > stream['oiMarker']:
+        if stream['oiMarkers'][0] > 0 and deltaOI > stream['oiMarkers'][0]:
             message = coin + ' Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
             sendMessage(coin, message, '', 'blue')
             streamAlert(message, 'OI', coin)
 
-        if deltaOI < - stream['oiMarker']:
+        if stream['oiMarkers'][1] > 0 and deltaOI < - stream['oiMarkers'][1]:
             message = coin + ' Sudden OI DEC: ' + deltaOIstr + ' Buys: ' + deltaBuyStr + ' Sells: ' + deltaSellStr  + ' Price: ' + str(stream['lastPrice'])
             sendMessage(coin, message, '', 'pink')
             streamAlert(message, 'OI', coin)
@@ -232,32 +231,36 @@ def addDelta(blocks, coin):
         switchUp = False
         switchDown = False
 
-        if len(blocks) > 2:
-            if blocks[-1]['delta'] > 0 and blocks[-2]['delta'] < 0:
-                switchUp = True
-            if blocks[-1]['delta'] < 0 and blocks[-2]['delta'] > 0:
-                switchDown = True
+        if len(blocks) > 3:
+            if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
+                if blocks[-1]['delta'] < 0:
+                    switchDown = True
+                    actionDELTA('Sell')
+            if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
+                if blocks[-1]['delta'] > 0:
+                    switchUp = True
+                    actionDELTA('Buy')
 
-        lastElements = [-2, -3, -4, -5, -6]
-        timeElements = []
+        # lastElements = [-2, -3, -4, -5, -6]
+        # timeElements = []
 
-        if len(blocks) >= 7:
-            for t in lastElements:
-                timeDelta = blocks[t]['time_delta']/1000
-                timeElements.append(round(timeDelta))
-                if timeDelta < 30:
-                    fastCandles += 1
+        # if len(blocks) >= 7:
+        #     for t in lastElements:
+        #         timeDelta = blocks[t]['time_delta']/1000
+        #         timeElements.append(round(timeDelta))
+        #         if timeDelta < 30:
+        #             fastCandles += 1
 
 
-        if fastCandles >= 3:
-            if switchUp:
-                switch = True
-                r.set('discord_' + coin, 'Delta Switch Up: ' + json.dumps(timeElements) )
-                streamAlert('Delta Switch Up: ' + json.dumps(timeElements), 'Delta', coin)
-            if switchDown:
-                switch = True
-                r.set('discord_' + coin, 'Delta Switch Down: ' + json.dumps(timeElements) )
-                streamAlert('Delta Switch Down: ' + json.dumps(timeElements), 'Delta', coin)
+        # if fastCandles >= 3:
+        #     if switchUp:
+        #         switch = True
+        #         r.set('discord_' + coin, 'Delta Switch Up: ' + json.dumps(timeElements) )
+        #         streamAlert('Delta Switch Up: ' + json.dumps(timeElements), 'Delta', coin)
+        #     if switchDown:
+        #         switch = True
+        #         r.set('discord_' + coin, 'Delta Switch Down: ' + json.dumps(timeElements) )
+        #         streamAlert('Delta Switch Down: ' + json.dumps(timeElements), 'Delta', coin)
 
         return switch
 
@@ -325,14 +328,10 @@ def addBlock(units, blocks, mode, coin):
     coinDict = json.loads(r.get('coinDict'))
 
     pause = coinDict[coin]['pause']
-
+    getTickImbs = coinDict[coin]['imbalances']
 
     modeSplit = mode.split('_')
     mode = modeSplit[0]
-    size = 0
-    if 'vol' in mode:
-        size = int(modeSplit[1])
-
 
     CVDdivergence = {}
 
@@ -346,7 +345,7 @@ def addBlock(units, blocks, mode, coin):
 
     switch = False
 
-    if mode == 'deltablock':
+    if mode == 'deltablock' and coin == 'BIT':
        switch = addDelta(blocks, coin)
 
     ''' BLOCK DATA '''
@@ -455,7 +454,9 @@ def addBlock(units, blocks, mode, coin):
 
     tickList = []
 
-    if coin in tickCoins and pause == False:
+
+
+    if coin in tickCoins:
         #print('TICKS SORT', mode, size)
 
         tickKeys = list(tickDict.keys())
@@ -466,19 +467,16 @@ def addBlock(units, blocks, mode, coin):
         for p in tickKeys:
             tickList.append(tickDict[p])
 
-        getIMBs = getImbalances(tickList, mode)
-        tickList = getIMBs[0]
-        stackBuys = getIMBs[1]
-        stackSells = getIMBs[2]
+        if getTickImbs:
+            getIMBs = getImbalances(tickList, mode)
+            tickList = getIMBs[0]
+            stackBuys = getIMBs[1]
+            stackSells = getIMBs[2]
 
-        if stackBuys >= 3 and 'time' in mode:
-            sendMessage(coin, 'Stack IMBS BUY', '', 'white')
-        if stackSells >= 3 and 'time' in mode:
-            sendMessage(coin, 'Stack IMBS SELL', '', 'white')
-
-        # previousCVDDIV = False
-        # if lastCandle['divergence'] and len(lastCandle['divergence']) > 0:
-        #     if lastCandle['divergence']['highInfo'] or lastCandle['divergence']['lowInfo']
+            if stackBuys >= 3 and 'time' in mode:
+                sendMessage(coin, 'Stack IMBS BUY', '', 'white')
+            if stackSells >= 3 and 'time' in mode:
+                sendMessage(coin, 'Stack IMBS SELL', '', 'white')
 
 
     oiList.sort()
@@ -749,14 +747,10 @@ def logTimeUnit(buyUnit, sellUnit, coin):
             r.set('timeflow_' + coin, json.dumps(timeflow))
 
 
-def getDeltaStatus(deltaflow, buyUnit, sellUnit):
-    print('GET DELTA STATUS')
-
-    deltaBlock = 1_000_000
+def getDeltaStatus(deltaflow, deltaCount):
 
     if LOCAL:
-        deltaBlock = 100_000
-
+        print('GET DELTA STATUS')
 
 
     totalBuys = 0
@@ -772,18 +766,18 @@ def getDeltaStatus(deltaflow, buyUnit, sellUnit):
             totalSells += d['size']
 
 
-    # if totalBuys - totalSells < - deltaBlock:
-    #     negDelta = True
-    #     ## there are excess shorts
-    #     ##  1M longs  2.5M shorts = delta -1.5m  with 0.5 excess
-    #     excess = abs((totalBuys - totalSells) + deltaBlock)
+    if totalBuys - totalSells < - deltaCount:
+        negDelta = True
+        ## there are excess shorts
+        ##  1M longs  2.5M shorts = delta -1.5m  with 0.5 excess
+        excess = abs((totalBuys - totalSells) + deltaCount)
 
 
-    # if totalBuys - totalSells > deltaBlock:
-    #     posDelta = True
-    #     ## there are excess long
-    #     ##  2.5M longs  1M shorts = delta 1.5m  with 0.5 excess
-    #     excess = abs((totalBuys - totalSells) - deltaBlock)
+    if totalBuys - totalSells > deltaCount:
+        posDelta = True
+        ## there are excess long
+        ##  2.5M longs  1M shorts = delta 1.5m  with 0.5 excess
+        excess = abs((totalBuys - totalSells) - deltaCount)
 
     return {
             'flowdelta' : totalBuys - totalSells,
@@ -793,9 +787,17 @@ def getDeltaStatus(deltaflow, buyUnit, sellUnit):
     }
 
 
-def logDeltaUnit(buyUnit, sellUnit, coin):
+def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
+
 
     # add a new unit which is msg from handle_message
+
+    dFlow = 'deltaflow_' + coin
+    dBlocks = 'deltablocks_' + coin
+
+    if not r.get(dFlow):
+        r.set(dFlow, json.dumps([]))
+        r.set(dBlocks, json.dumps([]))
 
     deltaflow =  json.loads(r.get('deltaflow_' + coin)) # []
     deltablocks = json.loads(r.get('deltablocks_' + coin)) # []
@@ -807,9 +809,9 @@ def logDeltaUnit(buyUnit, sellUnit, coin):
         print('DELTA 0')
 
         ## start the initial time flow and initial current candle
-        if buyUnit['size'] > 0:
+        if buyUnit['size'] > 1:
             deltaflow.append(buyUnit)
-        if sellUnit['size'] > 0:
+        if sellUnit['size'] > 1:
             deltaflow.append(sellUnit)
 
         currentCandle = addBlock(deltaflow, deltablocks, 'deltamode', coin)
@@ -819,7 +821,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin):
         r.set('deltaflow_' + coin, json.dumps(deltaflow))
     else:
 
-        deltaStatus = getDeltaStatus(deltaflow, buyUnit, sellUnit)
+        deltaStatus = getDeltaStatus(deltaflow, deltaCount)
 
         print('DELTA 1')
 
@@ -1097,7 +1099,7 @@ def historyReset(coin):
                 print(k)
 
 
-            r.set('timeflow_' + coin, json.dumps([]) )  # this the flow of message data to create next candle
+            r.set('timeflow_' + coin, json.dumps([]) )  # this is the flow of message data to create next candle
             r.set('timeblocks_' + coin, json.dumps([]) ) # this is the store of new time based candles
             r.set('newDay_' + coin, dt_string)
 
@@ -1169,10 +1171,13 @@ def compiler(message, pair, coin):
             # 23.645  -->  23.645 --> 30204 --> 15102 --> 1510.2
             priceString = str(  round  ( float(x['price'])  *100 )/100)
             size = round ( x['size']*10  )  / 10
-
         elif coin == 'GALA':
-            # 0.4848
+            # 0.04848 -- >
             priceString = str(  round  ( float(x['price'])  *100000 )/100000)
+            size = round ( x['size']*10  )  / 10
+        elif coin == 'BIT':
+            # 0.5774
+            priceString = str(  round  ( float(x['price'])  *10000 )/10000)
             size = round ( x['size']*10  )  / 10
 
         if x['side'] == 'Buy':
@@ -1195,15 +1200,14 @@ def compiler(message, pair, coin):
             sellUnit['size'] += x['size']
             sellUnit['tradecount'] += 1
 
-    totalMsgSize = int(buyUnit['size'] + sellUnit['size'])
+    # totalMsgSize = int(buyUnit['size'] + sellUnit['size'])
 
     # if  totalMsgSize > 1_000_000:
     #     bString = 'Buy: ' + str(buyUnit['size'])  + ' Sell: ' + str(sellUnit['size'])
     #     print('Large Trade: ' + bString)
     #     r.set('discord_' + coin,  'Large Trade: ' + bString)
 
-    print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) )
-
+    # print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) )
 
     return [buyUnit, sellUnit]
 
@@ -1243,9 +1247,15 @@ def handle_trade_message(msg):
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    if coinDict[coin]['pause'] == False:
-        for vs in coinDict[coin]['volsize']:
-            logVolumeUnit(buyUnit, sellUnit, coin, int(vs))
+    volControl = coinDict[coin]['volume']
+    deltaControl = coinDict[coin]['delta']
+
+    if volControl[0]:
+        logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
+
+    if deltaControl[0]:
+        deltaCount = deltaControl[1]
+        logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
 
 
 def sendMessage(coin, string, bg, text):
@@ -1280,61 +1290,6 @@ def sendMessage(coin, string, bg, text):
         r.set('discord_' + coin, msg)
 
 
-def startDiscord():
-    ## intents controls what the bot can do; in this case read message content
-    intents = discord.Intents.default()
-    intents.message_content = True
-    intents.members = True
-    bot = commands.Bot(command_prefix="!", intents=discord.Intents().all())
-
-    @bot.event
-    async def on_ready():
-        print(f'{bot.user} is now running!')
-        user = bot.get_user(int(DISCORD_USER))
-        print('DISCORD_GET USER', DISCORD_USER, 'user=', user)
-        msg = sendMessage(None, 'Running', 'yellow', 'white')
-        await user.send(msg)
-        checkRedis.start(user)
-
-    @tasks.loop(seconds=3)
-    async def checkRedis(user):
-        print('DISCORD REDIS CHECK')
-
-        coinDict = json.loads(r.get('coinDict'))
-
-        for coin in coinDict:
-
-            ## need incase redis gets wiped
-            if not r.get('discord_' + coin):
-                sendMessage(coin, 'discord set', 'white', 'pink')
-
-            channel = bot.get_channel(int(coinDict[coin]['channel']))
-
-            if r.get('discord_' + coin) != 'blank':
-                msg = r.get('discord_' + coin)
-                await channel.send(msg)
-                r.set('discord_' + coin, 'blank')
-
-    @bot.event
-    async def on_message(msg):
-        user = bot.get_user(int(DISCORD_USER))
-        # print('MESSAGE DDDDDDDDD', msg.content)
-        replyText = 'ho'
-
-        if msg.content == 'B':
-            lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
-            oi = round(lastCandle['oi_delta']/1000)
-            b = round(lastCandle['buys']/1000)
-            s = round(lastCandle['sells']/1000)
-            replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
-
-        if msg.author == user:
-            await user.send(replyText)
-            # ping('rekt-app.onrender.com', verbose=True)
-
-
-    bot.run(DISCORD_TOKEN)
-
 
 @app.task() #bind=True, base=AbortableTask  // (self)
 def runStream():
@@ -1346,15 +1301,6 @@ def runStream():
         if k[0] != '_' and k != 'coinDict':
             r.delete(k)
 
-
-    # 'BTC' : {
-    #         'channel' : 1064447410350329876,
-    #         'oicheck' : 1_000_000,
-    #         'volsize' : [2,5],
-    #         'active' : True,
-    #         'purge' : False
-    #     },
-
     coinDict = json.loads(r.get('coinDict'))
 
 
@@ -1364,7 +1310,7 @@ def runStream():
             'lastTime' : 0,
             'lastOI' : 0,
             '1mOI' : [],
-            'oiMarker' : coinDict[c]['oicheck'],
+            'oiMarkers' : coinDict[c]['oicheck'],
             'Divs' : {},
             'alerts' : []
         }
@@ -1383,7 +1329,7 @@ def runStream():
     )
 
     ws_inverseP.trade_stream(
-        handle_trade_message, ["BTCUSD", "ETHUSD"]
+        handle_trade_message, ["BTCUSD", "ETHUSD", "BITUSD"]
     )
 
     # ws_usdtP = usdt_perpetual.WebSocket(
