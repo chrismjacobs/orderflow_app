@@ -54,7 +54,7 @@ def getVWAP(timeblocks, coin):
         elif coin == 'ETH':
             t['vwapTick']  = math.floor(vwapPrice)
 
-    return json.dumps(timeblocks)
+    return timeblocks
 
 def getPVAStatus(newBlocks):
 
@@ -130,7 +130,6 @@ def getImbalances(tickList):
             tickList[i + 1]['SellPer'] = SIpct
 
     return tickList
-
 
 
 def getTicks(newCandle, unit):

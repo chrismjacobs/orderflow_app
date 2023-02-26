@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 import json
-from analysis import getBlocks, getVWAP
+from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 
 if not LOCAL:
@@ -42,14 +42,14 @@ def getOF():
 
     coinDict = r.get('coinDict')
     coinInfo = json.loads(coinDict)[coin]
+    size = coinInfo['volume'][1]
 
     stream = r.get('stream_' + coin)
 
-    timeBlocks = r.get('timeblocks_' + coin)
+    timeBlocks = json.loads(r.get('timeblocks_' + coin))
     #timeFlow = r.get('timeflow_' + coin)
 
-    timeBlocks = getVWAP(json.loads(timeBlocks), coin)
-
+    timeBlocks = getVWAP(timeBlocks, coin)
 
     # deltaBlocks = r.get('deltablocks_' + coin)
     # deltaFlow = r.get('deltaflow_' + coin)
@@ -69,6 +69,13 @@ def getOF():
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
+    deltaBlocks = []
+
+    checkDelta = r.get('delta_' + coin)
+
+    if checkDelta:
+        deltaBlocks = json.loads(checkDelta)
+
     # if 'deltablocks' in lastHistory:
     #     ## combine History and current
     #     currentDelta = json.loads(deltaBlocks)
@@ -78,27 +85,40 @@ def getOF():
     volumeBlocks = {}
     # volumeFlow = {}
 
-    for size in coinInfo['volsize']:
-        volumeBlocks[size] = json.loads(r.get('volumeblocks_' + coin + str(size)))
+    volumeCheck = r.get('volumeblocks_' + coin + str(size))
         # volumeFlow[size] = json.loads(r.get('volumeflow_' + coin + str(size)))
 
-        if 'volumeblocks_' + coin + str(size) in lastHistory:
-        ## combine History and current
-            currentVolume = volumeBlocks[size]
-            newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
-            volumeBlocks[size] = newVolume
+    if volumeCheck:
+        volumeBlocks = json.loads(volumeCheck)
+
+
+    if 'volumeblocks_' + coin + str(size) in lastHistory:
+    ## combine History and current
+        currentVolume = volumeBlocks[size]
+        newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
+        volumeBlocks[size] = newVolume
+
+
+
+
 
     user = False
     if current_user.is_authenticated:
         user = current_user.username
 
+
+    for tb in timeBlocks:
+        tb['tickList'] = getImbalances(tb['tickList'])
+    for vb in volumeBlocks:
+        vb['tickList'] = getImbalances(vb['tickList'])
+
     jDict = {
         'stream' : stream,
         'volumeBlocks' : json.dumps(volumeBlocks),
         # 'volumeFlow' : json.dumps(volumeFlow),
-        'timeBlocks' : timeBlocks,
+        'timeBlocks' : json.dumps(timeBlocks),
         # 'timeFlow' : timeFlow,
-        # 'deltaBlocks' : deltaBlocks,
+        'deltaBlocks' : json.dumps(deltaBlocks),
         # 'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
         'user' : user,
