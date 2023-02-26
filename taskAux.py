@@ -52,7 +52,7 @@ def startDiscord():
 
             if r.get('discord_' + coin) != 'blank':
                 msg = r.get('discord_' + coin)
-                await channel.send(msg)
+                await channel.send(msg + 'TEST')
                 r.set('discord_' + coin, 'blank')
 
     @bot.event
