@@ -374,7 +374,7 @@
                 <div id="volOF" v-if="showTable != 'Notes'">
 
                     <div  class="border border-warning text-warning rounded pt-2 pb-1" >
-                        <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[ coinOBJ[coin]['volsize'][0] ]]m ([[tickLookback]]) </span>
+                        <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[ coinOBJ[coin]['volume'][1] ]]m ([[tickLookback]]) </span>
                                 <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
                                 <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
                         </h3>
@@ -514,7 +514,7 @@
                 <div v-if="showTable != 'Notes' && coin == 'BTC'" style="display:none">
                     <div class="border border-warning text-warning rounded pt-2 pb-1"  >
                         <h3> <span> Volume Blocks (2m)</span>
-                            <span style="display:none" v-if="coinOBJ[coin] && coinOBJ[coin]['volsize'].length > 1">
+                            <span style="display:none" v-if="coinOBJ[coin]">
                                 <span @click="setVol(1)" class="ml-2" >&#8593</span>
                                 <span @click="setVol(-1)" class="ml-2">&#8595</span>
                             </span>
@@ -1286,7 +1286,7 @@ let vue = new Vue({
             }
         },
         setVol: function (n) {
-            let sizes = this.coinOBJ[this.coin]['volsize']
+            let sizes = this.coinOBJ[this.coin]['volume'][1]
             let i = sizes.indexOf(this.volumeBlockSize)
 
             if (this.volumeBlockSize == sizes.length - 1) {
@@ -1605,13 +1605,15 @@ let vue = new Vue({
                 //console.log('OF data received')
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
-                //console.log(vue.coinOBJ)
+                console.log(vue.coinOBJ)
 
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
                 let volumeblocks = false
                 let volumeblocks2 = []
 
-                volumeblocks = volumeblocksOBJ[vue.coinOBJ[vue.coin]['volsize'][0]]
+                console.log(volumeblocksOBJ)
+
+                volumeblocks = volumeblocksOBJ
 
                 vue.volumeBlocks = volumeblocks
 
@@ -1619,9 +1621,7 @@ let vue = new Vue({
 
                 vue.timeBlocks = JSON.parse(data.timeBlocks)
 
-                //vue.deltaBlocks = JSON.parse(data.deltaBlocks)
-
-                //vue.deltaFlow = JSON.parse(data.deltaFlow)
+                vue.deltaBlocks = JSON.parse(data.deltaBlocks)
 
                 vScroll = true
 
