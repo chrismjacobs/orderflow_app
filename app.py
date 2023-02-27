@@ -75,7 +75,7 @@ def getOF():
     if checkDelta:
         deltaBlocks = json.loads(checkDelta)
 
-    print('DELTA', deltaBlocks)
+    # print('DELTA', deltaBlocks)
 
     if 'deltablocks_' + coin in lastHistory:
         ## combine History and current
