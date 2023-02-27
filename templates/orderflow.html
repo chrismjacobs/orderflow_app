@@ -511,9 +511,9 @@
                 </div>
 
 
-                <div v-if="showTable != 'Notes' && coin == 'BTC'" style="display:none">
-                    <div class="border border-warning text-warning rounded pt-2 pb-1"  >
-                        <h3> <span> Volume Blocks (2m)</span>
+                <div v-if="showTable != 'Notes' && coin == 'BTC' && user">
+                    <div class="border border-success text-success rounded pt-2 pb-1"  >
+                        <h3> <span> Delta Blocks</span>
                             <span style="display:none" v-if="coinOBJ[coin]">
                                 <span @click="setVol(1)" class="ml-2" >&#8593</span>
                                 <span @click="setVol(-1)" class="ml-2">&#8595</span>
@@ -535,9 +535,9 @@
                             </tr>
                         </thead>
                         <tbody class="vert" id='volTableVert' :style="getVerticalTable()">
-                            <template v-for="(item, key) in getVolumeBlocksVert" :key="key" >
+                            <template v-for="(item, key) in getDeltaBlocksVert" :key="key" >
                             <tr class="vert">
-                                <th class="vert text-warning text-xsmall" scope="row"><span>[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
+                                <th class="vert text-success text-xsmall" scope="row"><span>[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
                                 <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
                                 <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
                                 <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
@@ -1801,6 +1801,14 @@ let vue = new Vue({
                 return this.volumeBlocks2.slice(-50)
             } else {
                 return this.volumeBlocks2
+            }
+        },
+        getDeltaBlocksVert() {
+            let vbl = this.deltaBlocks.length
+            if (vbl > 50) {
+                return this.deltaBlocks.slice(-50)
+            } else {
+                return this.deltaBlocks
             }
         }
     },

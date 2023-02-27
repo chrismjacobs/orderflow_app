@@ -59,29 +59,27 @@ def getOF():
     historyBlocks = json.loads(r.get('history_' + coin))
     if len(historyBlocks) > 0:
         lastHistory = historyBlocks[-1]
-        print(lastHistory.keys())
+        # print(lastHistory.keys())
 
-    # if 'timeblocks_' + coin in lastHistory:
-    #     ## combine History and current
-    #     currentTime = json.loads(timeBlocks)
-    #     newTime = lastHistory['timeblocks_' + coin] + currentTime
-    #     timeBlocks = json.dumps(newTime)
+    if 'timeblocks_' + coin in lastHistory:
+        ## combine History and current
+        timeBlocks = lastHistory['timeblocks_' + coin] + timeBlocks
 
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
 
     deltaBlocks = []
 
-    checkDelta = r.get('delta_' + coin)
+    checkDelta = r.get('deltablocks_' + coin)
 
     if checkDelta:
         deltaBlocks = json.loads(checkDelta)
 
-    # if 'deltablocks' in lastHistory:
-    #     ## combine History and current
-    #     currentDelta = json.loads(deltaBlocks)
-    #     newDelta = lastHistory['deltablocks'] + currentDelta
-    #     deltaBlocks = json.dumps(newDelta)
+    print('DELTA', deltaBlocks)
+
+    if 'deltablocks_' + coin in lastHistory:
+        ## combine History and current
+        deltaBlocks = lastHistory['deltablocks'] + deltaBlocks
 
     volumeBlocks = {}
     # volumeFlow = {}
@@ -93,14 +91,9 @@ def getOF():
         volumeBlocks = json.loads(volumeCheck)
 
 
-    # if 'volumeblocks_' + coin + str(size) in lastHistory:
-    # ## combine History and current
-    #     currentVolume = volumeBlocks[size]
-    #     newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
-    #     volumeBlocks[size] = newVolume
-
-
-
+    if 'volumeblocks_' + coin + str(size) in lastHistory:
+        ## combine History and current
+        volumeBlocks = lastHistory['volumeblocks_' + coin + str(size)] + volumeBlocks
 
 
     user = False
@@ -116,11 +109,8 @@ def getOF():
     jDict = {
         'stream' : stream,
         'volumeBlocks' : json.dumps(volumeBlocks),
-        # 'volumeFlow' : json.dumps(volumeFlow),
         'timeBlocks' : json.dumps(timeBlocks),
-        # 'timeFlow' : timeFlow,
         'deltaBlocks' : json.dumps(deltaBlocks),
-        # 'deltaFlow' : deltaFlow,
         'login' : current_user.is_authenticated,
         'user' : user,
         'coin' : coin,
