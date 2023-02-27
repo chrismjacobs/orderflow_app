@@ -24,7 +24,7 @@ login_manager.login_message_category = 'info'
 
 
 @app.route('/')
-@login_required
+# @login_required
 def home():
 
     if START_CODE == 'block':
@@ -59,12 +59,13 @@ def getOF():
     historyBlocks = json.loads(r.get('history_' + coin))
     if len(historyBlocks) > 0:
         lastHistory = historyBlocks[-1]
+        print(lastHistory.keys())
 
-    if 'timeblocks_' + coin in lastHistory:
-        ## combine History and current
-        currentTime = json.loads(timeBlocks)
-        newTime = lastHistory['timeblocks_' + coin] + currentTime
-        timeBlocks = json.dumps(newTime)
+    # if 'timeblocks_' + coin in lastHistory:
+    #     ## combine History and current
+    #     currentTime = json.loads(timeBlocks)
+    #     newTime = lastHistory['timeblocks_' + coin] + currentTime
+    #     timeBlocks = json.dumps(newTime)
 
     if timeBlockSize > 5:
         timeBlocks = getBlocks(timeBlockSize/5, timeBlocks)
@@ -92,11 +93,11 @@ def getOF():
         volumeBlocks = json.loads(volumeCheck)
 
 
-    if 'volumeblocks_' + coin + str(size) in lastHistory:
-    ## combine History and current
-        currentVolume = volumeBlocks[size]
-        newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
-        volumeBlocks[size] = newVolume
+    # if 'volumeblocks_' + coin + str(size) in lastHistory:
+    # ## combine History and current
+    #     currentVolume = volumeBlocks[size]
+    #     newVolume = lastHistory['volumeblocks_' + coin + str(size)] + currentVolume
+    #     volumeBlocks[size] = newVolume
 
 
 
