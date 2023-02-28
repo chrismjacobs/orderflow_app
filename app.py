@@ -79,7 +79,7 @@ def getOF():
 
     if 'deltablocks_' + coin in lastHistory:
         ## combine History and current
-        deltaBlocks = lastHistory['deltablocks'] + deltaBlocks
+        deltaBlocks = lastHistory['deltablocks_' + coin] + deltaBlocks
 
     volumeBlocks = {}
     # volumeFlow = {}
