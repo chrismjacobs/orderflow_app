@@ -323,6 +323,7 @@ def getImbalances(tickList, mode):
 
     return [tickList, stackBuys, stackSells]
 
+
 def addBlock(units, blocks, mode, coin):
 
     coinDict = json.loads(r.get('coinDict'))
@@ -802,9 +803,6 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
     deltaflow =  json.loads(r.get('deltaflow_' + coin)) # []
     deltablocks = json.loads(r.get('deltablocks_' + coin)) # []
 
-    if LOCAL:
-        print('DELTA REDIS', len(deltaflow), len(deltablocks))
-
     if len(deltaflow) == 0:
         print('DELTA 0')
 
@@ -820,10 +818,14 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         r.set('deltablocks_' + coin, json.dumps(deltablocks))
         r.set('deltaflow_' + coin, json.dumps(deltaflow))
     else:
+        if buyUnit['size'] > 1:
+            deltaflow.append(buyUnit)
+        if sellUnit['size'] > 1:
+            deltaflow.append(sellUnit)
 
         deltaStatus = getDeltaStatus(deltaflow, deltaCount)
-
-        print('DELTA 1')
+        if LOCAL:
+            print('DELTA 1', len(deltablocks), len(deltaflow))
 
         if deltaStatus['posDelta'] or deltaStatus['negDelta']:
             # store current candle and start a new Candle
@@ -846,8 +848,8 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             r.set('deltaflow_' + coin, json.dumps(deltaflow))
 
         else: # add the unit to the delta flow
-
-            print('ADD DELTA UNIT')
+            if LOCAL:
+                print('ADD DELTA UNIT', len(deltablocks), len(deltaflow))
 
             # update current candle with new unit data
             currentCandle = addBlock(deltaflow, deltablocks, 'deltamode', coin)
