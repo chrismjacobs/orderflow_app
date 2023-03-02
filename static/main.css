@@ -35,6 +35,7 @@
   height: 100vh;
 }
 
+
 table.vert { border-collapse: collapse; white-space: nowrap; }
 tr.vert { display: inline-block; }
 th.vert, td.vert { display: block; border: 0px solid black; height: 35px }
@@ -45,4 +46,9 @@ tbody.vert {
   overflow-x: scroll;
   white-space: nowrap;
 }
-tbody.vert tr.vert { margin-right: -5px;}
+
+tbody.horiz {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
