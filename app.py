@@ -24,7 +24,7 @@ login_manager.login_message_category = 'info'
 
 
 @app.route('/')
-@login_required
+# @login_required
 def home():
 
     if START_CODE == 'block':
