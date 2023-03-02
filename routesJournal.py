@@ -14,7 +14,7 @@ def journal():
 
     mList = [
         'October',
-        'February'
+        'March'
     ]
 
     bucket = 'rekt-journal'
