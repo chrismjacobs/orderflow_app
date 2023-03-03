@@ -9,7 +9,7 @@ import redis
 import time
 
 from math import trunc
-from taskAux import actionBIT, actionDELTA, startDiscord
+from taskAux import actionBIT, actionDELTA, startDiscord, sendMessage
 
 
 session = inverse_perpetual.HTTP(
@@ -753,38 +753,62 @@ def getDeltaStatus(deltaflow, deltaCount):
     if LOCAL:
         print('GET DELTA STATUS')
 
-
     totalBuys = 0
     totalSells = 0
     negDelta = False
     posDelta = False
     excess = 0
 
+    deltaflowList = [[]]
+
     for d in deltaflow:
+
+        size = d['size']
+
         if d['side'] == 'Buy':
-            totalBuys += d['size']
-        if d['side'] == 'Sell':
-            totalSells += d['size']
+            totalBuys += size
+
+        elif d['side'] == 'Sell':
+            totalSells += size
 
 
-    if totalBuys - totalSells < - deltaCount:
-        negDelta = True
-        ## there are excess shorts
-        ##  1M longs  2.5M shorts = delta -1.5m  with 0.5 excess
-        excess = abs((totalBuys - totalSells) + deltaCount)
+        if totalBuys - totalSells <  -deltaCount:
+            negDelta = True
+            ## calculate carry over
+            excess = abs((totalBuys - totalSells) + deltaCount)
+
+        elif totalBuys - totalSells > deltaCount:
+            posDelta = True
+            excess = abs((totalBuys - totalSells) - deltaCount)
 
 
-    if totalBuys - totalSells > deltaCount:
-        posDelta = True
-        ## there are excess long
-        ##  2.5M longs  1M shorts = delta 1.5m  with 0.5 excess
-        excess = abs((totalBuys - totalSells) - deltaCount)
+        if posDelta or negDelta:
+            ## complete delta flow
+            completeUnit = d.copy()
+            completeUnit['size'] -= excess
+            deltaflowList[-1].append(completeUnit)
+
+
+            while excess > deltaCount:
+                adjustUnit = d.copy()
+                adjustUnit['size'] = deltaCount
+                adjustUnit['oi_delta'] = 0
+                excess -= deltaCount
+                deltaflowList.append([adjustUnit])
+
+            finalUnit = d.copy()
+            finalUnit['size'] = excess
+            deltaflowList.append([finalUnit])
+        else:
+            deltaflowList[-1].append(d)
+
+
 
     return {
             'flowdelta' : totalBuys - totalSells,
             'negDelta' : negDelta,
             'posDelta' : posDelta,
-            'excess' : excess
+            'deltaflowList' : deltaflowList
     }
 
 
@@ -824,6 +848,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             deltaflow.append(sellUnit)
 
         deltaStatus = getDeltaStatus(deltaflow, deltaCount)
+
         if LOCAL:
             print('DELTA 1', len(deltablocks), len(deltaflow))
 
@@ -834,12 +859,22 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
                 r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
             # replace current candle with completed candle
-            newCandle = addBlock(deltaflow, deltablocks, 'deltablock', coin)
-            LastIndex = len(deltablocks) - 1
-            deltablocks[LastIndex] = newCandle
 
-            # reset deltaflow
-            deltaflow = []
+            for flow in deltaStatus['deltaflowList']:
+                if deltaStatus['deltaflowList'].index(flow) == 0:
+                    ### replace first completed block
+                    newCandle = addBlock(flow, deltablocks, 'deltablock', coin)
+                    deltablocks[-1] = newCandle
+                else:
+                    currentCandle = addBlock(flow, deltablocks, 'deltamode', coin)
+                    deltablocks.append(currentCandle)
+                    if deltaStatus['deltaflowList'].index(flow) == len(deltaStatus['deltaflowList']) - 1:
+                        # reset deltaflow - the last delta block
+                        deltaflow = flow
+
+
+            if len(deltablocks) > 300:
+                del deltablocks[0]
 
             # add fresh current candle to timeblock
             if LOCAL:
@@ -864,11 +899,11 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
     vFlow = 'volumeflow_' + coin + str(size)
     vBlocks = 'volumeblocks_' + coin + str(size)
 
-
-
     if not r.get(vFlow):
         r.set(vFlow, json.dumps([]))
         r.set(vBlocks, json.dumps([]))
+
+    # return False
 
     if LOCAL:
         block = size * 100_000
@@ -1258,38 +1293,6 @@ def handle_trade_message(msg):
     if deltaControl[0]:
         deltaCount = deltaControl[1]
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
-
-
-def sendMessage(coin, string, bg, text):
-    str1 = "```ansi\n"
-
-    escape =  "\u001b[0;"   ## 0 == normal text  1 bold
-
-    colors = {  ### bg / text
-        '': [''],
-        'grey': ['44;'],
-        'red' : ['45;', '31m'],
-        'green' : ['43;', '32m'],
-        'yellow' : ['41;', '33m'],
-        'blue' : ['40;', '34m'],
-        'pink' : ['45;', '35m'],
-        'cyan' : ['42;', '36m'],
-        'white' : ['47;', '37m']
-    }
-    ## bground first then color
-
-    str2 = "\n```"
-
-    msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
-
-    noAnsi = True
-    if noAnsi:
-        msg = string
-
-    if not coin:
-        return msg
-    else:
-        r.set('discord_' + coin, msg)
 
 
 

@@ -52,7 +52,7 @@ def startDiscord():
 
             if r.get('discord_' + coin) != 'blank':
                 msg = r.get('discord_' + coin)
-                await channel.send(msg + 'TEST')
+                await channel.send(msg)
                 r.set('discord_' + coin, 'blank')
 
     @bot.event
@@ -75,10 +75,44 @@ def startDiscord():
 
     bot.run(DISCORD_TOKEN)
 
+
+def sendMessage(coin, string, bg, text):
+    str1 = "```ansi\n"
+
+    escape =  "\u001b[0;"   ## 0 == normal text  1 bold
+
+    colors = {  ### bg / text
+        '': [''],
+        'grey': ['44;'],
+        'red' : ['45;', '31m'],
+        'green' : ['43;', '32m'],
+        'yellow' : ['41;', '33m'],
+        'blue' : ['40;', '34m'],
+        'pink' : ['45;', '35m'],
+        'cyan' : ['42;', '36m'],
+        'white' : ['47;', '37m']
+    }
+    ## bground first then color
+
+    str2 = "\n```"
+
+    msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
+
+    noAnsi = True
+    if noAnsi:
+        msg = string
+
+    if not coin:
+        return msg
+    else:
+        r.set('discord_' + coin, msg)
+
+
 def actionBIT():
     print('ACTION BIT')
 
 
 def actionDELTA(side):
+    r.set('discord_BIT', side)
     print('ACTION DELTA')
 
