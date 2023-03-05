@@ -98,7 +98,7 @@ def sendMessage(coin, string, bg, text):
 
     msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
 
-    noAnsi = True
+    noAnsi = False
     if noAnsi:
         msg = string
 
@@ -108,11 +108,32 @@ def sendMessage(coin, string, bg, text):
         r.set('discord_' + coin, msg)
 
 
-def actionBIT():
+def actionBIT(side):
+    r.set('discord_BIT', side)
     print('ACTION BIT')
 
 
-def actionDELTA(side):
-    r.set('discord_BIT', side)
+def actionDELTA(blocks):
+    # lastElements = [-2, -3, -4, -5, -6]
+    #     timeElements = []
+
+    #     if len(blocks) >= 7:
+    #         for t in lastElements:
+    #             timeDelta = blocks[t]['time_delta']/1000
+    #             timeElements.append(round(timeDelta))
+    #             if timeDelta < 30:
+    #                 fastCandles += 1
+
+
+    #     if fastCandles >= 3:
+    #         if switchUp:
+    #             switch = True
+    #             r.set('discord_' + coin, 'Delta Switch Up: ' + json.dumps(timeElements) )
+    #             streamAlert('Delta Switch Up: ' + json.dumps(timeElements), 'Delta', coin)
+    #         if switchDown:
+    #             switch = True
+    #             r.set('discord_' + coin, 'Delta Switch Down: ' + json.dumps(timeElements) )
+    #             streamAlert('Delta Switch Down: ' + json.dumps(timeElements), 'Delta', coin)
+
     print('ACTION DELTA')
 
