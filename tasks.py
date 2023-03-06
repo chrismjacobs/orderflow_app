@@ -329,7 +329,7 @@ def addBlock(units, blocks, mode, coin):
 
     switch = False
 
-    if mode == 'deltablock' and coin == 'BIT':
+    if mode == 'deltablock':
        switch = addDelta(blocks, coin)
 
     ''' BLOCK DATA '''
@@ -838,8 +838,9 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
         if deltaStatus['posDelta'] or deltaStatus['negDelta']:
             # store current candle and start a new Candle
-            print('ADD DELTA CANDLE: ' + json.dumps(deltaStatus))
+
             if LOCAL:
+                print('ADD DELTA CANDLE: ' + json.dumps(deltaStatus))
                 r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
             # replace current candle with completed candle

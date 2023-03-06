@@ -517,7 +517,8 @@
                             <br>
                             <input type="number" maxlength="6" size="6" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
                             <input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
-
+                            <br>
+                            [[conditionOBJ]]
                         </h3>
                     </div>
                     <table style="display:none" class="table table-dark table-sm vert">
@@ -794,6 +795,7 @@ let vue = new Vue({
         coin : 'BTC',
         coins : ['BTC', 'ETH'],
         coinOBJ : {},
+        conditionOBJ : {},
         history : {},
         showTable : 'Time',
         showDelta : true,
@@ -1678,6 +1680,8 @@ let vue = new Vue({
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
                 console.log(vue.coinOBJ)
+                vue.conditionOBJ = JSON.parse(data.conditionDict)
+                console.log(vue.conditionOBJ)
 
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
                 let volumeblocks = false

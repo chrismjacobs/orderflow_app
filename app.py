@@ -77,9 +77,9 @@ def getOF():
 
     # print('DELTA', deltaBlocks)
 
-    if 'deltablocks_' + coin in lastHistory:
-        ## combine History and current
-        deltaBlocks = lastHistory['deltablocks_' + coin] + deltaBlocks
+    # if 'deltablocks_' + coin in lastHistory:
+    #     ## combine History and current
+    #     deltaBlocks = lastHistory['deltablocks_' + coin] + deltaBlocks
 
     volumeBlocks = {}
     # volumeFlow = {}
@@ -114,7 +114,8 @@ def getOF():
         'login' : current_user.is_authenticated,
         'user' : user,
         'coin' : coin,
-        'coinDict' : coinDict
+        'coinDict' : coinDict,
+        'conditionDict' : r.get('conditionDict')
     }
 
     jx = jsonify(jDict)

@@ -147,13 +147,12 @@ def getHL(side, current):
 
     return stop_loss
 
-def marketOrder(side):
+def marketOrder(side, fraction):
 
     price = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
     funds = session.get_wallet_balance()['result']['BTC']['equity']
     leverage = 2
     session.set_leverage(symbol="BTCUSD", leverage=leverage)
-    fraction = 0.1
     qty = (price * funds * leverage) * fraction
 
     stop_loss = getHL(side, price)
@@ -236,7 +235,7 @@ def actionDELTA(blocks):
             conditionDict['active'] == False
             conditionDict['swing'] == False
             r.set('conditionDict', json.dumps(conditionDict))
-            marketOrder('Sell')
+            marketOrder('Sell', conditionDict['fraction'])
             r.set('discord_' + 'BTC', 'Delta Action: ' + conditionDict['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
 
         elif conditionDict['active'] and conditionDict['side'] == 'Buy' and percentDelta > 0.9:
@@ -244,7 +243,7 @@ def actionDELTA(blocks):
             conditionDict['active'] == False
             conditionDict['swing'] == False
             r.set('conditionDict', json.dumps(conditionDict))
-            marketOrder('Buy')
+            marketOrder('Buy', conditionDict['fraction'])
             r.set('discord_' + 'BTC', 'Delta Action: ' + conditionDict['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
 
         print('ACTION DELTA')
