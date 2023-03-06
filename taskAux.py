@@ -192,7 +192,9 @@ def actionDELTA(blocks):
 
         conditionDict = json.loads(r.get('conditionDict'))
 
-        if conditionDict['swing'] == True or conditionDict['price'] == 0:
+        if conditionDict['price'] == 0:
+            return False
+        elif conditionDict['swing'] == True:
             pass
         elif conditionDict['Sell'] and blocks[-1]['close'] > conditionDict['price'] and conditionDict['swing'] == False:
             conditionDict['swing'] = True
