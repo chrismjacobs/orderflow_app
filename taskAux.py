@@ -187,22 +187,35 @@ def marketOrder(side, fraction):
 
 def actionDELTA(blocks):
 
+    conditionDict = json.loads(r.get('conditionDict'))
+
     try:
 
-        conditionDict = json.loads(r.get('conditionDict'))
-
         if conditionDict['price'] == 0:
+            print('zero')
             return False
         elif conditionDict['swing'] == True:
+            print('swing true')
             pass
-        elif conditionDict['Sell'] and blocks[-1]['close'] > conditionDict['price'] and conditionDict['swing'] == False:
+        elif conditionDict['Sell'] and blocks[-1]['close'] > conditionDict['price']:
             conditionDict['swing'] = True
             r.set('conditionDict', json.dumps(conditionDict))
             return True
-        elif conditionDict['Buy'] and blocks[-1]['close'] < conditionDict['price'] and conditionDict['swing'] == False:
+        elif conditionDict['Buy'] and blocks[-1]['close'] < conditionDict['price']:
             conditionDict['swing'] = True
             r.set('conditionDict', json.dumps(conditionDict))
             return True
+        else:
+            print('swing false')
+            return False
+
+    except:
+
+        print('STAGE 1 FAIL')
+
+    try:
+
+        print('stage one pass')
 
         fastCandles = 0
 
@@ -216,15 +229,25 @@ def actionDELTA(blocks):
                 if timeDelta <= 5:
                     fastCandles += 1
 
+        print('stage two pass')
+
+    except:
+
+        print('STAGE 2 FAIL')
+
+    try:
+
         currentTimeDelta = blocks[-1]['time_delta']/1000
 
         if currentTimeDelta > 5 and fastCandles > 9 and conditionDict['active'] == False:
             ## delta action has stalled: lookout is active
             conditionDict['active'] = True
+            print('DELTA STALL')
             r.set('conditionDict', json.dumps(conditionDict))
             return True
         elif fastCandles > 9 and conditionDict['active'] == True:
             conditionDict['active'] = False
+            print('DELTA FAST RESET')
             r.set('conditionDict', json.dumps(conditionDict))
             return True
 
@@ -235,7 +258,7 @@ def actionDELTA(blocks):
             conditionDict['active'] == False
             conditionDict['swing'] == False
             r.set('conditionDict', json.dumps(conditionDict))
-            marketOrder('Sell', conditionDict['fraction'])
+            marketOrder('Sell', conditionDict['fraction'], conditionDict['stop'])
             r.set('discord_' + 'BTC', 'Delta Action: ' + conditionDict['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
 
         elif conditionDict['active'] and conditionDict['side'] == 'Buy' and percentDelta > 0.9:
@@ -243,14 +266,14 @@ def actionDELTA(blocks):
             conditionDict['active'] == False
             conditionDict['swing'] == False
             r.set('conditionDict', json.dumps(conditionDict))
-            marketOrder('Buy', conditionDict['fraction'])
+            marketOrder('Buy', conditionDict['fraction'], conditionDict['stop'])
             r.set('discord_' + 'BTC', 'Delta Action: ' + conditionDict['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
 
         print('ACTION DELTA')
 
     except:
 
-        print('DELTA FAIL')
+        print('STAGE 3 FAIL')
 
 
 
