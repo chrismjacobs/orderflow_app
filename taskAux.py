@@ -113,7 +113,7 @@ def actionBIT(side):
     r.set('discord_BIT', side)
     print('ACTION BIT')
 
-def getHL(side, current):
+def getHL(side, current, stop):
 
     now = datetime.now()
     minutes = 5
@@ -132,22 +132,22 @@ def getHL(side, current):
 
     if side == 'Buy':
         distance = abs(current - mLow)
-        if distance > 100:
-            stop_loss = current - 100
+        if distance > stop:
+            stop_loss = current - stop
         else:
             stop_loss = mLow - 11
 
     if side == 'Sell':
         distance = abs(current - mHi)
-        if distance > 100:
-            stop_loss = current + 100
+        if distance > stop:
+            stop_loss = current + stop
         else:
             stop_loss = mHi + 11
 
 
     return stop_loss
 
-def marketOrder(side, fraction):
+def marketOrder(side, fraction, stop):
 
     price = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
     funds = session.get_wallet_balance()['result']['BTC']['equity']
@@ -155,7 +155,7 @@ def marketOrder(side, fraction):
     session.set_leverage(symbol="BTCUSD", leverage=leverage)
     qty = (price * funds * leverage) * fraction
 
-    stop_loss = getHL(side, price)
+    stop_loss = getHL(side, price, stop)
 
     if side == 'Buy':
         take_profit = price + 100
