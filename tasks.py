@@ -231,36 +231,19 @@ def addDelta(blocks, coin):
         switchUp = False
         switchDown = False
 
-        if len(blocks) > 3:
-            if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
-                if blocks[-1]['delta'] < 0:
-                    switchDown = True
-                    actionDELTA('Sell')
-            if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
-                if blocks[-1]['delta'] > 0:
-                    switchUp = True
-                    actionDELTA('Buy')
+        if coin == 'BIT':
+            if len(blocks) > 3:
+                if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
+                    if blocks[-1]['delta'] < 0:
+                        switchDown = True
+                        actionBIT('Sell')
+                if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
+                    if blocks[-1]['delta'] > 0:
+                        switchUp = True
+                        actionBIT('Buy')
 
-        # lastElements = [-2, -3, -4, -5, -6]
-        # timeElements = []
-
-        # if len(blocks) >= 7:
-        #     for t in lastElements:
-        #         timeDelta = blocks[t]['time_delta']/1000
-        #         timeElements.append(round(timeDelta))
-        #         if timeDelta < 30:
-        #             fastCandles += 1
-
-
-        # if fastCandles >= 3:
-        #     if switchUp:
-        #         switch = True
-        #         r.set('discord_' + coin, 'Delta Switch Up: ' + json.dumps(timeElements) )
-        #         streamAlert('Delta Switch Up: ' + json.dumps(timeElements), 'Delta', coin)
-        #     if switchDown:
-        #         switch = True
-        #         r.set('discord_' + coin, 'Delta Switch Down: ' + json.dumps(timeElements) )
-        #         streamAlert('Delta Switch Down: ' + json.dumps(timeElements), 'Delta', coin)
+        if coin == 'BTC':
+            actionDELTA(blocks)
 
         return switch
 
@@ -796,9 +779,10 @@ def getDeltaStatus(deltaflow, deltaCount):
                 excess -= deltaCount
                 deltaflowList.append([adjustUnit])
 
-            finalUnit = d.copy()
-            finalUnit['size'] = excess
-            deltaflowList.append([finalUnit])
+            if excess > 0:
+                finalUnit = d.copy()
+                finalUnit['size'] = excess
+                deltaflowList.append([finalUnit])
         else:
             deltaflowList[-1].append(d)
 
