@@ -32,6 +32,21 @@ def home():
 
     return render_template('orderflow.html')
 
+@app.route('/setDelta', methods=['POST'])
+def setDelta():
+
+    coinDict = request.form['coinOBJ']
+
+    if not coinDict or len(coinDict) == 0:
+        coinDict = r.get('coinDict')
+    else:
+        r.set('coinDict', coinDict)
+
+    print(coinDict)
+
+    return jsonify({'coinDict' : coinDict})
+
+
 @app.route('/getOF', methods=['POST'])
 def getOF():
 
@@ -114,8 +129,7 @@ def getOF():
         'login' : current_user.is_authenticated,
         'user' : user,
         'coin' : coin,
-        'coinDict' : coinDict,
-        'conditionDict' : r.get('conditionDict')
+        'coinDict' : coinDict
     }
 
     jx = jsonify(jDict)
