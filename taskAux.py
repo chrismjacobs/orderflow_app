@@ -238,6 +238,9 @@ def actionDELTA(blocks, coin, coinDict):
 
     currentTimeDelta = blocks[-1]['time_delta']/1000
 
+    deltaControl['count'] = fastCandles
+    deltaControl['time'] = currentTimeDelta
+
     print('stage two pass ' + str(fastCandles) + ' ' + str(currentTimeDelta) + ' ' + str(deltaControl['active']))
 
     if currentTimeDelta > 5 and fastCandles > 6 and deltaControl['active'] == False:
