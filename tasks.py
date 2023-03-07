@@ -222,35 +222,29 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
     return True
 
-def addDelta(blocks, coin):
-    try:
-        switch = False
+def addDelta(blocks, coin, coinDict):
 
-        fastCandles = 0
+    switch = False
 
-        switchUp = False
-        switchDown = False
+    switchUp = False
+    switchDown = False
 
-        if coin == 'BIT':
-            if len(blocks) > 3:
-                if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
-                    if blocks[-1]['delta'] < 0:
-                        switchDown = True
-                        actionBIT('Sell')
-                if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
-                    if blocks[-1]['delta'] > 0:
-                        switchUp = True
-                        actionBIT('Buy')
+    if coin == 'BIT':
+        if len(blocks) > 3:
+            if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
+                if blocks[-1]['delta'] < 0:
+                    switchDown = True
+                    actionBIT('Sell')
+            if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
+                if blocks[-1]['delta'] > 0:
+                    switchUp = True
+                    actionBIT('Buy')
 
-        if coin == 'BTC':
-            actionDELTA(blocks)
+    if coin == 'BTC':
+        actionDELTA(blocks, coin, coinDict)
 
-        return switch
+    return switch
 
-    except:
-
-        r.set('discord_' + coin, 'delta switch fail')
-        return False
 
 def getImbalances(tickList, mode):
     if LOCAL:
@@ -330,7 +324,7 @@ def addBlock(units, blocks, mode, coin):
     switch = False
 
     if mode == 'deltablock':
-       switch = addDelta(blocks, coin)
+        switch = addDelta(blocks, coin, coinDict)
 
     ''' BLOCK DATA '''
 
@@ -516,10 +510,6 @@ def addBlock(units, blocks, mode, coin):
 
         deltaPercent = round( (  newCandle['delta']  /  newCandle['total']  ) * 100  )
 
-        infoDict = {
-            'BTC' : [],
-            'ETH' : []
-        }
 
         if abs(deltaPercent) > 20:
             print('VOL DIV CHECK 2')
@@ -840,7 +830,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             # store current candle and start a new Candle
 
             if LOCAL:
-                print('ADD DELTA CANDLE: ' + json.dumps(deltaStatus))
+                print('ADD DELTA CANDLE', len(deltablocks), len(deltaflow))
                 r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
             # replace current candle with completed candle
@@ -888,7 +878,9 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         r.set(vFlow, json.dumps([]))
         r.set(vBlocks, json.dumps([]))
 
-    # return False
+    if LOCAL:
+        print('LOG VOLUME UNIT SKIP')
+        return False
 
     if LOCAL:
         block = size * 100_000
@@ -1243,11 +1235,11 @@ def handle_trade_message(msg):
 
     # print(coinDict)
 
-    if not coinDict[coin]['active']:
+    if not coinDict[coin] or not coinDict[coin]['active']:
         print('not active ' + coin)
         return False
 
-    if coinDict[coin]['purge']:
+    if coinDict[coin] and coinDict[coin]['purge']:
         print('purge ' + coin)
         for k in r.keys():
             if coin in k:
@@ -1275,8 +1267,10 @@ def handle_trade_message(msg):
     if volControl[0]:
         logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
 
-    if deltaControl[0]:
-        deltaCount = deltaControl[1]
+    if deltaControl['check']:
+        deltaCount = deltaControl['block']
+        if LOCAL:
+            deltaCount = 10000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
 
 
@@ -1318,8 +1312,12 @@ def runStream():
         domain="bybit"  # the default is "bybit"
     )
 
+    coins = ["BTCUSD", "ETHUSD"] #"BITUSD"
+    if LOCAL:
+        coins = ["BTCUSD"]
+
     ws_inverseP.trade_stream(
-        handle_trade_message, ["BTCUSD", "ETHUSD", "BITUSD"]
+        handle_trade_message, coins
     )
 
     # ws_usdtP = usdt_perpetual.WebSocket(

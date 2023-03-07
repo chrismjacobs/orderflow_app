@@ -518,7 +518,7 @@
                             <input type="number" maxlength="6" size="6" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
                             <input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
                             <br>
-                            [[conditionOBJ]]
+                            [[  coinOBJ[coin]['delta']  ]]
                         </h3>
                     </div>
                     <table style="display:none" class="table table-dark table-sm vert">
@@ -1503,7 +1503,7 @@ let vue = new Vue({
             }
         },
         getLevel: function (level) {
-            console.log(this.levelHigh, level, level > this.levelHigh)
+            // console.log(this.levelHigh, level, level > this.levelHigh)
             if (this.levelHigh > 0) {
 
                 if (level > this.levelHigh) {
@@ -1676,18 +1676,20 @@ let vue = new Vue({
 
             })
             .done(function(data) {
-                //console.log('OF data received')
+                console.log('OF data received')
 
                 vue.coinOBJ = JSON.parse(data.coinDict)
-                console.log(vue.coinOBJ)
-                vue.conditionOBJ = JSON.parse(data.conditionDict)
-                console.log(vue.conditionOBJ)
+
+                if (vue.user) {
+                    console.log(vue.coinOBJ)
+                }
+
 
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
                 let volumeblocks = false
                 let volumeblocks2 = []
 
-                console.log(volumeblocksOBJ)
+                // console.log('volumeBlocks', volumeblocksOBJ)
 
                 volumeblocks = volumeblocksOBJ
 
