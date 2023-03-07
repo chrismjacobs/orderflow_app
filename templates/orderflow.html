@@ -1942,16 +1942,11 @@ let vue = new Vue({
     watch: {
         levelHigh: function () {
             if (this.levelHigh != 0) {
-                this.coinOBJ[this.coin]['delta']['price'] = this.levelHigh
-                this.coinOBJ[this.coin]['delta']['side'] = 'Sell'
                 this.levelLow = 0
-                console.log('levelHigh')
             }
         },
         levelLow: function () {
             if (this.levelLow != 0) {
-                this.coinOBJ[this.coin]['delta']['price'] = this.levelLow
-                this.coinOBJ[this.coin]['delta']['side'] = 'Buy'
                 this.levelHigh = 0
             }
         },
