@@ -37,12 +37,9 @@ def setDelta():
 
     coinDict = request.form['coinOBJ']
 
-    if not coinDict or len(coinDict) == 0:
-        coinDict = r.get('coinDict')
-    else:
-        r.set('coinDict', coinDict)
-
     print(coinDict)
+
+    r.set('coinDict', coinDict)
 
     return jsonify({'coinDict' : coinDict})
 
