@@ -773,7 +773,7 @@ def getDeltaStatus(deltaflow, deltaCount):
                 print('Excess', 'UNIT SIZE', completeUnit['size'], completeUnit['side'], totalBuys, totalSells, abs((totalBuys - totalSells)), excess)
 
             completeUnit['size'] -= excess
-            adjustUnit['oi_delta'] = 1
+            completeUnit['oi_delta'] = 1
             deltaflowList[-1].append(completeUnit)
 
             # Excess UNIT SIZE 1084 10352 0 10352 352
