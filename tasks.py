@@ -744,30 +744,49 @@ def getDeltaStatus(deltaflow, deltaCount):
         elif d['side'] == 'Sell':
             totalSells += size
 
+        ## 4k Buys
+        ## 13K Sells
+        ## delta -9K
 
-        if totalBuys - totalSells <  -deltaCount:
+        ## 2K sell comes in
+        ## 4k Buys
+        ## 15K Sells
+
+        ## delta =  -11K
+
+        if totalBuys - totalSells <  - deltaCount:
             negDelta = True
-            ## calculate carry over
-            excess = abs((totalBuys - totalSells) + deltaCount)
+            excess = abs(totalBuys - totalSells) - deltaCount
+
 
         elif totalBuys - totalSells > deltaCount:
             posDelta = True
-            excess = abs((totalBuys - totalSells) - deltaCount)
+            excess = abs(totalBuys - totalSells) - deltaCount
 
 
         if posDelta or negDelta:
             ## complete delta flow
+
             completeUnit = d.copy()
+
+            if LOCAL:
+                print('Excess', 'UNIT SIZE', completeUnit['size'], completeUnit['side'], totalBuys, totalSells, abs((totalBuys - totalSells)), excess)
+
             completeUnit['size'] -= excess
+            adjustUnit['oi_delta'] = 1
             deltaflowList[-1].append(completeUnit)
 
+            # Excess UNIT SIZE 1084 10352 0 10352 352
+            # Excess UNIT SIZE 2 10352 2 10350 350
 
             while excess > deltaCount:
                 adjustUnit = d.copy()
                 adjustUnit['size'] = deltaCount
-                adjustUnit['oi_delta'] = 0
                 excess -= deltaCount
+                if excess != 0:
+                    adjustUnit['oi_delta'] = 2
                 deltaflowList.append([adjustUnit])
+                print('excess unit added')
 
             if excess > 0:
                 finalUnit = d.copy()
@@ -775,7 +794,6 @@ def getDeltaStatus(deltaflow, deltaCount):
                 deltaflowList.append([finalUnit])
         else:
             deltaflowList[-1].append(d)
-
 
 
     return {
@@ -824,7 +842,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         deltaStatus = getDeltaStatus(deltaflow, deltaCount)
 
         if LOCAL:
-            print('DELTA 1', len(deltablocks), len(deltaflow))
+            print('DELTA 1', len(deltablocks), len(deltaflow), len(deltaStatus['deltaflowList']))
 
         if deltaStatus['posDelta'] or deltaStatus['negDelta']:
             # store current candle and start a new Candle

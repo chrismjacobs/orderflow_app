@@ -200,7 +200,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     deltaControl = coinDict[coin]['delta']
 
-    print(deltaControl, len(blocks), blocks[-1]['close'], deltaControl['price'], deltaControl['side'] == ['Sell'], blocks[-1]['close'] > deltaControl['price'])
+    print(deltaControl)
 
     if deltaControl['price'] == 0:
         print('zero')
