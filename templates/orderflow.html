@@ -1501,7 +1501,7 @@ let vue = new Vue({
 
         },
         timeStyleDelta: function (ms) {
-            if (Math.round((ms/1000)) <= 5) {
+            if (Math.round((ms/1000)) < 5) {
                 return {background: '#2C3E50' }
             } else {
                 return {background: '#1B2631' }

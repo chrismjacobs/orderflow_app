@@ -3,8 +3,9 @@ import redis
 import json
 import discord
 from discord.ext import tasks, commands
-from meta import session
 from datetime import datetime
+from pybit import inverse_perpetual, usdt_perpetual
+
 
 try:
     import config
@@ -13,14 +14,24 @@ try:
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
+    API_KEY = config.API_KEY
+    API_SECRET = config.API_SECRET
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     DISCORD_USER = os.getenv('DISCORD_USER')
+    API_KEY = os.getenv('API_KEY')
+    API_SECRET = os.getenv('API_SECRET')
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
+
+session = inverse_perpetual.HTTP(
+    endpoint='https://api.bybit.com',
+    api_key= API_KEY,
+    api_secret=API_SECRET
+)
 
 def startDiscord():
     ## intents controls what the bot can do; in this case read message content
@@ -149,7 +160,7 @@ def getHL(side, current, stop):
 
 def marketOrder(side, fraction, stop):
 
-    print('MARKET ORDER')
+
 
     position = session.my_position(symbol="BTCUSD")['result']
 
@@ -167,6 +178,8 @@ def marketOrder(side, fraction, stop):
     qty = (price * funds * 2) * fraction
 
     stop_loss = getHL(side, price, stop)
+
+    print('MARKET ORDER ' + str(price))
 
     if side == 'Buy':
         take_profit = price + 60
@@ -257,21 +270,18 @@ def actionDELTA(blocks, coin, coinDict):
 
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
 
-    if deltaControl['active'] and deltaControl['side'] == 'Sell' and percentDelta < -0.9:
-        deltaControl['price'] == 0
-        deltaControl['active'] == False
-        deltaControl['swing'] == False
-        r.set('coinDict', json.dumps(coinDict))
-        marketOrder('Sell', deltaControl['fraction'], deltaControl['stop'])
-        r.set('discord_' + 'BTC', 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
+    if deltaControl['active'] and percentDelta > 0.9:
 
-    elif deltaControl['active'] and deltaControl['side'] == 'Buy' and percentDelta > 0.9:
+        marketOrder(deltaControl['side'], deltaControl['fraction'], deltaControl['stop'])
+
         deltaControl['price'] == 0
         deltaControl['active'] == False
         deltaControl['swing'] == False
+        msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
+        print('MARKET MESSAGE ' + msg)
         r.set('coinDict', json.dumps(coinDict))
-        marketOrder('Buy', deltaControl['fraction'], deltaControl['stop'])
-        r.set('discord_' + 'BTC', 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta))
+        r.set('discord_' + 'BTC', msg)
+
 
     print('ACTION DELTA')
 

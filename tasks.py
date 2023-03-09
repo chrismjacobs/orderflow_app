@@ -124,7 +124,7 @@ def getHiLow(timeblocks, coin):
 
             streamAlert('CVD Bear div: ' + json.dumps(highInfo), 'CVD Divergence', coin)
             if coin == 'BTC':
-                r.set('discord_' + coin, coin + ' CVD BEAR div: ' + json.dumps(highInfo))
+                r.set('discord_' + coin, coin + ' CVD BEAR div')  #: '  + json.dumps(highInfo))
 
     if LL2h_index >= 2:
         if tbRev[0]['delta_cumulative'] < LL2h_cvd:
@@ -133,7 +133,7 @@ def getHiLow(timeblocks, coin):
             streamAlert('CVD Bull div: ' + json.dumps(lowInfo), 'CVD Divergence', coin)
 
             if coin == 'BTC':
-                r.set('discord_' + coin, coin + ' CVD BULL div: ' + json.dumps(lowInfo))
+                r.set('discord_' + coin, coin + ' CVD BULL div') # : ' + json.dumps(lowInfo))
 
 
     return {'highInfo' : highInfo , 'lowInfo' : lowInfo }
@@ -769,8 +769,17 @@ def getDeltaStatus(deltaflow, deltaCount):
 
             completeUnit = d.copy()
 
-            if LOCAL:
-                print('Excess', 'UNIT SIZE', completeUnit['size'], completeUnit['side'], totalBuys, totalSells, abs((totalBuys - totalSells)), excess)
+            printDict = {
+                'UNIT SIZE': completeUnit['size'],
+                'SIDE' : completeUnit['side'],
+                'totalBS' : [totalBuys , totalSells],
+                'abs' : abs((totalBuys - totalSells)),
+                'excess' : excess
+
+            }
+
+
+            print('EXESSS ' + json.dumpe(printDict)  )
 
             completeUnit['size'] -= excess
             completeUnit['oi_delta'] = 1
