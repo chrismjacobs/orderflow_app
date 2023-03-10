@@ -68,10 +68,13 @@ def getOF():
 
     lastHistory = {}
 
-    historyBlocks = json.loads(r.get('history_' + coin))
-    if len(historyBlocks) > 0:
-        lastHistory = historyBlocks[-1]
-        # print(lastHistory.keys())
+    try:
+        historyBlocks = json.loads(r.get('history_' + coin))
+        if len(historyBlocks) > 0:
+            lastHistory = historyBlocks[-1]
+            # print(lastHistory.keys())
+    except:
+        print('NO HISTORY')
 
     if 'timeblocks_' + coin in lastHistory:
         ## combine History and current

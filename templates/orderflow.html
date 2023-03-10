@@ -515,14 +515,15 @@
                     <div class="border border-success text-success rounded pt-2 pb-1"  >
                         <h3> <span> Delta Blocks</span>
                             <br>
-                            <input type="number" maxlength="6" size="6" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
-                            <input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
+
+                            H<input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
+                            L<input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
                             <button @click="setDelta()" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button>
                             <br>
-                            [[  coinOBJ[coin]['delta']['price'] ]]
-                            [[  coinOBJ[coin]['delta']['side'] ]]<br>
-                            S: [[  coinOBJ[coin]['delta']['swing'] ]]
-                            A: [[  coinOBJ[coin]['delta']['active'] ]]<br>
+
+                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])"> [[  coinOBJ[coin]['delta']['Sell']['price'] ]] </span> / <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])"> [[  coinOBJ[coin]['delta']['Buy']['price'] ]] </span> <br>
+                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])"> Active </span> / <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])"> Active </span>
+                            <br>
                             C: [[  coinOBJ[coin]['delta']['count'] ]]
                             T: [[  coinOBJ[coin]['delta']['time'] ]]<br>
                         </h3>
@@ -566,8 +567,8 @@
                                 <th scope="col">Vol</th>
                                 <th scope="col"> %</th>
 
-
-                                <th scope="col">OI</th>
+                                <th scope="col">Sells</th>
+                                <th scope="col">Buys</th>
 
                                 <th scope="col" style="width:2%">High</th>
                                 <th scope="col" style="width:2%">Low</th>
@@ -581,8 +582,8 @@
                                     <td :style="timeStyleDelta(item.time_delta, key)">[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
-
-                                    <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                                    <td  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
+                                    <td  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                     <td :style="getLevel(item.high)">[[item.high]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
                                     <td :style="getLevel(item.close)">[[item.close]]</td>
@@ -1050,6 +1051,14 @@ let vue = new Vue({
 
             return bStyle
 
+        },
+        getSwing: function (bool) {
+            console.log(bool)
+            if (bool) {
+                return {color:'springgreen'}
+            } else {
+                return {color:'hotpink'}
+            }
         },
         getCurrent: function (price) {
             let pFloor = Math.floor(this.stream['lastPrice']/10)*10
