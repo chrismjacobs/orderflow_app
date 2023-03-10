@@ -1709,7 +1709,7 @@ let vue = new Vue({
                         vue.levelHigh = deltaOBJ['Sell']['price']
                     }
                     if (deltaOBJ['Buy']['price'] > 0) {
-                        vue.levelHigh = deltaOBJ['Buy']['price']
+                        vue.levelLow = deltaOBJ['Buy']['price']
                     }
 
                 } else {
