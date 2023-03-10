@@ -76,7 +76,7 @@ def startDiscord():
         if msg.content == 'B':
             lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
             oi = round(lastCandle['oi_delta']/1000)
-            b = round(lastCandle['buys']/1000)
+            b = round(lastCandle['Buys']/1000)
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
 
@@ -213,26 +213,32 @@ def actionDELTA(blocks, coin, coinDict):
 
     deltaControl = coinDict[coin]['delta']
 
-    print(deltaControl)
+    print(deltaControl['Buy'], deltaControl['Sell'])
 
-    if deltaControl['price'] == 0:
+    if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
         print('zero')
         return False
-    elif deltaControl['swing'] == True:
-        print('swing true')
-        pass
-    elif deltaControl['side'] == 'Sell' and blocks[-1]['close'] > deltaControl['price']:
-        deltaControl['swing'] = True
+
+    if deltaControl['Sell']['price'] > 0 and blocks[-1]['close'] > deltaControl['Sell']['price'] and deltaControl['Sell']['swing'] == False:
+        deltaControl['Sell']['swing'] = True
+        deltaControl['Buy']['swing'] = False
         print('SELL SWING TRUE')
         r.set('coinDict', json.dumps(coinDict))
         return True
-    elif deltaControl['side'] == 'Buy' and blocks[-1]['close'] < deltaControl['price']:
-        deltaControl['swing'] = True
+
+    if deltaControl['Buy']['price'] > 0 and blocks[-1]['close'] < deltaControl['Buy']['price'] and deltaControl['Buy']['swing'] == False:
+        deltaControl['Buy']['swing'] = True
+        deltaControl['Sell']['swing'] = False
         print('BUY SWING TRUE')
         r.set('coinDict', json.dumps(coinDict))
         return True
+
+    side = None
+    if deltaControl['Sell']['swing'] == True:
+        side = 'Sell'
+    elif deltaControl['Buy']['swing'] == True:
+        side = 'Buy'
     else:
-        print('swing false')
         return False
 
 
@@ -245,45 +251,83 @@ def actionDELTA(blocks, coin, coinDict):
         for t in lastElements:
             timeDelta = blocks[t]['time_delta']/1000
             timeElements.append(round(timeDelta))
-            if timeDelta <= 5:
+            if timeDelta < 5:
                 fastCandles += 1
-
 
     currentTimeDelta = blocks[-1]['time_delta']/1000
 
+    tds = []
+    for b in blocks[-10:]:
+        tds.append(b['time_delta']/1000)
+
     deltaControl['count'] = fastCandles
     deltaControl['time'] = currentTimeDelta
+    percentDelta = blocks[-1]['delta']/blocks[-1]['total']
 
-    print('stage two pass ' + str(fastCandles) + ' ' + str(currentTimeDelta) + ' ' + str(deltaControl['active']))
+    if percentDelta > 1 or percentDelta < -1:
+        ## errounous result
+        percentDelta = 0
 
-    if currentTimeDelta > 5 and fastCandles > 6 and deltaControl['active'] == False:
+    print('stage two pass ' + str(fastCandles) + ' ' + json.dumps(tds) + ' ' + str(deltaControl[side]['active']) + ' ' + str(percentDelta))
+
+    if currentTimeDelta > 5 and fastCandles > 6 and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
-        deltaControl['active'] = True
+        deltaControl[side]['active'] = True
         print('DELTA STALL')
         r.set('coinDict', json.dumps(coinDict))
         return True
-    elif fastCandles > 6 and deltaControl['active'] == True:
-        deltaControl['active'] = False
+    elif fastCandles > 6 and deltaControl[side]['active'] == True:
+        deltaControl[side]['active'] = False
         print('DELTA FAST RESET')
         r.set('coinDict', json.dumps(coinDict))
         return True
 
-    percentDelta = blocks[-1]['delta']/blocks[-1]['total']
+    threshold = percentDelta > 0.9
+    if side == 'Sell':
+        threshold = percentDelta < -0.9
 
-    if deltaControl['active'] and percentDelta > 0.9:
+    if deltaControl[side]['active'] and threshold:
 
-        marketOrder(deltaControl['side'], deltaControl['fraction'], deltaControl['stop'])
+        MO = marketOrder(side, deltaControl['fraction'], deltaControl['stop'])
 
-        deltaControl['price'] == 0
-        deltaControl['active'] == False
-        deltaControl['swing'] == False
-        msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
-        print('MARKET MESSAGE ' + msg)
-        r.set('coinDict', json.dumps(coinDict))
-        r.set('discord_' + 'BTC', msg)
+        if MO:
+            resetCoinDict(coinDict)
+            msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
+            print('MARKET MESSAGE ' + msg)
+        else:
+            print('MARKET ORDER FAIL')
+
+
 
 
     print('ACTION DELTA')
+
+
+def resetCoinDict(coinDict):
+
+    resetDelta = {
+                'check': True,
+                'block' : 100_000,
+                'Sell' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False
+                },
+                'Buy' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False,
+                },
+                'fraction' : 0.2,
+                'stop' : 70,
+                'count' : 0,
+                'time' : 0,
+            }
+
+    coinDict['BTC']['delta'] = resetDelta
+
+    r.set('coinDict', json.dumps(coinDict))
+    r.set('discord_' + 'BTC', 'coinDict Reset')
 
 
 

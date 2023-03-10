@@ -724,13 +724,15 @@ def logTimeUnit(buyUnit, sellUnit, coin):
 def getDeltaStatus(deltaflow, deltaCount):
 
     if LOCAL:
-        print('GET DELTA STATUS')
+        print('GET DELTA STATUS', len(deltaflow))
+
+    newDeltaflowList = []
+
+
 
     totalBuys = 0
     totalSells = 0
-    negDelta = False
-    posDelta = False
-    excess = 0
+
 
     deltaflowList = [[]]
 
@@ -748,23 +750,37 @@ def getDeltaStatus(deltaflow, deltaCount):
         ## 13K Sells
         ## delta -9K
 
+        newDeltaflowList.append([
+            {
+                "side": d['side'],
+                "size": d['size'],
+                'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
+            }
+        ])
+
         ## 2K sell comes in
         ## 4k Buys
         ## 15K Sells
 
         ## delta =  -11K
+        #
 
-        if totalBuys - totalSells <  - deltaCount:
-            negDelta = True
+        excess = 0
+        blockfill = False
+        fillMarker = False # toggle when unfilled block is added at the end
+
+        if totalBuys - totalSells <  - deltaCount or totalBuys - totalSells > deltaCount:
+            blockfill = True
+            fillMarker = True
             excess = abs(totalBuys - totalSells) - deltaCount
 
 
-        elif totalBuys - totalSells > deltaCount:
-            posDelta = True
-            excess = abs(totalBuys - totalSells) - deltaCount
+        # elif :
+        #     posDelta = True
+        #     excess = abs(totalBuys - totalSells) - deltaCount
 
 
-        if posDelta or negDelta:
+        if blockfill and fillMarker: #posDelta or negDelta:
             ## complete delta flow
 
             completeUnit = d.copy()
@@ -772,32 +788,31 @@ def getDeltaStatus(deltaflow, deltaCount):
             printDict = {
                 'UNIT SIZE': completeUnit['size'],
                 'SIDE' : completeUnit['side'],
+                'LENGTH' : len(deltaflow),
                 'totalBS' : [totalBuys , totalSells],
                 'abs' : abs((totalBuys - totalSells)),
-                'excess' : excess
-
+                'excess' : excess,
+                'counted unit' : newDeltaflowList,
+                'currentnewList' : deltaflowList
             }
 
-
-            print('EXESSS ' + json.dumps(printDict)  )
+            print('EXCESS ' + json.dumps(printDict))
 
             completeUnit['size'] -= excess
-            completeUnit['oi_delta'] = 1
             deltaflowList[-1].append(completeUnit)
 
             # Excess UNIT SIZE 1084 10352 0 10352 352
             # Excess UNIT SIZE 2 10352 2 10350 350
 
-            while excess > deltaCount:
+            while excess >= deltaCount:
                 adjustUnit = d.copy()
                 adjustUnit['size'] = deltaCount
                 excess -= deltaCount
-                if excess != 0:
-                    adjustUnit['oi_delta'] = 2
                 deltaflowList.append([adjustUnit])
-                print('excess unit added')
+                print('excess unit added ' + str(excess))
 
             if excess > 0:
+                fillMarker = False
                 finalUnit = d.copy()
                 finalUnit['size'] = excess
                 deltaflowList.append([finalUnit])
@@ -807,8 +822,7 @@ def getDeltaStatus(deltaflow, deltaCount):
 
     return {
             'flowdelta' : totalBuys - totalSells,
-            'negDelta' : negDelta,
-            'posDelta' : posDelta,
+            'blockfill' : blockfill,
             'deltaflowList' : deltaflowList
     }
 
@@ -853,12 +867,12 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         if LOCAL:
             print('DELTA 1', len(deltablocks), len(deltaflow), len(deltaStatus['deltaflowList']))
 
-        if deltaStatus['posDelta'] or deltaStatus['negDelta']:
+        if deltaStatus['blockfill']:
             # store current candle and start a new Candle
 
-            if LOCAL:
-                print('ADD DELTA CANDLE', len(deltablocks), len(deltaflow))
-                r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
+            # if LOCAL:
+            #     print('ADD DELTA CANDLE', len(deltablocks), len(deltaflow))
+            #     r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
 
             # replace current candle with completed candle
 
