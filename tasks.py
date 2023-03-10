@@ -779,7 +779,7 @@ def getDeltaStatus(deltaflow, deltaCount):
             }
 
 
-            print('EXESSS ' + json.dump(printDict)  )
+            print('EXESSS ' + json.dumps(printDict)  )
 
             completeUnit['size'] -= excess
             completeUnit['oi_delta'] = 1
