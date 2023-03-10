@@ -516,13 +516,15 @@
                         <h3> <span> Delta Blocks</span>
                             <br>
 
-                            H<input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
-                            L<input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
+                            <span style="color:white">Hi </span><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input>
+                            <span style="color:white"> / </span>
+                            <input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input>
+                            <span style="color:white">Lo </span>
                             <button @click="setDelta()" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button>
                             <br>
 
-                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])"> [[  coinOBJ[coin]['delta']['Sell']['price'] ]] </span> / <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])"> [[  coinOBJ[coin]['delta']['Buy']['price'] ]] </span> <br>
-                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])"> Active </span> / <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])"> Active </span>
+                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])"> [[  coinOBJ[coin]['delta']['Sell']['price'] ]] </span> <span style="color:white"> / </span><span :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])"> [[  coinOBJ[coin]['delta']['Buy']['price'] ]] </span> <br>
+                            <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])"> Active </span> <span style="color:white"> / </span> <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])"> Active </span>
                             <br>
                             C: [[  coinOBJ[coin]['delta']['count'] ]]
                             T: [[  coinOBJ[coin]['delta']['time'] ]]<br>
@@ -1703,12 +1705,13 @@ let vue = new Vue({
                     console.log(deltaOBJ['side'] == 'Buy', deltaOBJ['price'] )
 
 
-                    if (deltaOBJ['side'] == 'Sell') {
-                        vue.levelHigh = deltaOBJ['price']
+                    if (deltaOBJ['Sell']['price'] > 0) {
+                        vue.levelHigh = deltaOBJ['Sell']['price']
                     }
-                    if (deltaOBJ['side'] == 'Buy') {
-                        vue.levelLow = deltaOBJ['price']
+                    if (deltaOBJ['Buy']['price'] > 0) {
+                        vue.levelHigh = deltaOBJ['Buy']['price']
                     }
+
                 } else {
                     vue.coinOBJ = cOBJ
                 }
@@ -1767,27 +1770,24 @@ let vue = new Vue({
             console.log('setDelta')
 
             let deltaOBJ = this.coinOBJ[this.coin]['delta']
+            let reset = false
 
-            if (this.levelHigh == 0 && this.levelLow != deltaOBJ['price']) {
-                deltaOBJ['price'] = parseInt(this.levelLow)
-                deltaOBJ['side'] = 'Buy'
+            if (this.levelHigh != deltaOBJ['Sell']['price']) {
+                deltaOBJ['Sell']['price'] = parseInt(this.levelHigh)
             }
-            if (this.levelLow == 0 && this.levelHigh != deltaOBJ['price']) {
-                deltaOBJ['price'] = parseInt(this.levelHigh)
-                deltaOBJ['side'] = 'Sell'
+            if (this.levelLow != deltaOBJ['Buy']['price']) {
+                deltaOBJ['Buy']['price'] = parseInt(this.levelLow)
             }
+
             if (this.levelLow == 0 && this.levelHigh == 0) {
-                deltaOBJ['price'] = 0
-                deltaOBJ['count'] = 0
-                deltaOBJ['time'] = 0
-                deltaOBJ['swing'] = false
-                deltaOBJ['active'] = false
+                reset = true
             }
 
             $.ajax({
                 data : {
                     coinOBJ: JSON.stringify(this.coinOBJ),
-                    coin: this.coin
+                    coin: this.coin,
+                    reset: reset
                 },
                 type : 'POST',
                 url : '/setDelta'
@@ -1964,16 +1964,7 @@ let vue = new Vue({
         }
     },
     watch: {
-        levelHigh: function () {
-            if (this.levelHigh != 0) {
-                this.levelLow = 0
-            }
-        },
-        levelLow: function () {
-            if (this.levelLow != 0) {
-                this.levelHigh = 0
-            }
-        },
+
         tpElement: function () {
             element = document.getElementById(this.tpElement)
             if (element) {

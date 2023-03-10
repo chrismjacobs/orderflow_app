@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 import json
-from analysis import getBlocks, getVWAP, getImbalances
+from analysis import getBlocks, getVWAP, getImbalances, resetCoinDict2
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 
 if not LOCAL:
@@ -36,10 +36,15 @@ def home():
 def setDelta():
 
     coinDict = request.form['coinOBJ']
+    reset = request.form['reset']
 
-    print(coinDict)
 
-    r.set('coinDict', coinDict)
+    print(reset, coinDict, type(coinDict))
+
+    if reset == 'true':
+        resetCoinDict2(json.loads(coinDict))
+    else:
+        r.set('coinDict', coinDict)
 
     return jsonify({'coinDict' : coinDict})
 

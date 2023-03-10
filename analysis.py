@@ -241,4 +241,30 @@ def getBlocks(size, blocksString):
     #print(len(newBlocks))
     return json.dumps(newBlocks)
 
+
+def resetCoinDict2(coinDict):
+
+    resetDelta = {
+                'check': True,
+                'block' : 100_000,
+                'Sell' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False
+                },
+                'Buy' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False,
+                },
+                'fraction' : 0.2,
+                'stop' : 70,
+                'count' : 0,
+                'time' : 0,
+            }
+
+    coinDict['BTC']['delta'] = resetDelta
+
+    r.set('coinDict', json.dumps(coinDict))
+    r.set('discord_' + 'BTC', 'coinDict Reset')
 # getVolumeBlock()
