@@ -29,7 +29,7 @@ except:
 
 session = inverse_perpetual.HTTP(
     endpoint='https://api.bybit.com',
-    api_key= API_KEY,
+    api_key=API_KEY,
     api_secret=API_SECRET
 )
 
@@ -159,6 +159,8 @@ def getHL(side, current, stop):
     return stop_loss
 
 def marketOrder(side, fraction, stop):
+
+    print(session, API_SECRET)
 
 
 
