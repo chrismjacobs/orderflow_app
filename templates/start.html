@@ -7,12 +7,11 @@
         <div class="col">
             <h1 class="mb-5 text-light">Orderflow Worker Start Command</h1>
 
-            <form method="POST" class="form-inline">
-                <div class="form-group">
-                    <input id="x" class="form-control mx-3" type="number" name="x"/>
-                </div>
 
-                <button class="btn btn-primary" type="submit">Start Code</button>
+                    <input id="x" class="form-control mx-3" type="number" name="x"/>
+
+
+                <button class="btn btn-primary" type="submit" @click="login()">Start Code</button>
             </form>
         </div>
     </div>
@@ -84,7 +83,6 @@ let vue = new Vue({
             .done(function(data) {
                 console.log(data)
                 this.goTo()
-
 
             })
             .fail(function(){
