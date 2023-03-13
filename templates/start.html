@@ -8,7 +8,7 @@
             <h1 class="mb-5 text-light">Orderflow Worker Start Command</h1>
 
 
-                    <input id="x" class="form-control mx-3" type="number" name="x"/>
+                    <input id="x" type="number" v-model="passcode"/>
 
 
                 <button class="btn btn-primary" type="submit" @click="login()">Start Code</button>
@@ -77,6 +77,7 @@ let vue = new Vue({
                 data : {
                 },
                 type : 'POST',
+                passcode : this.passcode,
                 url : '/workerAction'
 
             })

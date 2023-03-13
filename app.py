@@ -151,7 +151,7 @@ def start():
 @app.route('/workerAction', methods=['POST'])
 @login_required
 def worker():
-    x = int(request.form['x'] or 0)
+    x = int(request.form['passcode'] or 0)
     print('workerAction', x, START_CODE)
 
     if x == int(START_CODE):
