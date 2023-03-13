@@ -72,9 +72,9 @@ let vue = new Vue({
 
             $.ajax({
                 data : {
+                    passcode : this.passcode,
                 },
                 type : 'POST',
-                passcode : this.passcode,
                 url : '/workerAction'
 
             })
