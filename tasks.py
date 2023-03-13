@@ -222,26 +222,23 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
     return True
 
-def addDelta(blocks, coin, coinDict):
+def addDeltaBIT(blocks, coin, coinDict):
 
     switch = False
 
     switchUp = False
     switchDown = False
 
-    if coin == 'BIT':
-        if len(blocks) > 3:
-            if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
-                if blocks[-1]['delta'] < 0:
-                    switchDown = True
-                    actionBIT('Sell')
-            if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
-                if blocks[-1]['delta'] > 0:
-                    switchUp = True
-                    actionBIT('Buy')
 
-    if coin == 'BTC':
-        actionDELTA(blocks, coin, coinDict)
+    if len(blocks) > 3:
+        if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
+            if blocks[-1]['delta'] < 0:
+                switchDown = True
+                actionBIT('Sell')
+        if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
+            if blocks[-1]['delta'] > 0:
+                switchUp = True
+                actionBIT('Buy')
 
     return switch
 
@@ -300,8 +297,12 @@ def getImbalances(tickList, mode):
 
     return [tickList, stackBuys, stackSells]
 
-
+## addBlockk
 def addBlock(units, blocks, mode, coin):
+
+    TIME = False
+    VOLUME = False
+    BLOCK = False
 
     coinDict = json.loads(r.get('coinDict'))
 
@@ -311,20 +312,23 @@ def addBlock(units, blocks, mode, coin):
     modeSplit = mode.split('_')
     mode = modeSplit[0]
 
+    if 'time' in mode:
+        TIME = True
+    elif 'vol' in mode:
+        VOLUME = True
+
+    if 'block' in mode:
+        BLOCK = True
+
+
     CVDdivergence = {}
 
-    if mode == 'timeblock' and pause == False:
+    if TIME and BLOCK and pause == False:
         CVDdivergence = getHiLow(blocks, coin)
         stream = json.loads(r.get('stream_' + coin))
         stream['Divs'] = CVDdivergence
         r.set('stream_' + coin, json.dumps(stream) )
 
-    # print('ADD BLOCK')
-
-    switch = False
-
-    if mode == 'deltablock':
-        switch = addDelta(blocks, coin, coinDict)
 
     ''' BLOCK DATA '''
 
@@ -348,7 +352,7 @@ def addBlock(units, blocks, mode, coin):
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
-    elif 'time' in mode:
+    elif TIME:
         h = getHistory(coin)
         if h:
             lastCandle = h['timeblocks_' + coin][-1]
@@ -364,8 +368,6 @@ def addBlock(units, blocks, mode, coin):
 
     timeDelta = newClose - newStart
     timeDelta2 = newClose - previousTime
-
-
 
     buyCount = 0
     sellCount = 0
@@ -385,6 +387,7 @@ def addBlock(units, blocks, mode, coin):
     priceList = []
 
     tickCoins = ['BTC', 'ETH']
+
 
     for d in units:
         # print('BLOCK LOOP', d)
@@ -456,7 +459,6 @@ def addBlock(units, blocks, mode, coin):
             if stackSells >= 3 and 'time' in mode:
                 sendMessage(coin, 'Stack IMBS SELL', '', 'white')
 
-
     oiList.sort()
 
     OIlow = oiList[0]
@@ -472,7 +474,6 @@ def addBlock(units, blocks, mode, coin):
     if coin == 'GALA':
         priceDelta = round(priceDelta*10000)/10000
 
-    # print(coin + ' NC DICT')
 
     newCandle = {
         'trade_time_ms' : newClose,
@@ -495,11 +496,10 @@ def addBlock(units, blocks, mode, coin):
         'oi_range': OIhigh - OIlow,
         'oi_cumulative': OIclose,
         'divergence' : CVDdivergence,
-        'switch' : switch,
         'tickList' : tickList,
         'pva_status': {},
         'volDiv' : False,
-        'tradecount': tradecount,
+        #'tradecount': tradecount,
     }
 
     # if 'block' in mode:
@@ -532,17 +532,109 @@ def addBlock(units, blocks, mode, coin):
 
             print('VOL DIV CHECK COMPLETE')
 
-    if newCandle['total'] > 50_000_000 and pause == False:
-        if coinDict['ETH']:
-            coinDict['ETH']['active'] = False
-        coinDict['BTC']['pause'] = True
-        r.set('coinDict', json.dumps(coinDict))
-    elif pause == True and newCandle['total'] < 50_000_000:
-        coinDict['BTC']['pause'] = False
-        r.set('coinDict', json.dumps(coinDict))
-
+    if TIME:
+        if newCandle['total'] > 50_000_000 and pause == False:
+            if coinDict['ETH']:
+                coinDict['ETH']['active'] = False
+            coinDict['BTC']['pause'] = True
+            r.set('coinDict', json.dumps(coinDict))
+        elif pause == True and newCandle['total'] < 50_000_000:
+            coinDict['BTC']['pause'] = False
+            r.set('coinDict', json.dumps(coinDict))
 
     return newCandle
+
+def addDeltaBlock(units, blocks, mode, coin):
+
+    coinDict = json.loads(r.get('coinDict'))
+
+    switch = False
+
+    if coin == 'BTC' and 'block' in mode:
+        switch = actionDELTA(blocks, coin, coinDict)
+    elif coin == 'BIT':
+        switch = addDeltaBIT(blocks, coin, coinDict)
+
+    ''' BLOCK DATA '''
+
+    print('BLOCK DATA: ' + mode + ' -- ' + coin)
+
+    previousTime = units[0]['trade_time_ms']
+    newOpen = units[0]['streamPrice']
+    price = units[-1]['streamPrice']
+
+    ## if just one block than that is the current candle
+    ## last block is the previous one
+    ## but if its the start of the day then we need to get Historical last block
+
+    if len(blocks) > 1:
+
+        lastCandle = blocks[-2] # ignore last unit which is the current one
+
+        previousTime = lastCandle['trade_time_ms']
+        newOpen = lastCandle['close']
+
+
+    newStart  = units[0]['trade_time_ms']
+    newClose = units[-1]['trade_time_ms']
+
+    # if LOCAL:
+    #     print('TIME CHECK', previousTime, newClose, newStart, type(newClose), type(newStart))
+
+    timeDelta = newClose - newStart
+    timeDelta2 = newClose - previousTime
+
+    buyCount = 0
+    sellCount = 0
+    highPrice = 0
+    lowPrice = 0
+
+    priceList = []
+
+    for d in units:
+        # print('BLOCK LOOP', d)
+
+        if d['side'] == 'Buy':
+            buyCount += d['size']
+        else:
+            sellCount += d['size']
+
+        for price in d['spread']:
+
+            price = float(price)
+            priceList.append(price)
+
+
+    highPrice = max(priceList)
+    lowPrice = min(priceList)
+
+    delta = buyCount - sellCount
+    priceDelta = price - newOpen
+
+    newDeltaCandle = {
+        'trade_time_ms' : newClose,
+        'timestamp' : str(units[0]['timestamp']),
+        'time_delta' : timeDelta,
+        'close' : price,
+        'open' : newOpen,
+        'price_delta' : priceDelta,
+        'high' : highPrice,
+        'low' : lowPrice,
+        'buys' : buyCount,
+        'sells' : sellCount,
+        'delta' : delta,
+        'total' : buyCount + sellCount,
+        'switch' : switch,
+    }
+
+    if sellCount < 0 and 'block' in mode:
+        print('SELL COUNT LESS THAN ZERO')
+    if buyCount < 0  and 'block' in mode:
+        print('BUY COUNT LESS THAN ZERO')
+
+    print('NEW DELTA CANDLE')
+
+    return newDeltaCandle
 
 
 def getPVAstatus(timeblocks, coin):
@@ -728,8 +820,6 @@ def getDeltaStatus(deltaflow, deltaCount):
 
     newDeltaflowList = []
 
-
-
     totalBuys = 0
     totalSells = 0
 
@@ -851,7 +941,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         if sellUnit['size'] > 1:
             deltaflow.append(sellUnit)
 
-        currentCandle = addBlock(deltaflow, deltablocks, 'deltamode', coin)
+        currentCandle = addDeltaBlock(deltaflow, deltablocks, 'deltamode', coin)
         deltablocks.append(currentCandle)
 
         r.set('deltablocks_' + coin, json.dumps(deltablocks))
@@ -879,10 +969,10 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             for flow in deltaStatus['deltaflowList']:
                 if deltaStatus['deltaflowList'].index(flow) == 0:
                     ### replace first completed block
-                    newCandle = addBlock(flow, deltablocks, 'deltablock', coin)
+                    newCandle = addDeltaBlock(flow, deltablocks, 'deltablock', coin)
                     deltablocks[-1] = newCandle
                 else:
-                    currentCandle = addBlock(flow, deltablocks, 'deltamode', coin)
+                    currentCandle = addDeltaBlock(flow, deltablocks, 'deltamode', coin)
                     deltablocks.append(currentCandle)
                     if deltaStatus['deltaflowList'].index(flow) == len(deltaStatus['deltaflowList']) - 1:
                         # reset deltaflow - the last delta block
@@ -903,7 +993,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
                 print('ADD DELTA UNIT', len(deltablocks), len(deltaflow))
 
             # update current candle with new unit data
-            currentCandle = addBlock(deltaflow, deltablocks, 'deltamode', coin)
+            currentCandle = addDeltaBlock(deltaflow, deltablocks, 'deltamode', coin)
             LastIndex = len(deltablocks) - 1
             deltablocks[LastIndex] = currentCandle
             r.set('deltablocks_' + coin, json.dumps(deltablocks))

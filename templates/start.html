@@ -7,7 +7,7 @@
         <div class="col">
             <h1 class="mb-5 text-light">Orderflow Worker Start Command</h1>
 
-            <form action="/workerAction" method="POST" class="form-inline">
+            <form method="POST" class="form-inline">
                 <div class="form-group">
                     <input id="x" class="form-control mx-3" type="number" name="x"/>
                 </div>
@@ -61,6 +61,16 @@ let vue = new Vue({
         passcode : ''
     },
     methods: {
+        goTo: function(){
+
+            var str = window.location.href.split('start')[0]
+
+            let url = str
+
+            console.log('goTO', url);
+            window.location = url
+
+        },
         login: function () {
             console.log('start')
 
@@ -73,7 +83,9 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log(data)
-                alert('Started')
+                this.goTo()
+
+
             })
             .fail(function(){
                   alert('error has occurred with worker start');

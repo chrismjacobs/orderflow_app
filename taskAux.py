@@ -160,10 +160,6 @@ def getHL(side, current, stop):
 
 def marketOrder(side, fraction, stop):
 
-    print(session, API_SECRET)
-
-
-
     position = session.my_position(symbol="BTCUSD")['result']
 
     positionSide = position['side']
@@ -217,6 +213,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     print(deltaControl['Buy'], deltaControl['Sell'])
 
+
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
         print('zero')
         return False
@@ -243,6 +240,8 @@ def actionDELTA(blocks, coin, coinDict):
     else:
         return False
 
+    print('D1')
+
 
     fastCandles = 0
 
@@ -258,13 +257,17 @@ def actionDELTA(blocks, coin, coinDict):
 
     currentTimeDelta = blocks[-1]['time_delta']/1000
 
+    print('D2')
+
     tds = []
     for b in blocks[-10:]:
         tds.append(b['time_delta']/1000)
 
     deltaControl['count'] = fastCandles
     deltaControl['time'] = currentTimeDelta
+
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
+
 
     if percentDelta > 1 or percentDelta < -1:
         ## errounous result
@@ -299,10 +302,13 @@ def actionDELTA(blocks, coin, coinDict):
         else:
             print('MARKET ORDER FAIL')
 
-
-
-
     print('ACTION DELTA')
+
+    return blocks[-1]
+
+
+
+
 
 
 def resetCoinDict(coinDict):

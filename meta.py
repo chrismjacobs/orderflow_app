@@ -12,7 +12,7 @@ try:
     SECRET_KEY = config.SECRET_KEY
     SQLALCHEMY_DATABASE_URI = config.SQLALCHEMY_DATABASE_URI
     REDIS_URL = config.REDIS_URL
-    START_CODE = None
+    START_CODE = config.START_CODE
     LOCAL = True
     DEBUG = True
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
