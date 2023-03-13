@@ -75,8 +75,9 @@ def startDiscord():
 
         if msg.content == 'B':
             lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
+            print(lastCandle)
             oi = round(lastCandle['oi_delta']/1000)
-            b = round(lastCandle['Buys']/1000)
+            b = round(lastCandle['buys']/1000)
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
 
@@ -158,7 +159,7 @@ def getHL(side, current, stop):
 
     return stop_loss
 
-def marketOrder(side, fraction, stop):
+def marketOrder(side, fraction, stop, profit):
 
     position = session.my_position(symbol="BTCUSD")['result']
 
@@ -180,10 +181,10 @@ def marketOrder(side, fraction, stop):
     print('MARKET ORDER ' + str(price))
 
     if side == 'Buy':
-        take_profit = price + 60
+        take_profit = price + profit
 
     if side == 'Sell':
-        take_profit = price - 60
+        take_profit = price - profit
 
 
     order = session.place_active_order(
@@ -293,7 +294,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     if deltaControl[side]['active'] and threshold:
 
-        MO = marketOrder(side, deltaControl['fraction'], deltaControl['stop'])
+        MO = marketOrder(side, deltaControl['fraction'], deltaControl['stop'], deltaControl['profit'])
 
         if MO:
             resetCoinDict(coinDict)

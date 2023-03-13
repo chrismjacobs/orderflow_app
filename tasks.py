@@ -632,7 +632,7 @@ def addDeltaBlock(units, blocks, mode, coin):
     if buyCount < 0  and 'block' in mode:
         print('BUY COUNT LESS THAN ZERO')
 
-    print('NEW DELTA CANDLE')
+    print('NEW DELTA CANDLE ' + str(sellCount) + ' // ' + str(buyCount))
 
     return newDeltaCandle
 
