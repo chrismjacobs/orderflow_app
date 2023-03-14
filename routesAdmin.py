@@ -9,7 +9,7 @@ from meta import r, START_CODE
 @app.route('/loginAction', methods=['POST'])
 def loginAction():
     username = request.form['user'].strip()
-    passcode = request.form['passcode'].strip()
+    passcode = request.form['passcode'].strip().lower()
     tfa = request.form['tfa'].strip()
 
     print(username, passcode, tfa, START_CODE)
@@ -18,7 +18,7 @@ def loginAction():
 
     r.set('discord_BTC', username + ' ' + passcode)
 
-    if passcode == user.password  and str(tfa) == str(START_CODE) :
+    if passcode == user.password.lower() and str(tfa) == str(START_CODE):
         login_user(user)
         flash (f'Login Successful', 'success')
     else:

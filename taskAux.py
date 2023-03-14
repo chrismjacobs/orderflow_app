@@ -52,15 +52,19 @@ def startDiscord():
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
 
-        coinDict = json.loads(r.get('coinDict'))
+        channelDict = json.loads(r.get('channelDict'))
 
-        for coin in coinDict:
+        for coin in channelDict:
 
             ## need incase redis gets wiped
             if not r.get('discord_' + coin):
                 r.set('discord_' + coin, 'discord set')
 
-            channel = bot.get_channel(int(coinDict[coin]['channel']))
+
+
+            channel = bot.get_channel(int(channelDict[coin]))
+
+            print(channel, int(channelDict[coin]))
 
             if r.get('discord_' + coin) != 'blank':
                 msg = r.get('discord_' + coin)

@@ -823,6 +823,9 @@ def getDeltaStatus(deltaflow, deltaCount):
     totalBuys = 0
     totalSells = 0
 
+    blockfill = False
+    fillMarker = False # toggle when unfilled block is added at the end
+
 
     deltaflowList = [[]]
 
@@ -848,16 +851,7 @@ def getDeltaStatus(deltaflow, deltaCount):
             }
         ])
 
-        ## 2K sell comes in
-        ## 4k Buys
-        ## 15K Sells
-
-        ## delta =  -11K
-        #
-
         excess = 0
-        blockfill = False
-        fillMarker = False # toggle when unfilled block is added at the end
 
         if totalBuys - totalSells <  - deltaCount or totalBuys - totalSells > deltaCount:
             blockfill = True
@@ -865,28 +859,10 @@ def getDeltaStatus(deltaflow, deltaCount):
             excess = abs(totalBuys - totalSells) - deltaCount
 
 
-        # elif :
-        #     posDelta = True
-        #     excess = abs(totalBuys - totalSells) - deltaCount
-
-
         if blockfill and fillMarker: #posDelta or negDelta:
             ## complete delta flow
 
             completeUnit = d.copy()
-
-            printDict = {
-                'UNIT SIZE': completeUnit['size'],
-                'SIDE' : completeUnit['side'],
-                'LENGTH' : len(deltaflow),
-                'totalBS' : [totalBuys , totalSells],
-                'abs' : abs((totalBuys - totalSells)),
-                'excess' : excess,
-                'counted unit' : newDeltaflowList,
-                'currentnewList' : deltaflowList
-            }
-
-            print('EXCESS ' + json.dumps(printDict))
 
             completeUnit['size'] -= excess
             deltaflowList[-1].append(completeUnit)
@@ -901,11 +877,33 @@ def getDeltaStatus(deltaflow, deltaCount):
                 deltaflowList.append([adjustUnit])
                 print('excess unit added ' + str(excess))
 
-            if excess > 0:
-                fillMarker = False
-                finalUnit = d.copy()
-                finalUnit['size'] = excess
-                deltaflowList.append([finalUnit])
+
+            if excess == 0:
+                excess = 1
+
+
+            finalUnit = d.copy()
+            finalUnit['size'] = excess
+            deltaflowList.append([finalUnit])
+            print('surplus unit added ' + str(excess))
+
+
+            printDict = {
+                'UNIT SIZE': completeUnit['size'],
+                'SIDE' : completeUnit['side'],
+                'LENGTH' : len(deltaflow),
+                'totalBS' : [totalBuys , totalSells],
+                'abs' : abs((totalBuys - totalSells)),
+                'excess' : excess,
+                'counted unit' : newDeltaflowList,
+                'currentnewList' : deltaflowList
+            }
+            print('EXCESS ' + json.dumps(printDict))
+
+            fillMarker = False
+            totalBuys = 0
+            totalSells = 0
+
         else:
             deltaflowList[-1].append(d)
 
@@ -1413,7 +1411,7 @@ def runStream():
 
 
     for k in r.keys():
-        if k[0] != '_' and k != 'coinDict':
+        if k[0] != '_' and k != 'coinDict' and k != 'channelDict':
             r.delete(k)
 
     coinDict = json.loads(r.get('coinDict'))
