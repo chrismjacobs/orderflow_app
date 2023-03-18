@@ -259,6 +259,7 @@ def resetCoinDict2(coinDict):
                 },
                 'fraction' : 0.2,
                 'stop' : 70,
+                'profit' : 200,
                 'count' : 0,
                 'time' : 0,
             }
