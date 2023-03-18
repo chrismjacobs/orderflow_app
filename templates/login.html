@@ -86,6 +86,12 @@ let vue = new Vue({
         if (mobile) {
             this.mobile = true
         }
+        if (localStorage['user']) {
+            this.user = localStorage['user']
+        }
+        if (localStorage['passcode']) {
+            this.passcode = localStorage['passcode']
+        }
 
     },
     data: {
@@ -127,7 +133,16 @@ let vue = new Vue({
                   alert('error has occurred with login');
             });
         },
+    },
+    watch: {
+        user: function () {
+            localStorage.setItem('user', this.user)
+        },
+        passcode: function () {
+            localStorage.setItem('passcode', this.passcode)
+        },
     }
+
 })// end NEW VUE
 
 }

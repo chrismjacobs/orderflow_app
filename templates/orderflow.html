@@ -231,9 +231,10 @@
                 <div id="timeOF" v-if="showTable != 'Notes'">
 
                     <div  class="border border-info text-info rounded pt-2 pb-1" >
-                        <h3> <span @click="flowPosition = !flowPosition"> Time Flow ([[tickLookback]]) </span>
+                        <h3> <span @click="flowPositionTime += 1"> Time Flow [[timeBlockSize]]m </span>
                                 <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
                                 <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
+                                ([[tickLookback]] Bars)
                         </h3>
                     </div>
 
@@ -241,7 +242,7 @@
                         <table class="table table-dark table-sm table-fixed">
 
                             <tbody>
-                                <template v-if="flowPosition" v-for="(item, key) in getTicksReversedTime" :key="key" >
+                                <template v-if="flowPositionTime == 1" v-for="(item, key) in getTicksReversedTime" :key="key" >
                                             <tr :style="getCurrent(item)">
                                                 <th class="text-info" scope="row"> [[item]] </th>
                                                 <template v-for="(tick, index) in getTickCandlesTime[item]" :key="index">
@@ -332,7 +333,7 @@
                                     </tr>
                                 </template>
 
-                                <template v-if="!flowPosition" v-for="(item, key) in getTicksReversedTime" :key="key" >
+                                <template v-if="flowPositionTime == 2" v-for="(item, key) in getTicksReversedTime" :key="key" >
                                     <tr :style="getCurrent(item)">
                                         <th class="text-info" scope="row"> [[item]] </th>
                                         <template v-for="(tick, index) in getTickCandlesTime[item]" :key="index">
@@ -347,7 +348,7 @@
                                     </tr>
                                 </template>
 
-                                <template >
+                                <template v-if="showChart == 2">
                                     <tr>
                                         <td>CVD</td>
                                         <td></td>
@@ -374,9 +375,10 @@
                 <div id="volOF" v-if="showTable != 'Notes'">
 
                     <div  class="border border-warning text-warning rounded pt-2 pb-1" >
-                        <h3> <span @click="flowPosition = !flowPosition"> Volume Flow [[ coinOBJ[coin]['volume'][1] ]]m ([[tickLookback]]) </span>
+                        <h3> <span @click="flowPositionVol += 1"> Volume Flow [[ coinOBJ[coin]['volume'][1] ]]m  </span>
                                 <span @click="setTickLookBack(+10)" class="ml-2" >&#8593</span>
                                 <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
+                                ([[tickLookback]] Bars)
                         </h3>
                     </div>
 
@@ -384,7 +386,7 @@
                         <table class="table table-dark table-sm table-fixed">
 
                             <tbody>
-                                <template v-if="flowPosition" v-for="(item, key) in getTicksReversedVolume" :key="key" >
+                                <template v-if="flowPositionVol == 1" v-for="(item, key) in getTicksReversedVolume" :key="key" >
                                             <tr :style="getCurrent(item)">
                                                 <th class="text-warning" scope="row"> [[item]] </th>
                                                 <template v-for="(tick, index) in getTickCandlesVolume[item]" :key="index">
@@ -459,7 +461,7 @@
                                     </tr>
                                 </template>
 
-                                <template v-if="!flowPosition" v-for="(item, key) in getTicksReversedVolume" :key="key" >
+                                <template v-if="flowPositionVol == 2" v-for="(item, key) in getTicksReversedVolume" :key="key" >
                                     <tr :style="getCurrent(item)">
                                         <th class="text-warning" scope="row"> [[item]] </th>
                                         <template v-for="(tick, index) in getTickCandlesVolume[item]" :key="index">
@@ -474,40 +476,10 @@
                                     </tr>
                                 </template>
 
-                                <template style="display:none">
-                                    <tr>
-                                        <td>CVD</td>
-                                        <td></td>
-                                        <td :colspan="tickLookback*2" align="center">
-                                        <div @click="setChartHeight('CVDchart')" class="ct-chart" :style="getChartHeight('CVDchart')" id="chart7"></div>
-                                        </td>
-
-                                    </tr>
-                                    <tr>
-                                        <td>OI</td>
-                                        <td></td>
-                                        <td :colspan="tickLookback*2" align="center">
-                                        <div @click="setChartHeight('OIchart')" class="ct-chart" :style="getChartHeight('OIchart')" id="chart8"></div>
-                                        </td>
-
-                                    </tr>
-                                </template>
-
                             </tbody>
                         </table>
                     </div>
 
-                </div>
-
-                <div class="col" v-if="mobile">
-
-                    <!-- TradingView Widget BEGIN -->
-                    <div class="tradingview-widget-container">
-                        <div id="tradingview_2c4c6">
-
-                        </div>
-                    </div>
-                    <!-- TradingView Widget END -->
                 </div>
 
 
@@ -723,6 +695,19 @@
 
                     </table>
                 </div>
+
+                <div class="p-3">
+
+                    <!-- TradingView Widget BEGIN -->
+                    <div class="tradingview-widget-container">
+                        <div id="tradingview_2c4c6">
+
+                        </div>
+                    </div>
+                    <!-- TradingView Widget END -->
+                </div>
+
+
             </div>
 
 
@@ -737,7 +722,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
 
 
@@ -778,6 +763,12 @@ let vue = new Vue({
         if (localStorage['showChart']) {
             this.showChart = parseInt(localStorage['showChart'])
         }
+        if (localStorage['flowPositionVol']) {
+            this.flowPositionVol = parseInt(localStorage['flowPositionVol'])
+        }
+        if (localStorage['flowPositionTime']) {
+            this.flowPositionTime = parseInt(localStorage['flowPositionTime'])
+        }
         if (localStorage['lookback']) {
             this.lookback = parseInt(localStorage['lookback'])
         }
@@ -787,12 +778,14 @@ let vue = new Vue({
         if (!this.lookback || this.lookback == 'NaN') {
             this.lookback = 4
         }
+        this.tradingView()
 
     },
     data: {
         levelHigh: 0,
         levelLow: 0,
-        flowPosition: true,
+        flowPositionVol: 2,
+        flowPositionTime: 2,
         OIchart: 100,
         CVDchart: 200,
         tickLookback: 20,
@@ -895,7 +888,7 @@ let vue = new Vue({
                     "studies": [
                         "STD;Bollinger_Bands",
                         "STD;VWAP",
-                        "STD;Pivot%1Points%1Standard",
+                        //"STD;Pivot%1Points%1Standard",
                     ],
                 }
             );
@@ -1331,8 +1324,8 @@ let vue = new Vue({
 
             new Chartist.Line('#chart5', dataDT, this.optionsP);
             new Chartist.Line('#chart6', dataOT, this.optionsP);
-            new Chartist.Line('#chart7', dataDV, this.optionsP);
-            new Chartist.Line('#chart8', dataOV, this.optionsP);
+            //new Chartist.Line('#chart7', dataDV, this.optionsP);
+            //new Chartist.Line('#chart8', dataOV, this.optionsP);
             //new Chartist.Line('#chart7', dataO, this.optionsP);
         },
         setTime: function (n) {
@@ -2021,6 +2014,18 @@ let vue = new Vue({
                 this.showChart = 0
             }
             localStorage.setItem('showChart', this.showChart)
+        },
+        flowPositionTime: function () {
+            if (this.flowPositionTime > 2) {
+                this.flowPositionTime = 0
+            }
+            localStorage.setItem('flowPositionTime', this.flowPositionTime)
+        },
+        flowPositionVol: function () {
+            if (this.flowPositionVol > 2) {
+                this.flowPositionVol = 0
+            }
+            localStorage.setItem('flowPositionVol', this.flowPositionVol)
         },
         lookback: function () {
             if (this.lookback > 100) {
