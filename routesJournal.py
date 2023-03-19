@@ -13,8 +13,7 @@ from flask_login import login_required
 def journal():
 
     mList = [
-        'October',
-        'March'
+        'One'
     ]
 
     bucket = 'rekt-journal'
@@ -47,7 +46,7 @@ def recordTrade():
 
     print ('put MetaFile')
     bucket = 'rekt-journal'
-    key = 'tradeJournal_' + month + '.json'
+    key = 'tradeJournal_One.json'
 
     # with open('static/' + key, 'r') as json_file:
     #     file_content = json_file
