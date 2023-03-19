@@ -724,15 +724,17 @@ def getPVAstatus(timeblocks, coin):
 
         print('RETURN PVA')
 
+        volString = str(round(returnPVA['vol']/100_000)/10)
+
         if pva200 and flatOI and lastVolume > 1_000_000:
-            msg = coin + ' PVA flatOI  Vol:' + str(returnPVA['vol']) + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm'
+            msg = coin + ' PVA flatOI  Vol:' + volString  + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm'
             sendMessage(coin, msg, '', 'yellow')
             streamAlert('PVA candle with flat OI', 'PVA', coin)
         elif pva200 and divergenceBear and lastVolume > 1_000_000:
-            msg = coin + ' PVA divergence Bear: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage'])
+            msg = coin + ' PVA divergence Bear: ' + volString  + ' ' + str(returnPVA['percentage'])
             sendMessage(coin, msg, '', 'red')
         elif pva200 and divergenceBull and lastVolume > 1_000_000:
-            msg = coin + ' PVA divergence Bull: ' +  str(returnPVA['vol']) + ' ' + str(returnPVA['percentage'])
+            msg = coin + ' PVA divergence Bull: ' +  volString  + ' ' + str(returnPVA['percentage'])
             sendMessage(coin, msg, '', 'cyan')
 
         return returnPVA

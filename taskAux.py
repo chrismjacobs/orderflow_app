@@ -64,7 +64,7 @@ def startDiscord():
 
             channel = bot.get_channel(int(channelDict[coin]))
 
-            print(channel, int(channelDict[coin]))
+            # print(channel, int(channelDict[coin]))
 
             if r.get('discord_' + coin) != 'blank':
                 msg = r.get('discord_' + coin)
@@ -215,22 +215,23 @@ def marketOrder(side, fraction, stop, profit):
 def actionDELTA(blocks, coin, coinDict):
 
     deltaControl = coinDict[coin]['delta']
+    # BuySet = Auto.query.filter(mode='deltaLow').first()
+    # SellSet = Auto.query.filter(mode='deltaHigh').first()
 
-    print(deltaControl['Buy'], deltaControl['Sell'])
 
 
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
         print('zero')
         return False
 
-    if deltaControl['Sell']['price'] > 0 and blocks[-1]['close'] > deltaControl['Sell']['price'] and deltaControl['Sell']['swing'] == False:
+    if deltaControl['Sell']['price'] > 0 and blocks[-1]['high'] > deltaControl['Sell']['price'] and deltaControl['Sell']['swing'] == False:
         deltaControl['Sell']['swing'] = True
         deltaControl['Buy']['swing'] = False
         print('SELL SWING TRUE')
         r.set('coinDict', json.dumps(coinDict))
         return True
 
-    if deltaControl['Buy']['price'] > 0 and blocks[-1]['close'] < deltaControl['Buy']['price'] and deltaControl['Buy']['swing'] == False:
+    if deltaControl['Buy']['price'] > 0 and blocks[-1]['low'] < deltaControl['Buy']['price'] and deltaControl['Buy']['swing'] == False:
         deltaControl['Buy']['swing'] = True
         deltaControl['Sell']['swing'] = False
         print('BUY SWING TRUE')
@@ -244,8 +245,6 @@ def actionDELTA(blocks, coin, coinDict):
         side = 'Buy'
     else:
         return False
-
-    print('D1')
 
 
     fastCandles = 0
@@ -261,8 +260,6 @@ def actionDELTA(blocks, coin, coinDict):
                 fastCandles += 1
 
     currentTimeDelta = blocks[-1]['time_delta']/1000
-
-    print('D2')
 
     tds = []
     for b in blocks[-10:]:
@@ -310,9 +307,6 @@ def actionDELTA(blocks, coin, coinDict):
     print('ACTION DELTA')
 
     return blocks[-1]
-
-
-
 
 
 
