@@ -60,8 +60,6 @@ def startDiscord():
             if not r.get('discord_' + coin):
                 r.set('discord_' + coin, 'discord set')
 
-
-
             channel = bot.get_channel(int(channelDict[coin]))
 
             # print(channel, int(channelDict[coin]))
@@ -172,6 +170,7 @@ def marketOrder(side, fraction, stop, profit):
     positionLev = float(position['leverage'])
 
     if positionSize > 0 or positionLev > 2:
+        print('Position already open: ' + positionSide)
         return False
 
     price = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
@@ -249,24 +248,32 @@ def actionDELTA(blocks, coin, coinDict):
 
     fastCandles = 0
 
-    lastElements = [-2, -3, -4, -5, -6, -7, -8]  # -9, -10, -11
-    timeElements = []
+    # lastElements = [-2, -3, -4, -5, -6, -7, -8]  # -9, -10, -11
+    # timeElements = []
 
-    if len(blocks) >= 11:
-        for t in lastElements:
-            timeDelta = blocks[t]['time_delta']/1000
-            timeElements.append(round(timeDelta))
-            if timeDelta < 5:
-                fastCandles += 1
+    # if len(blocks) >= 11:
+    #     for t in lastElements:
+    #         timeDelta = blocks[t]['time_delta']/1000
+    #         timeElements.append(round(timeDelta))
+    #         if timeDelta < 5:
+    #             fastCandles += 1
 
-    currentTimeDelta = blocks[-1]['time_delta']/1000
+    currentTimeDelta = 0
+
+    count = 0
 
     tds = []
-    for b in blocks[-10:]:
-        tds.append(b['time_delta']/1000)
+    for b in blocks[-8:]:
+        t = b['time_delta']/1000
 
-    deltaControl['count'] = fastCandles
-    deltaControl['time'] = currentTimeDelta
+        # first candle recorded next 7 candles appended
+        if count == 0:
+            currentTimeDelta = t
+        else:
+            tds.append(t)
+            if t < 5:
+                fastCandles += 1
+        count += 1
 
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
 
@@ -295,10 +302,10 @@ def actionDELTA(blocks, coin, coinDict):
 
     if deltaControl[side]['active'] and threshold:
 
-        MO = marketOrder(side, deltaControl['fraction'], deltaControl['stop'], deltaControl['profit'])
+        MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'])
 
         if MO:
-            resetCoinDict(coinDict)
+            resetCoinDict(coinDict, side)
             msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
             print('MARKET MESSAGE ' + msg)
         else:
@@ -310,28 +317,17 @@ def actionDELTA(blocks, coin, coinDict):
 
 
 
-def resetCoinDict(coinDict):
+def resetCoinDict(coinDict, side):
 
-    resetDelta = {
-                'check': True,
-                'block' : 100_000,
-                'Sell' : {
-                    'price' : 0,
-                    'swing' : False,
-                    'active' : False
-                },
-                'Buy' : {
-                    'price' : 0,
-                    'swing' : False,
-                    'active' : False,
-                },
-                'fraction' : 0.2,
-                'stop' : 70,
-                'count' : 0,
-                'time' : 0,
-            }
 
-    coinDict['BTC']['delta'] = resetDelta
+    coinDict['BTC']['delta'][side]['active'] = False
+    coinDict['BTC']['delta'][side]['swing'] = False
+    coinDict['BTC']['delta'][side]['price'] = 0
+
+    if coinDict['BTC']['delta'][side]['backup'] > 0:
+        coinDict['BTC']['delta'][side]['price'] = int(coinDict['BTC']['delta'][side]['backup'])
+        coinDict['BTC']['delta'][side]['backup'] = 0
+
 
     r.set('coinDict', json.dumps(coinDict))
     r.set('discord_' + 'BTC', 'coinDict Reset')

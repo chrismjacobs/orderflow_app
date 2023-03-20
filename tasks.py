@@ -978,9 +978,13 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
                         # reset deltaflow - the last delta block
                         deltaflow = flow
 
+            # dbList = []
 
-            if len(deltablocks) > 300:
-                del deltablocks[0]
+            # if not r.get('deltablocklist_' + coin):
+            #     r.set('deltablocklist_' + coin, json.dumps([]))
+            # else:
+            #     dbList = json.loads(r.get('deltablocklist_' + coin))
+
 
             # add fresh current candle to timeblock
             if LOCAL:
@@ -1401,7 +1405,7 @@ def handle_trade_message(msg):
     if deltaControl['check']:
         deltaCount = deltaControl['block']
         if LOCAL:
-            deltaCount = 10000
+            deltaCount = 100000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
 
 
