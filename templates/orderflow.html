@@ -497,9 +497,17 @@
 
                             <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])"> [[  coinOBJ[coin]['delta']['Sell']['price'] ]] </span> <span style="color:white"> / </span><span :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])"> [[  coinOBJ[coin]['delta']['Buy']['price'] ]] </span> <br>
                             <span :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])"> Active </span> <span style="color:white"> / </span> <span :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])"> Active </span>
+
                             <br>
+                            <div style="display:none">
                             C: [[  coinOBJ[coin]['delta']['count'] ]]
-                            T: [[  coinOBJ[coin]['delta']['time'] ]]<br>
+                            T: [[  coinOBJ[coin]['delta']['time'] ]]
+                            </div>
+                            <div >
+                            TP: [[  coinOBJ[coin]['delta']['profit'] ]]
+                            SL: [[  coinOBJ[coin]['delta']['stop'] ]]
+                            </div>
+                            <br>
                         </h3>
                     </div>
                     <table style="display:none" class="table table-dark table-sm vert">
