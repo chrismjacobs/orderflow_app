@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 import json
-from analysis import getBlocks, getVWAP, getImbalances, resetCoinDict2
+from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 
 if not LOCAL:
@@ -42,7 +42,16 @@ def setDelta():
     print(reset, coinDict, type(coinDict))
 
     if reset == 'true':
-        resetCoinDict2(json.loads(coinDict))
+        coinDict['BTC']['delta']['Sell']['active'] = False
+        coinDict['BTC']['delta']['Sell']['swing'] = False
+        coinDict['BTC']['delta']['Sell']['price'] = 0
+
+        coinDict['BTC']['delta']['Buy']['active'] = False
+        coinDict['BTC']['delta']['Buy']['swing'] = False
+        coinDict['BTC']['delta']['Buy']['price'] = 0
+
+        r.set('coinDict', json.dumps(coinDict))
+        r.set('discord_' + 'BTC', 'coinDict Reset')
     else:
         r.set('coinDict', coinDict)
 
@@ -125,6 +134,8 @@ def getOF():
         tb['tickList'] = getImbalances(tb['tickList'])
     for vb in volumeBlocks:
         vb['tickList'] = getImbalances(vb['tickList'])
+
+
 
     jDict = {
         'stream' : stream,
