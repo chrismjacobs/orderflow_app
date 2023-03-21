@@ -1782,12 +1782,12 @@ let vue = new Vue({
         },
         setDelta: function (mode) {
 
-            console.log('setDelta')
+            console.log('setDelta', vue.deltaOBJ)
 
 
             let reset = false
 
-            this.coinOBJ['delta'] = vue.deltaOBJ
+            this.coinOBJ[this.coin]['delta'] = vue.deltaOBJ
 
 
             if (vue.deltaOBJ['Sell']['price'] == 0 && vue.deltaOBJ['Buy']['price'] == 0) {
@@ -1805,8 +1805,8 @@ let vue = new Vue({
 
             })
             .done(function(data) {
-                console.log('DELTA data received')
-                //vue.coinOBJ = JSON.parse(data.coinDict)
+                console.log('DELTA data received', data)
+                vue.coinOBJ = JSON.parse(data.coinDict)
 
             })
             .fail(function(){
