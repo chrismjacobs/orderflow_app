@@ -432,6 +432,7 @@ def addBlock(units, blocks, mode, coin):
 
     highPrice = max(priceList)
     lowPrice = min(priceList)
+    total = buyCount + sellCount
 
     tickList = []
 
@@ -448,7 +449,7 @@ def addBlock(units, blocks, mode, coin):
         for p in tickKeys:
             tickList.append(tickDict[p])
 
-        if getTickImbs:
+        if getTickImbs and total > 2_000_000:
             getIMBs = getImbalances(tickList, mode)
             tickList = getIMBs[0]
             stackBuys = getIMBs[1]
@@ -488,7 +489,7 @@ def addBlock(units, blocks, mode, coin):
         'sells' : sellCount,
         'delta' : delta,
         'delta_cumulative' : int(previousDeltaCum + delta),
-        'total' : buyCount + sellCount,
+        'total' : total,
         'oi_delta': OIdelta,
         'oi_high': OIhigh,
         'oi_low': OIlow,

@@ -260,14 +260,14 @@ def actionDELTA(blocks, coin, coinDict):
 
     currentTimeDelta = 0
 
-    count = 0
+    count = 1
 
     tds = []
     for b in blocks[-8:]:
         t = b['time_delta']/1000
 
         # first candle recorded next 7 candles appended
-        if count == 0:
+        if count == 8:
             currentTimeDelta = t
         else:
             tds.append(t)
@@ -282,7 +282,7 @@ def actionDELTA(blocks, coin, coinDict):
         ## errounous result
         percentDelta = 0
 
-    print('stage two pass ' + str(fastCandles) + ' ' + json.dumps(tds) + ' ' + str(deltaControl[side]['active']) + ' ' + str(percentDelta))
+    print('stage two pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' CT:' + str(currentTimeDelta) + ' %D' + str(percentDelta))
 
     if currentTimeDelta > 5 and fastCandles > 6 and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
