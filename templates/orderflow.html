@@ -483,12 +483,10 @@
                 </div>
 
 
-                <div v-if="showTable != 'Notes' && coin == 'BTC' && user" class="mt-3">
-                    <div class="border border-success text-success rounded pt-2 pb-1"  >
-                        <h3> <span> Delta Blocks  <input type="number" maxlength="6" size="6" style="width:100px;background:green;color:white;font-size:15px" v-model="dbcount"> </input>
-                        </span> <button @click="setDelta()" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button>
-
-                        </h3>
+                <div v-if="showTable != 'Notes' && coin == 'BTC'" class="mt-3">
+                    <div class="border border-success text-success rounded pt-2 pb-1" style="text-align:center"  >
+                        <h3> <span> Delta Blocks <br> <input type="number" step="100" style="width:90px;background:black;color:green;" v-model="dbcount"> </input></span>
+                            </h3>
                     </div>
                     <table style="display:none" class="table table-dark table-sm vert">
                         <thead class="vert">
@@ -520,7 +518,7 @@
                             </template>
                         </tbody>
                     </table>
-                    <div v-if="showTable != 'Notes'" >
+                    <div v-if="showTable != 'Notes' && user" >
                         <table class="table table-dark vert" class="table-responsive">
                             <thead>
                             <tr>
@@ -538,26 +536,27 @@
                             <tbody>
                                 <tr>
                                     <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Sell (Hi)</span> </th>
-                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="levelHigh"> </input> </td>
+                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['price']"> </input> </td>
                                     <td >[[  coinOBJ['BTC']['delta']['Sell']['price']  ]] </td>
                                     <td :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])">[[  coinOBJ['BTC']['delta']['Sell']['swing']  ]] </td>
                                     <td :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])">[[  coinOBJ['BTC']['delta']['Sell']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['stop']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Sell']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['profit']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Sell']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Sell']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Sell']['backup']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['stop']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Sell']['profit']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['fraction']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['backup']"></input></span> </td>
                                 </tr>
                                 <tr>
                                     <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Buy (Lo)</span> </th>
-                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="levelLow"> </input> </td>
+                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['price']"> </input> </td>
                                     <td >[[  coinOBJ['BTC']['delta']['Buy']['price']  ]] </td>
                                     <td :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])">[[  coinOBJ['BTC']['delta']['Buy']['swing']  ]] </td>
                                     <td :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])">[[  coinOBJ['BTC']['delta']['Buy']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['stop']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Buy']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['profit']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Buy']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Buy']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="coinOBJ['BTC']['delta']['Buy']['backup']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Buy']['stop']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['profit']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['fraction']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['backup']"></input> <button @click="setDelta()" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button> </span></td>
                                 </tr>
+
                             </tbody>
 
                         </table>
@@ -814,6 +813,7 @@ let vue = new Vue({
     data: {
         deltaEdit: false,
         dbcount: 100,
+        deltaOBJ: {},
         levelHigh: 0,
         levelLow: 0,
         flowPositionVol: 2,
@@ -828,7 +828,6 @@ let vue = new Vue({
         coin : 'BTC',
         coins : ['BTC', 'ETH'],
         coinOBJ : false,
-        conditionOBJ : {},
         history : {},
         showTable : 'Time',
         showDelta : true,
@@ -1545,14 +1544,14 @@ let vue = new Vue({
         },
         getLevel: function (level) {
             // console.log(this.levelHigh, level, level > this.levelHigh)
-            if (this.levelHigh > 0) {
+            if (this.deltaOBJ['Sell']['price'] > 0) {
 
-                if (level > this.levelHigh) {
+                if (level > this.deltaOBJ['Sell']['price']) {
                     return {background: 'firebrick' }
                 }
             }
-            if (this.levelLow > 0) {
-                target = this.levelLow
+            if (this.deltaOBJ['Buy']['price'] > 0) {
+                target = this.deltaOBJ['Buy']['price']
                 if (level < target) {
                     return {background: 'green' }
                 }
@@ -1723,19 +1722,10 @@ let vue = new Vue({
                 console.log(vue.coinOBJ)
 
                 if (vue.coinOBJ == false) {
+                    /// only act on page load
                     vue.coinOBJ = cOBJ
-                    let deltaOBJ = vue.coinOBJ[vue.coin]['delta']
-                    console.log(vue.coinOBJ)
+                    vue.deltaOBJ = vue.coinOBJ[vue.coin]['delta']
 
-                    console.log(deltaOBJ['side'] == 'Buy', deltaOBJ['price'] )
-
-
-                    if (deltaOBJ['Sell']['price'] > 0) {
-                        vue.levelHigh = deltaOBJ['Sell']['price']
-                    }
-                    if (deltaOBJ['Buy']['price'] > 0) {
-                        vue.levelLow = deltaOBJ['Buy']['price']
-                    }
 
                 } else {
                     vue.coinOBJ = cOBJ
@@ -1794,17 +1784,13 @@ let vue = new Vue({
 
             console.log('setDelta')
 
-            let deltaOBJ = this.coinOBJ[this.coin]['delta']
+
             let reset = false
 
-            if (this.levelHigh != deltaOBJ['Sell']['price']) {
-                deltaOBJ['Sell']['price'] = parseInt(this.levelHigh)
-            }
-            if (this.levelLow != deltaOBJ['Buy']['price']) {
-                deltaOBJ['Buy']['price'] = parseInt(this.levelLow)
-            }
+            this.coinOBJ['delta'] = vue.deltaOBJ
 
-            if (this.levelLow == 0 && this.levelHigh == 0) {
+
+            if (vue.deltaOBJ['Sell']['price'] == 0 && vue.deltaOBJ['Buy']['price'] == 0) {
                 reset = true
             }
 
