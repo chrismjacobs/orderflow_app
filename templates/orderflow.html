@@ -1787,7 +1787,16 @@ let vue = new Vue({
 
             let reset = false
 
+            for (let x in vue.deltaOBJ) {
+                for (let y in vue.deltaOBJ[x]) {
+                    if (parseFloat(vue.deltaOBJ[x][y])) {
+                        vue.deltaOBJ[x][y] = parseFloat(vue.deltaOBJ[x][y])
+                    }
+                }
+            }
+
             this.coinOBJ[this.coin]['delta'] = vue.deltaOBJ
+
 
 
             if (vue.deltaOBJ['Sell']['price'] == 0 && vue.deltaOBJ['Buy']['price'] == 0) {
