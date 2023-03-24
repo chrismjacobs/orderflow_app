@@ -83,6 +83,21 @@ def startDiscord():
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
 
+        if msg.content == 'Ansi' and r.get('ansi') == 'on':
+            r.set('ansi', 'off')
+            replyText = 'Ansi off'
+        elif msg.content == 'Ansi' and r.get('ansi') == 'off':
+            r.set('ansi', 'on')
+            replyText = 'Ansi on'
+
+        if msg.content == 'Stack' and r.get('stack') == 'on':
+            r.set('stack', 'off')
+            replyText = 'Stacks on'
+        elif msg.content == 'Stack' and r.get('stack') == 'off':
+            r.set('stack', 'on')
+            replyText = 'Stacks off'
+
+
         if msg.author == user:
             await user.send(replyText)
             # ping('rekt-app.onrender.com', verbose=True)
@@ -113,8 +128,12 @@ def sendMessage(coin, string, bg, text):
 
     msg = str1 + escape +  colors[bg][0] + colors[text][1] + string + str2
 
-    noAnsi = False
-    if noAnsi:
+    ansi = r.get('ansi')
+    if not ansi:
+        ansi = 'on'
+        r.set('ansi', ansi)
+
+    if ansi == 'off':
         msg = string
 
     if not coin:
@@ -214,10 +233,6 @@ def marketOrder(side, fraction, stop, profit):
 def actionDELTA(blocks, coin, coinDict):
 
     deltaControl = coinDict[coin]['delta']
-    # BuySet = Auto.query.filter(mode='deltaLow').first()
-    # SellSet = Auto.query.filter(mode='deltaHigh').first()
-
-
 
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
         print('zero')
@@ -247,16 +262,6 @@ def actionDELTA(blocks, coin, coinDict):
 
 
     fastCandles = 0
-
-    # lastElements = [-2, -3, -4, -5, -6, -7, -8]  # -9, -10, -11
-    # timeElements = []
-
-    # if len(blocks) >= 11:
-    #     for t in lastElements:
-    #         timeDelta = blocks[t]['time_delta']/1000
-    #         timeElements.append(round(timeDelta))
-    #         if timeDelta < 5:
-    #             fastCandles += 1
 
     currentTimeDelta = 0
 
@@ -330,7 +335,7 @@ def resetCoinDict(coinDict, side):
 
 
     r.set('coinDict', json.dumps(coinDict))
-    r.set('discord_' + 'BTC', 'coinDict Reset')
+    r.set('discord_' + 'BTC', 'coinDict Reset: ' + side)
 
 
 

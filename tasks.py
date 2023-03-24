@@ -436,8 +436,6 @@ def addBlock(units, blocks, mode, coin):
 
     tickList = []
 
-
-
     if coin in tickCoins:
         #print('TICKS SORT', mode, size)
 
@@ -449,7 +447,12 @@ def addBlock(units, blocks, mode, coin):
         for p in tickKeys:
             tickList.append(tickDict[p])
 
-        if getTickImbs and total > 2_000_000:
+        stack = r.get('stack')
+        if not stack:
+            stack = 'off'
+            r.set('stack', stack)
+
+        if stack and total > 2_000_000:
             getIMBs = getImbalances(tickList, mode)
             tickList = getIMBs[0]
             stackBuys = getIMBs[1]
@@ -920,7 +923,6 @@ def getDeltaStatus(deltaflow, deltaCount):
 
 def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
-
     # add a new unit which is msg from handle_message
 
     dFlow = 'deltaflow_' + coin
@@ -1350,13 +1352,6 @@ def compiler(message, pair, coin):
             sellUnit['size'] += x['size']
             sellUnit['tradecount'] += 1
 
-    # totalMsgSize = int(buyUnit['size'] + sellUnit['size'])
-
-    # if  totalMsgSize > 1_000_000:
-    #     bString = 'Buy: ' + str(buyUnit['size'])  + ' Sell: ' + str(sellUnit['size'])
-    #     print('Large Trade: ' + bString)
-    #     r.set('discord_' + coin,  'Large Trade: ' + bString)
-
     # print(coin + ' COMPILER RECORD:  Buys - ' + str(buyUnit['size']) + ' Sells - ' + str(sellUnit['size']) )
 
     return [buyUnit, sellUnit]
@@ -1395,10 +1390,13 @@ def handle_trade_message(msg):
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
 
-    logTimeUnit(buyUnit, sellUnit, coin)
-
     volControl = coinDict[coin]['volume']
     deltaControl = coinDict[coin]['delta']
+    pause = coinDict[coin]['pause']
+
+    logTimeUnit(buyUnit, sellUnit, coin)
+
+
 
     if volControl[0]:
         logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
