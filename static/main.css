@@ -47,6 +47,12 @@ tbody.vert {
   white-space: nowrap;
 }
 
+tbody.flow {
+  overflow-y: hidden;
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+
 tbody.horiz {
   overflow-y: scroll;
   overflow-x: hidden;
