@@ -750,9 +750,9 @@ def getPVAstatus(timeblocks, coin):
 
 def logTimeUnit(buyUnit, sellUnit, coin):
 
-    if not r.get('timeflow_' + coin):
-        r.set('timeflow_' + coin, json.dumps([]))
-        r.set('timeblocks_' + coin, json.dumps([]))
+    # if not r.get('timeflow_' + coin):
+    #     r.set('timeflow_' + coin, json.dumps([]))
+    #     r.set('timeblocks_' + coin, json.dumps([]))
 
     timeflow =  json.loads(r.get('timeflow_' + coin)) # []
     timeblocks = json.loads(r.get('timeblocks_' + coin)) # []
