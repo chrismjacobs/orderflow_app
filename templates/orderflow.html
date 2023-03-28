@@ -1803,11 +1803,10 @@ let vue = new Vue({
 
             for (let x in vue.deltaOBJ) {
                 for (let y in vue.deltaOBJ[x]) {
-                    if (parseFloat(vue.deltaOBJ[x][y])) {
+                    if (isNaN(parseFloat(vue.deltaOBJ[x][y]))) {
+                        vue.deltaOBJ[x][y] = false
+                    } else {
                         vue.deltaOBJ[x][y] = parseFloat(vue.deltaOBJ[x][y])
-                    }
-                    if (vue.deltaOBJ[x][y] == "0") {
-                        vue.deltaOBJ[x][y] = 0
                     }
                 }
             }
