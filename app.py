@@ -35,7 +35,7 @@ def home():
 @app.route('/setDelta', methods=['POST'])
 def setDelta():
 
-    coinDict = request.form['coinOBJ']
+    coinDict = json.loads(request.form['coinOBJ'])
     reset = request.form['reset']
 
 
@@ -53,7 +53,7 @@ def setDelta():
         r.set('coinDict', json.dumps(coinDict))
         r.set('discord_' + 'BTC', 'coinDict Reset')
     else:
-        r.set('coinDict', coinDict)
+        r.set('coinDict', json.dumps(coinDict))
 
     return jsonify({'coinDict' : coinDict})
 
