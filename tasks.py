@@ -9,7 +9,7 @@ import redis
 import time
 
 from math import trunc
-from taskAux import actionBIT, actionDELTA, startDiscord, sendMessage
+from taskAux import actionBIT, actionDELTA, actionVOLUME, startDiscord, sendMessage
 
 
 session = inverse_perpetual.HTTP(
@@ -509,11 +509,16 @@ def addBlock(units, blocks, mode, coin):
     # if 'block' in mode:
     #     print('NEW CANDLE: ' + mode + ' ' + coin)
 
-    if mode == 'volblock' or mode == 'carry':
+    bullDiv = False
+    bearDiv = False
+
+    volblockcandle = mode == 'volblock' or mode == 'carry'
+
+    if coin == 'BTC' and volblockcandle:
+
         print('VOL DIV CHECK')
 
         deltaPercent = round( (  newCandle['delta']  /  newCandle['total']  ) * 100  )
-
 
         if abs(deltaPercent) > 20:
             print('VOL DIV CHECK 2')
@@ -523,6 +528,7 @@ def addBlock(units, blocks, mode, coin):
 
             if newCandle['delta'] < 0 and newCandle['price_delta'] > 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
+                bullDiv = True
                 msg = coin + ' BULL VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
                 if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'green')
@@ -530,11 +536,18 @@ def addBlock(units, blocks, mode, coin):
             print('VOL DIV CHECK 3')
             if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
+                bearDiv = True
                 msg = coin + ' BEAR VOL ' + str(tots) + ' Delta ' + str(deltaPercent) + '% ' + str(newCandle['price_delta']) + '$ ' + str(timeSecs) + ' secs  OI: ' + str(oiCheck)
                 if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'red')
 
             print('VOL DIV CHECK COMPLETE')
+
+    if coin == 'BTC' and 'block' in mode:
+        try:
+            actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv)
+        except:
+            print('ACTION VOLUME EXCEPTION')
 
     if TIME:
         if newCandle['total'] > 50_000_000 and pause == False:
@@ -853,13 +866,13 @@ def getDeltaStatus(deltaflow, deltaCount):
         ## 13K Sells
         ## delta -9K
 
-        newDeltaflowList.append([
-            {
-                "side": d['side'],
-                "size": d['size'],
-                'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
-            }
-        ])
+        # newDeltaflowList.append([
+        #     {
+        #         "side": d['side'],
+        #         "size": d['size'],
+        #         'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
+        #     }
+        # ])
 
         excess = 0
 
@@ -898,17 +911,17 @@ def getDeltaStatus(deltaflow, deltaCount):
             print('surplus unit added ' + str(excess))
 
 
-            printDict = {
-                'UNIT SIZE': completeUnit['size'],
-                'SIDE' : completeUnit['side'],
-                'LENGTH' : len(deltaflow),
-                'totalBS' : [totalBuys , totalSells],
-                'abs' : abs((totalBuys - totalSells)),
-                'excess' : excess,
-                'counted unit' : newDeltaflowList,
-                'currentnewList' : deltaflowList
-            }
-            print('EXCESS ' + json.dumps(printDict))
+            # printDict = {
+            #     'UNIT SIZE': completeUnit['size'],
+            #     'SIDE' : completeUnit['side'],
+            #     'LENGTH' : len(deltaflow),
+            #     'totalBS' : [totalBuys , totalSells],
+            #     'abs' : abs((totalBuys - totalSells)),
+            #     'excess' : excess,
+            #     'counted unit' : newDeltaflowList,
+            #     'currentnewList' : deltaflowList
+            # }
+            # print('EXCESS ' + json.dumps(printDict))
 
             fillMarker = False
             totalBuys = 0

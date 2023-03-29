@@ -282,12 +282,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
 
-
-    if percentDelta > 1 or percentDelta < -1:
-        ## errounous result
-        percentDelta = 0
-
-    print('stage two pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' CT:' + str(currentTimeDelta) + ' %D' + str(percentDelta))
+    print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' CT:' + str(currentTimeDelta) + ' %D' + str(percentDelta))
 
     if currentTimeDelta > 5 and fastCandles > 6 and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
@@ -317,6 +312,76 @@ def actionDELTA(blocks, coin, coinDict):
             print('MARKET ORDER FAIL')
 
     print('ACTION DELTA')
+
+    return blocks[-1]
+
+
+def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
+
+    volumeControl = coinDict[coin]['volume']
+
+    if volumeControl['Buy']['price'] == 0 and volumeControl['Sell']['price'] == 0:
+        print('zero')
+        return False
+
+    if volumeControl['Sell']['price'] > 0 and blocks[-1]['high'] > volumeControl['Sell']['price'] and volumeControl['Sell']['swing'] == False:
+        volumeControl['Sell']['swing'] = True
+        volumeControl['Buy']['swing'] = False
+        print('VOL SELL SWING TRUE')
+        r.set('coinDict', json.dumps(coinDict))
+        return True
+
+    if volumeControl['Buy']['price'] > 0 and blocks[-1]['low'] < volumeControl['Buy']['price'] and volumeControl['Buy']['swing'] == False:
+        volumeControl['Buy']['swing'] = True
+        volumeControl['Sell']['swing'] = False
+        print('BUY SWING TRUE')
+        r.set('coinDict', json.dumps(coinDict))
+        return True
+
+
+    side = None
+    if volumeControl['Sell']['swing'] == True:
+        side = 'Sell'
+    elif volumeControl['Buy']['swing'] == True:
+        side = 'Buy'
+    else:
+        return False
+
+    fastCandle = None
+    for b in blocks[-4:-2]:
+        if b['time_delta']/1000 < 60:
+            fastCandle = {
+                    'time' : b['time_delta']/1000
+                }
+        else:
+            return False
+
+    print('VOLUME SWING ACTIVE')
+
+    percentDelta = blocks[-1]['delta']/blocks[-1]['total']
+    oiDelta = blocks[-1]['oi_delta']
+
+    print('volume pass:  FC=' + json.dumps(fastCandle) + ' %d:' + str(percentDelta) + ' oi:' + str(oiDelta))
+
+    cond1 = side == 'Buy' and percentDelta > 0.3 and oiDelta > - 100_000
+    cond2 = side == 'Sell' and percentDelta < 0.3 and oiDelta > - 100_000
+    cond3 = side == 'Buy' and bullDiv
+    cond4 = side == 'Sell' and bearDiv
+
+    if cond1 or cond2 or cond3 or cond4:
+
+        print('VOLUME CONDITIONS: ', cond1, cond2, cond3, cond4)
+
+        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'])
+
+        if MO:
+            resetCoinDict(coinDict, side)
+            msg = 'Volume Action: ' + volumeControl['side'] + ' ' +  str(percentDelta)
+            print('MARKET MESSAGE ' + msg)
+        else:
+            print('MARKET ORDER FAIL')
+
+    print('ACTION VOLUME')
 
     return blocks[-1]
 
