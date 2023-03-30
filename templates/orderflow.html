@@ -381,6 +381,43 @@
                                 ([[tickLookback]] Bars)
                         </h3>
                     </div>
+                    <div v-if="user" >
+                        <table class="table table-dark vert" class="table-responsive">
+                            <thead>
+                            <tr>
+                                <th scope="col" style="width:10%">Side</th>
+                                <th scope="col">Test</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Swing</th>
+                                <th scope="col">Stop</th>
+                                <th scope="col">Profit</th>
+                                <th scope="col">Fraction</th>
+                            </tr>
+                            </thead>
+                        <tbody>
+                            <tr>
+                                <th class="text-warning" scope="row"><span @click="volumeEdit = !volumeEdit">Sell (Hi)</span> </th>
+                                <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['price']"> </input> </td>
+                                <td >[[  coinOBJ['BTC']['volswitch']['Sell']['price']  ]] </td>
+                                <td :style="getSwing(coinOBJ[coin]['volswitch']['Sell']['swing'])">[[  coinOBJ['BTC']['volswitch']['Sell']['swing']  ]] </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['stop']"></input></span> </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Sell']['profit']"></input></span> </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['fraction']"></input></span> </td>
+                            </tr>
+                            <tr>
+                                <th class="text-warning" scope="row"><span @click="volumeEdit = !volumeEdit">Buy (Lo)</span> </th>
+                                <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['price']"> </input> </td>
+                                <td >[[  coinOBJ['BTC']['volswitch']['Buy']['price']  ]] </td>
+                                <td :style="getSwing(coinOBJ[coin]['volswitch']['Buy']['swing'])">[[  coinOBJ['BTC']['volswitch']['Buy']['swing']  ]] </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Buy']['stop']"></input></span> </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['profit']"></input></span> </td>
+                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['fraction']"></input></span> <button @click="setDelta()" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button> </td>
+                            </tr>
+
+                        </tbody>
+
+                        </table>
+                    </div>
 
                     <div  style="color:white" class="table-responsive flow" id="vbf">
                         <table class="table table-dark table-sm table-fixed">
@@ -811,9 +848,11 @@ let vue = new Vue({
 
     },
     data: {
+        volumeEdit: false,
         deltaEdit: false,
         dbcount: 100,
         deltaOBJ: {},
+        volswitchOBJ: {},
         levelHigh: 0,
         levelLow: 0,
         flowPositionVol: 2,
@@ -1746,6 +1785,7 @@ let vue = new Vue({
                     /// only act on page load
                     vue.coinOBJ = cOBJ
                     vue.deltaOBJ = vue.coinOBJ[vue.coin]['delta']
+                    vue.volswitchOBJ = vue.coinOBJ[vue.coin]['volswitch']
                 } else {
                     vue.coinOBJ = cOBJ
                 }
@@ -1797,6 +1837,7 @@ let vue = new Vue({
         setDelta: function (mode) {
 
             console.log('setDelta', vue.deltaOBJ)
+            console.log('setVol', vue.volswitchOBJ)
 
 
             let reset = false
@@ -1811,7 +1852,18 @@ let vue = new Vue({
                 }
             }
 
+            for (let x in vue.volswitchOBJ) {
+                for (let y in vue.volswitchOBJ[x]) {
+                    if (isNaN(parseFloat(vue.volswitchOBJ[x][y]))) {
+                        vue.volswitchOBJ[x][y] = false
+                    } else {
+                        vue.volswitchOBJ[x][y] = parseFloat(vue.volswitchOBJ[x][y])
+                    }
+                }
+            }
+
             this.coinOBJ[this.coin]['delta'] = vue.deltaOBJ
+            this.coinOBJ[this.coin]['volswitch'] = vue.volswitchOBJ
 
 
 
@@ -1823,7 +1875,7 @@ let vue = new Vue({
                 data : {
                     coinOBJ: JSON.stringify(this.coinOBJ),
                     coin: this.coin,
-                    reset: reset
+                    reset: false
                 },
                 type : 'POST',
                 url : '/setDelta'
