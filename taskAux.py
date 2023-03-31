@@ -146,7 +146,7 @@ def actionBIT(side):
     r.set('discord_BIT', side)
     print('ACTION BIT')
 
-def getHL(side, current, stop):
+def getHL(side, current, stop, mode):
 
     now = datetime.now()
     minutes = 5
@@ -168,19 +168,21 @@ def getHL(side, current, stop):
         if distance > stop:
             stop_loss = current - stop
         else:
-            stop_loss = mLow - 11
+            stop_loss = mLow - 45
 
     if side == 'Sell':
         distance = abs(current - mHi)
         if distance > stop:
             stop_loss = current + stop
         else:
-            stop_loss = mHi + 11
+            stop_loss = mHi + 45
+
+
 
 
     return stop_loss
 
-def marketOrder(side, fraction, stop, profit):
+def marketOrder(side, fraction, stop, profit, mode):
 
     position = session.my_position(symbol="BTCUSD")['result']
 
@@ -198,7 +200,7 @@ def marketOrder(side, fraction, stop, profit):
     # session.set_leverage(symbol="BTCUSD", leverage=leverage)
     qty = (price * funds * 2) * fraction
 
-    stop_loss = getHL(side, price, stop)
+    stop_loss = getHL(side, price, stop, mode)
 
     print('MARKET ORDER ' + str(price))
 
@@ -235,7 +237,7 @@ def actionDELTA(blocks, coin, coinDict):
     deltaControl = coinDict[coin]['delta']
 
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
-        print('zero')
+        print('delta zero')
         return False
 
     if deltaControl['Sell']['price'] > 0 and blocks[-1]['high'] > deltaControl['Sell']['price'] and deltaControl['Sell']['swing'] == False:
@@ -302,7 +304,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     if deltaControl[side]['active'] and threshold:
 
-        MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'])
+        MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'delta')
 
         if MO:
             resetCoinDict(coinDict, side)
@@ -318,10 +320,10 @@ def actionDELTA(blocks, coin, coinDict):
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
-    volumeControl = coinDict[coin]['volume']
+    volumeControl = coinDict[coin]['volswtich']
 
     if volumeControl['Buy']['price'] == 0 and volumeControl['Sell']['price'] == 0:
-        print('zero')
+        print('volume zero')
         return False
 
     if volumeControl['Sell']['price'] > 0 and blocks[-1]['high'] > volumeControl['Sell']['price'] and volumeControl['Sell']['swing'] == False:
@@ -363,8 +365,8 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
     print('volume pass:  FC=' + json.dumps(fastCandle) + ' %d:' + str(percentDelta) + ' oi:' + str(oiDelta))
 
-    cond1 = side == 'Buy' and percentDelta > 0.3 and oiDelta > - 100_000
-    cond2 = side == 'Sell' and percentDelta < 0.3 and oiDelta > - 100_000
+    cond1 = side == 'Buy' and percentDelta > 0.3 and oiDelta > - 100_000 and not bearDiv
+    cond2 = side == 'Sell' and percentDelta < 0.3 and oiDelta > - 100_000 and not bullDiv
     cond3 = side == 'Buy' and bullDiv
     cond4 = side == 'Sell' and bearDiv
 
@@ -372,7 +374,7 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
         print('VOLUME CONDITIONS: ', cond1, cond2, cond3, cond4)
 
-        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'])
+        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volume')
 
         if MO:
             resetCoinDict(coinDict, side)
