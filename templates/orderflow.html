@@ -1114,6 +1114,17 @@ let vue = new Vue({
                 bStyle['background'] = '#455A64'
             }
 
+            vsSellTick = (Math.round(this.volswitchOBJ['Sell']['price']/10))*10
+            vsBuyTick = (Math.round(this.volswitchOBJ['Buy']['price']/10))*10
+
+            if (mode == 'volume' && tick == vsSellTick) {
+                bStyle['background'] = '#922B21'
+            }
+
+            if (mode == 'volume' && tick == vsBuyTick) {
+                bStyle['background'] = '#1D8348 '
+            }
+
             return bStyle
 
         },
