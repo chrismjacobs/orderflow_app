@@ -338,8 +338,8 @@ def actionDELTA(blocks, coin, coinDict):
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
-    volumeControl = coinDict[coin]['volswtich']
-    print(volumeControl)
+    volumeControl = coinDict[coin]['volswitch']
+    print('volume control', volumeControl)
 
     if volumeControl['Buy']['price'] == 0 and volumeControl['Sell']['price'] == 0:
         print('volume zero')
