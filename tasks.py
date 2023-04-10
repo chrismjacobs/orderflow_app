@@ -543,7 +543,6 @@ def addBlock(units, blocks, mode, coin):
 
             print('VOL DIV CHECK COMPLETE')
 
-    if coin == 'BTC' and 'block' in mode:
         try:
             actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv)
         except:
@@ -898,7 +897,7 @@ def getDeltaStatus(deltaflow, deltaCount):
                 adjustUnit['size'] = deltaCount
                 excess -= deltaCount
                 deltaflowList.append([adjustUnit])
-                print('excess unit added ' + str(excess))
+                # print('excess unit added ' + str(excess))
 
 
             if excess == 0:
@@ -908,7 +907,7 @@ def getDeltaStatus(deltaflow, deltaCount):
             finalUnit = d.copy()
             finalUnit['size'] = excess
             deltaflowList.append([finalUnit])
-            print('surplus unit added ' + str(excess))
+            # print('surplus unit added ' + str(excess))
 
 
             # printDict = {

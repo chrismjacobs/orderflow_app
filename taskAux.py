@@ -83,19 +83,23 @@ def startDiscord():
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
 
-        if msg.content == 'Ansi' and r.get('ansi') == 'on':
+        if 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
             replyText = 'Ansi off'
-        elif msg.content == 'Ansi' and r.get('ansi') == 'off':
+        elif 'nsi' in msg.content and r.get('ansi') == 'off':
             r.set('ansi', 'on')
             replyText = 'Ansi on'
 
-        if msg.content == 'Stack' and r.get('stack') == 'on':
+        if 'tack' in msg.content and r.get('stack') == 'on':
             r.set('stack', 'off')
             replyText = 'Stacks on'
-        elif msg.content == 'Stack' and r.get('stack') == 'off':
+        elif 'tack' in msg.content and r.get('stack') == 'off':
             r.set('stack', 'on')
             replyText = 'Stacks off'
+
+        if msg.content == 'Dict' or msg.content == 'dict':
+            setCoinDict()
+            replyText = 'Coin Dict Set'
 
 
         if msg.author == user:
@@ -184,7 +188,9 @@ def getHL(side, current, stop, mode):
 
 def marketOrder(side, fraction, stop, profit, mode):
 
-    position = session.my_position(symbol="BTCUSD")['result']
+    pair = 'BTCUSD'
+
+    position = session.my_position(symbol=pair)['result']
 
     positionSide = position['side']
     positionSize = int(position['size'])
@@ -194,15 +200,20 @@ def marketOrder(side, fraction, stop, profit, mode):
         print('Position already open: ' + positionSide)
         return False
 
-    price = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
+    price = float(session.latest_information_for_symbol(symbol=pair)['result'][0]['last_price'])
     funds = session.get_wallet_balance()['result']['BTC']['equity']
     # leverage = 2
-    # session.set_leverage(symbol="BTCUSD", leverage=leverage)
+    # session.set_leverage(symbol=pair, leverage=leverage)
     qty = (price * funds * 2) * fraction
 
     stop_loss = getHL(side, price, stop, mode)
 
     print('MARKET ORDER ' + str(price))
+
+    limits = {
+        'Buy' : -1,
+        'Sell' : 1
+    }
 
     if side == 'Buy':
         take_profit = price + profit
@@ -210,16 +221,23 @@ def marketOrder(side, fraction, stop, profit, mode):
     if side == 'Sell':
         take_profit = price - profit
 
+    oType = 'Market'
+    oPrice = None
+
+    if mode == 'volume':
+        oType == 'Limt'
+        oPrice = price + limits[side]
+
 
     order = session.place_active_order(
-    symbol="BTCUSD",
-    side=side,
-    order_type='Market',
-    price=None,
+    symbol = pair,
+    side = side,
+    order_type = oType,
+    price = oPrice,
     stop_loss = stop_loss,
     take_profit = take_profit,
-    qty=qty,
-    time_in_force="GoodTillCancel"
+    qty = qty,
+    time_in_force = "GoodTillCancel"
     )
 
     message = order['ret_msg']
@@ -321,6 +339,7 @@ def actionDELTA(blocks, coin, coinDict):
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
     volumeControl = coinDict[coin]['volswtich']
+    print(volumeControl)
 
     if volumeControl['Buy']['price'] == 0 and volumeControl['Sell']['price'] == 0:
         print('volume zero')
@@ -356,6 +375,7 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
                     'time' : b['time_delta']/1000
                 }
         else:
+            print('NO FAST CANDLE ACTIVATION')
             return False
 
     print('VOLUME SWING ACTIVE')
@@ -403,6 +423,71 @@ def resetCoinDict(coinDict, side):
 
     r.set('coinDict', json.dumps(coinDict))
     r.set('discord_' + 'BTC', 'coinDict Reset: ' + side)
+
+
+def setCoinDict():
+    deltaDict = {
+                'check': True,
+                'block' : 100_000,
+                'Sell' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False,
+                    'fraction' : 0.4,
+                    'stop' : 70,
+                    'profit' : 200,
+                    'backup' : 0
+                },
+                'Buy' : {
+                    'price' : 0,
+                    'swing' : False,
+                    'active' : False,
+                    'fraction' : 0.4,
+                    'stop' : 70,
+                    'profit' : 200,
+                    'backup' : 0
+                }
+            }
+
+    volDict = {
+                    'Sell' : {
+                        'price' : 0,
+                        'swing' : False,
+                        'fraction' : 0.4,
+                        'stop' : 100,
+                        'profit' : 300,
+                    },
+                    'Buy' : {
+                        'price' : 0,
+                        'swing' : False,
+                        'fraction' : 0.4,
+                        'stop' : 100,
+                        'profit' : 300,
+                    }
+                }
+
+    coinDict = {
+            'BTC' : {
+                'oicheck' : [1_500_000, 2_000_000],
+                'volume' : [True, 5],
+                'active' : True,
+                'imbalances' : False,
+                'pause' : False,
+                'purge' : False,
+                'delta' : deltaDict,
+                'volswitch' : volDict
+            },
+            'ETH' : {
+                'oicheck' : [800_000, 800_000],
+                'volume' : [True, 1],
+                'active' : False,
+                'imbalances' : False,
+                'pause' : False,
+                'purge' : False,
+            },
+    }
+
+    r.set('coinDict', json.dumps(coinDict))
 
 
 
