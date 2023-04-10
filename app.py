@@ -32,8 +32,8 @@ def home():
 
     return render_template('orderflow.html')
 
-@app.route('/setDelta', methods=['POST'])
-def setDelta():
+@app.route('/setPrices', methods=['POST'])
+def setPrices():
 
     coinDict = json.loads(request.form['coinOBJ'])
     reset = request.form['reset']
