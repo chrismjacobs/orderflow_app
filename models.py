@@ -24,23 +24,17 @@ class User(db.Model, UserMixin):
     info = db.Column(db.String(), default='')
 
 
-    # def get_reset_token(self, expires_sec=1800):
-    #     expires_sec = 1800
-    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
-    #     return s.dumps({'user_id': self.id}).decode('utf-8')
+class MyModelView(ModelView):
+    def is_accessible(self):
+        if current_user.is_authenticated and current_user.id == 1:
+            return True
+        else:
+            return False
 
-    # @staticmethod #tell python not to expect that self parameter as an argument, just accepting the token
-    # def verify_reset_token(token):
-    #     expires_sec = 1800
-    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
-    #     try:
-    #         user_id = s.loads(token)['user_id']
-    #     except:
-    #         return None
-    #     return User.query.get(user_id)
 
-    # def __repr__(self):  # double underscore method or dunder method, marks the data, this is how it is printed
-    #     return f"User('{self.username}', '{self.email}'"
+admin = Admin(app)
+
+admin.add_view(MyModelView(User, db.session))
 
 
 
