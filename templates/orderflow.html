@@ -1117,11 +1117,16 @@ let vue = new Vue({
             vsSellTick = (Math.round(this.volswitchOBJ['Sell']['price']/10))*10
             vsBuyTick = (Math.round(this.volswitchOBJ['Buy']['price']/10))*10
 
+            dsSellTick = (Math.round(this.deltaOBJ['Sell']['price']/10))*10
+            dsBuyTick = (Math.round(this.deltaOBJ['Buy']['price']/10))*10
+
             if (mode == 'volume' && tick == vsSellTick) {
                 bStyle['background'] = '#922B21'
-            }
-
-            if (mode == 'volume' && tick == vsBuyTick) {
+            } else if (mode == 'volume' && tick == vsBuyTick) {
+                bStyle['background'] = '#1D8348 '
+            } else if (mode == 'time' && tick == dsBuyTick) {
+                bStyle['background'] = '#1D8348 '
+            } else if (mode == 'time' && tick == dsBuyTick) {
                 bStyle['background'] = '#1D8348 '
             }
 
