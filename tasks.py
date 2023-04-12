@@ -9,7 +9,7 @@ import redis
 import time
 
 from math import trunc
-from taskAux import actionBIT, actionDELTA, actionVOLUME, startDiscord, sendMessage
+from taskAux import actionBIT, actionDELTA, actionVOLUME, startDiscord, sendMessage, setCoinDict
 
 
 session = inverse_perpetual.HTTP(
@@ -1434,6 +1434,9 @@ def runStream():
     for k in r.keys():
         if k[0] != '_' and k != 'coinDict' and k != 'channelDict':
             r.delete(k)
+
+    if not r.get('coinDict'):
+        setCoinDict()
 
     coinDict = json.loads(r.get('coinDict'))
 

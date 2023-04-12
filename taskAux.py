@@ -472,6 +472,7 @@ def setCoinDict():
                         'fraction' : 0.4,
                         'stop' : 100,
                         'profit' : 300,
+                        'backup' : 0
                     },
                     'Buy' : {
                         'price' : 0,
@@ -479,6 +480,7 @@ def setCoinDict():
                         'fraction' : 0.4,
                         'stop' : 100,
                         'profit' : 300,
+                        'backup' : 0
                     }
                 }
 
