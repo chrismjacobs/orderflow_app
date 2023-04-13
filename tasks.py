@@ -503,6 +503,7 @@ def addBlock(units, blocks, mode, coin):
         'tickList' : tickList,
         'pva_status': {},
         'volDiv' : False,
+        'switch' : False
         #'tradecount': tradecount,
     }
 
@@ -544,7 +545,7 @@ def addBlock(units, blocks, mode, coin):
             print('VOL DIV CHECK COMPLETE')
 
         try:
-            actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv)
+            newCandle['switch'] = actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv)
         except:
             print('ACTION VOLUME EXCEPTION')
 
@@ -954,7 +955,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
     if len(deltaflow) == 0:
         print('DELTA 0')
 
-        ## start the initial time flow and initial current candle
+        ## start the initial delta flow and initial current candle
         if buyUnit['size'] > 1:
             deltaflow.append(buyUnit)
         if sellUnit['size'] > 1:
@@ -1407,7 +1408,7 @@ def handle_trade_message(msg):
     sellUnit = compiledMessage[1]
 
     volControl = coinDict[coin]['volume']
-    deltaControl = coinDict[coin]['delta']
+    deltaControl = coinDict[coin]['deltaswitch']
     pause = coinDict[coin]['pause']
 
     logTimeUnit(buyUnit, sellUnit, coin)
@@ -1437,6 +1438,11 @@ def runStream():
 
     if not r.get('coinDict'):
         setCoinDict()
+        channelDict = {
+            'BTC' : 1064447410350329876,
+            'ETH' : 1064447463936765952
+        }
+        r.set('channelDict', json.dumps(channelDict))
 
     coinDict = json.loads(r.get('coinDict'))
 

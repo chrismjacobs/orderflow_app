@@ -59,18 +59,20 @@ def startDiscord():
             ## need incase redis gets wiped
             if not r.get('discord_' + coin):
                 r.set('discord_' + coin, 'discord set')
+            if not r.get('discord_' + coin + '_holder'):
+                r.set('discord_' + coin + '_holder', 'discord set')
 
             channel = bot.get_channel(int(channelDict[coin]))
 
             # print(channel, int(channelDict[coin]))
+            msg = r.get('discord_' + coin)
+            msg_h = r.get('discord_' + coin + '_holder')
 
-            if r.get('discord_' + coin) != 'blank':
-                msg = r.get('discord_' + coin)
+            if msg != 'blank':
                 await channel.send(msg)
                 r.set('discord_' + coin, 'blank')
-            elif r.get('discord_' + coin + '_holder') != 'blank':
-                msg = r.get('discord_' + coin + '_holder')
-                await channel.send(msg)
+            elif msg_h != 'blank':
+                await channel.send(msg_h)
                 r.set('discord_' + coin + '_holder', 'blank')
 
     @bot.event
@@ -86,6 +88,9 @@ def startDiscord():
             b = round(lastCandle['buys']/1000)
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
+        elif msg.content == 'D':
+            coinDict = json.loads(r.get('coinDict'))['BTC']
+            deltaOBJ = coinDict['deltaswitch']
 
         if 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
@@ -230,7 +235,7 @@ def marketOrder(side, fraction, stop, profit, mode):
     oType = 'Market'
     oPrice = None
 
-    if mode == 'volume':
+    if mode == 'volswitch':
         oType == 'Limt'
         oPrice = price + limits[side]
 
@@ -258,7 +263,7 @@ def marketOrder(side, fraction, stop, profit, mode):
 
 def actionDELTA(blocks, coin, coinDict):
 
-    deltaControl = coinDict[coin]['delta']
+    deltaControl = coinDict[coin]['deltaswitch']
 
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
         print('delta zero')
@@ -310,7 +315,11 @@ def actionDELTA(blocks, coin, coinDict):
 
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
 
-    print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' CT:' + str(currentTimeDelta) + ' %D' + str(percentDelta))
+    threshold = percentDelta > 0.9
+    if side == 'Sell':
+        threshold = percentDelta < -0.9
+
+    print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta) + ' Threshold: ' + str(threshold))
 
     if currentTimeDelta > 5 and fastCandles == fcCheck:
         ## delta action has stalled: lookout is active
@@ -324,16 +333,14 @@ def actionDELTA(blocks, coin, coinDict):
         r.set('coinDict', json.dumps(coinDict))
         return True
 
-    threshold = percentDelta > 0.9
-    if side == 'Sell':
-        threshold = percentDelta < -0.9
+
 
     if deltaControl[side]['active'] and threshold:
 
-        MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'delta')
+        MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'deltaswitch')
 
         if MO:
-            resetCoinDict(coinDict, side, 'delta')
+            resetCoinDict(coinDict, side, 'deltaswitch')
             msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
             print('MARKET MESSAGE ' + msg)
         else:
@@ -342,7 +349,7 @@ def actionDELTA(blocks, coin, coinDict):
 
     print('ACTION DELTA')
 
-    return blocks[-1]
+    return True
 
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
@@ -377,12 +384,15 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
     else:
         return False
 
-    fastCandle = None
+    fastCandles = []
     for b in blocks[-4:-2]:
         if b['time_delta']/1000 < 60:
-            fastCandle = {
-                    'time' : b['time_delta']/1000
-                }
+
+            bUnit = [  b['time_delta']/1000,
+                       round( (b['delta']/b['total'])*100   ),
+                       b['oi_delta']
+                    ]
+            fastCandles.append(bUnit)
         else:
             print('NO FAST CANDLE ACTIVATION')
             return False
@@ -392,9 +402,12 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
     percentDelta = blocks[-1]['delta']/blocks[-1]['total']
     oiDelta = blocks[-1]['oi_delta']
 
-    fcString = json.dumps(fastCandle) + ' %d:' + str(percentDelta) + ' oi:' + str(oiDelta)
+    lastUnit = [  blocks[-1]['time_delta']/1000,   round( percentDelta*100 ),  oiDelta  ]
 
-    print('volume pass:  FC= ' + fcString)
+    fastCandles.append(lastUnit)
+
+    fcString = json.dumps(fastCandles)
+    print('volswitch pass:  FC= ' + fcString)
 
     cond1 = side == 'Buy' and percentDelta > 0.3 and oiDelta > - 100_000 and not bearDiv
     cond2 = side == 'Sell' and percentDelta < 0.3 and oiDelta > - 100_000 and not bullDiv
@@ -405,11 +418,11 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
         conditionString = str(cond1) + ' ' + str(cond2) + ' ' + str(cond3) + ' ' + str(cond4) + ' ' + fcString
 
-        print('VOLUME CONDITIONS: ' + conditionString)
+        print('VOLSWITCH CONDITIONS: ' + conditionString)
 
-        r.set('discord_' + 'BTC', 'VOLUME CONDITIONS: ' + conditionString)
+        r.set('discord_' + 'BTC', 'VOLSWITCH CONDITIONS: ' + conditionString)
 
-        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volume')
+        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volswtich')
 
         if MO:
             resetCoinDict(coinDict, side, 'volswtich')
@@ -429,13 +442,14 @@ def resetCoinDict(coinDict, side, mode):
     coinDict['BTC'][mode][side]['swing'] = False
     coinDict['BTC'][mode][side]['price'] = 0
 
-    if mode == 'delta':
+    if coinDict['BTC'][mode][side]['backup'] and coinDict['BTC'][mode][side]['backup'] > 0:
+        coinDict['BTC'][mode][side]['price'] = int(coinDict['BTC'][mode][side]['backup'])
+        coinDict['BTC'][mode][side]['backup'] = 0
+
+    if mode == 'deltaswitch':
         coinDict['BTC'][mode][side]['active'] = False
 
-        if coinDict['BTC'][mode][side]['backup'] > 0:
 
-            coinDict['BTC'][mode][side]['price'] = int(coinDict['BTC'][mode][side]['backup'])
-            coinDict['BTC'][mode][side]['backup'] = 0
 
     r.set('coinDict', json.dumps(coinDict))
     r.set('discord_' + 'BTC', 'coinDict Reset: ' + side + ' ' + mode)
@@ -492,7 +506,7 @@ def setCoinDict():
                 'imbalances' : False,
                 'pause' : False,
                 'purge' : False,
-                'delta' : deltaDict,
+                'deltaswitch' : deltaDict,
                 'volswitch' : volDict
             },
             'ETH' : {
@@ -506,6 +520,8 @@ def setCoinDict():
     }
 
     r.set('coinDict', json.dumps(coinDict))
+
+
 
 
 

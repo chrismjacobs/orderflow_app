@@ -574,24 +574,24 @@
                                 <tr>
                                     <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Sell (Hi)</span> </th>
                                     <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['price']"> </input> </td>
-                                    <td >[[  coinOBJ['BTC']['delta']['Sell']['price']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['delta']['Sell']['swing'])">[[  coinOBJ['BTC']['delta']['Sell']['swing']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['delta']['Sell']['active'])">[[  coinOBJ['BTC']['delta']['Sell']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Sell']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Sell']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['backup']"></input></span> </td>
+                                    <td >[[  coinOBJ['BTC']['deltaswitch']['Sell']['price']  ]] </td>
+                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Sell']['swing'])">[[  coinOBJ['BTC']['deltaswitch']['Sell']['swing']  ]] </td>
+                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Sell']['active'])">[[  coinOBJ['BTC']['deltaswitch']['Sell']['active']  ]] </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Sell']['stop']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Sell']['profit']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['fraction']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Sell']['backup']"></input></span> </td>
                                 </tr>
                                 <tr>
                                     <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Buy (Lo)</span> </th>
                                     <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['price']"> </input> </td>
-                                    <td >[[  coinOBJ['BTC']['delta']['Buy']['price']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['delta']['Buy']['swing'])">[[  coinOBJ['BTC']['delta']['Buy']['swing']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['delta']['Buy']['active'])">[[  coinOBJ['BTC']['delta']['Buy']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Buy']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['delta']['Buy']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['backup']"></input> <button @click="setPrices('delta')" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button> </span></td>
+                                    <td >[[  coinOBJ['BTC']['deltaswitch']['Buy']['price']  ]] </td>
+                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Buy']['swing'])">[[  coinOBJ['BTC']['deltaswitch']['Buy']['swing']  ]] </td>
+                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Buy']['active'])">[[  coinOBJ['BTC']['deltaswitch']['Buy']['active']  ]] </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaOBJ['Buy']['stop']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaOBJ['Buy']['profit']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['fraction']"></input></span> </td>
+                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaOBJ['Buy']['backup']"></input> <input type="number" class="mb-2" style="width:30px;background:black;color:yellow;font-size:15px" v-model="deltaOBJ['fcCheck']"></input> <button @click="setPrices('deltaswitch')" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button> </span></td>
                                 </tr>
 
                             </tbody>
@@ -1126,7 +1126,7 @@ let vue = new Vue({
                 bStyle['background'] = '#1D8348 '
             } else if (mode == 'time' && tick == dsBuyTick) {
                 bStyle['background'] = '#1D8348 '
-            } else if (mode == 'time' && tick == dsBuyTick) {
+            } else if (mode == 'time' && tick == dsSellTick) {
                 bStyle['background'] = '#1D8348 '
             }
 
@@ -1800,7 +1800,7 @@ let vue = new Vue({
                 if (vue.coinOBJ == false) {
                     /// only act on page load
                     vue.coinOBJ = cOBJ
-                    vue.deltaOBJ = vue.coinOBJ[vue.coin]['delta']
+                    vue.deltaOBJ = vue.coinOBJ[vue.coin]['deltaswitch']
                     vue.volswitchOBJ = vue.coinOBJ[vue.coin]['volswitch']
                 } else {
                     vue.coinOBJ = cOBJ
@@ -1859,7 +1859,7 @@ let vue = new Vue({
             let reset = false
 
             let objects = {
-                'delta' :  vue.deltaOBJ,
+                'deltaswitch' :  vue.deltaOBJ,
                 'volswitch' : vue.volswitchOBJ
             }
 
