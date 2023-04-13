@@ -1134,7 +1134,7 @@ let vue = new Vue({
 
         },
         getSwing: function (bool) {
-            console.log(bool)
+            //console.log(bool)
             if (bool) {
                 return {color:'springgreen'}
             } else {
@@ -1779,8 +1779,8 @@ let vue = new Vue({
                     console.log(vue.coinOBJ)
                 }
 
-
                 let volumeblocksOBJ  = JSON.parse(data.volumeBlocks)
+
                 let volumeblocks = false
                 let volumeblocks2 = []
 
@@ -1830,7 +1830,9 @@ let vue = new Vue({
                    vue.updateCharts()
                 }
 
-                vue.updateOFCharts()
+                if (vue.showChart == 2) {
+                    vue.updateOFCharts()
+                }
 
                 vue.user = data.user
 

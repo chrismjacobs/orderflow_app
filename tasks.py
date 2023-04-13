@@ -641,7 +641,7 @@ def addDeltaBlock(units, blocks, mode, coin):
         'sells' : sellCount,
         'delta' : delta,
         'total' : buyCount + sellCount,
-        'switch' : switch,
+        'switch' : switch
     }
 
     if sellCount < 0 and 'block' in mode:
@@ -1033,9 +1033,9 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
         r.set(vFlow, json.dumps([]))
         r.set(vBlocks, json.dumps([]))
 
-    if LOCAL:
-        print('LOG VOLUME UNIT SKIP')
-        return False
+    # if LOCAL:
+    #     print('LOG VOLUME UNIT SKIP')
+    #     return False
 
     if LOCAL:
         block = size * 100_000
