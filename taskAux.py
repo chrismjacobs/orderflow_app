@@ -266,22 +266,22 @@ def actionDELTA(blocks, coin, coinDict):
     deltaControl = coinDict[coin]['deltaswitch']
 
     if deltaControl['Buy']['price'] == 0 and deltaControl['Sell']['price'] == 0:
-        print('delta zero')
-        return False
+        # print('delta zero')
+        return 'ZO'
 
     if deltaControl['Sell']['price'] > 0 and blocks[-1]['high'] > deltaControl['Sell']['price'] and deltaControl['Sell']['swing'] == False:
         deltaControl['Sell']['swing'] = True
         deltaControl['Buy']['swing'] = False
-        print('SELL SWING TRUE')
+        print('DELTA SELL SWING TRUE')
         r.set('coinDict', json.dumps(coinDict))
-        return True
+        return 'SW'
 
     if deltaControl['Buy']['price'] > 0 and blocks[-1]['low'] < deltaControl['Buy']['price'] and deltaControl['Buy']['swing'] == False:
         deltaControl['Buy']['swing'] = True
         deltaControl['Sell']['swing'] = False
-        print('BUY SWING TRUE')
+        print('DELTA BUY SWING TRUE')
         r.set('coinDict', json.dumps(coinDict))
-        return True
+        return 'SW'
 
     side = None
     if deltaControl['Sell']['swing'] == True:
@@ -290,7 +290,6 @@ def actionDELTA(blocks, coin, coinDict):
         side = 'Buy'
     else:
         return False
-
 
     fastCandles = 0
 
@@ -326,12 +325,12 @@ def actionDELTA(blocks, coin, coinDict):
         deltaControl[side]['active'] = True
         print('DELTA STALL')
         r.set('coinDict', json.dumps(coinDict))
-        return True
+        return 'AT'
     elif fastCandles == fcCheck:
         deltaControl[side]['active'] = False
         print('DELTA FAST RESET')
         r.set('coinDict', json.dumps(coinDict))
-        return True
+        return 'AF'
 
 
 
@@ -343,13 +342,13 @@ def actionDELTA(blocks, coin, coinDict):
             resetCoinDict(coinDict, side, 'deltaswitch')
             msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
             print('MARKET MESSAGE ' + msg)
+            return 'M0'
         else:
-
-            print('MARKET ORDER FAIL')
+            return 'MF'
 
     print('ACTION DELTA')
 
-    return True
+    return threshold
 
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
@@ -393,9 +392,10 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
                        b['oi_delta']
                     ]
             fastCandles.append(bUnit)
-        else:
-            print('NO FAST CANDLE ACTIVATION')
-            return False
+            break
+    else:
+        print('NO FAST CANDLE ACTIVATION')
+        return False
 
     print('VOLUME SWING ACTIVE')
 

@@ -42,13 +42,13 @@ def setPrices():
     print(reset, coinDict, type(coinDict))
 
     if reset == 'true':
-        coinDict['BTC']['delta']['Sell']['active'] = False
-        coinDict['BTC']['delta']['Sell']['swing'] = False
-        coinDict['BTC']['delta']['Sell']['price'] = 0
+        coinDict['BTC']['deltaswitch']['Sell']['active'] = False
+        coinDict['BTC']['deltaswitch']['Sell']['swing'] = False
+        coinDict['BTC']['deltaswitch']['Sell']['price'] = 0
 
-        coinDict['BTC']['delta']['Buy']['active'] = False
-        coinDict['BTC']['delta']['Buy']['swing'] = False
-        coinDict['BTC']['delta']['Buy']['price'] = 0
+        coinDict['BTC']['deltaswitch']['Buy']['active'] = False
+        coinDict['BTC']['deltaswitch']['Buy']['swing'] = False
+        coinDict['BTC']['deltaswitch']['Buy']['price'] = 0
 
         r.set('coinDict', json.dumps(coinDict))
         r.set('discord_' + 'BTC', 'coinDict Reset')
@@ -105,6 +105,7 @@ def getOF():
         deltaBlocks = json.loads(checkDelta)
 
     # print('DELTA', deltaBlocks)
+    # print('TIME', timeBlocks)
 
     # if 'deltablocks_' + coin in lastHistory:
     #     ## combine History and current
@@ -177,7 +178,8 @@ def worker():
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
-    # data = json.loads(request.data)
+    data = json.loads(request.data)
+    r.set('tv', json.dumps(data))
     print('TRADING VIEW ACTION')
 
     return redirect('/')

@@ -563,6 +563,8 @@ def addBlock(units, blocks, mode, coin):
 
 def addDeltaBlock(units, blocks, mode, coin):
 
+    # units == flow
+
     coinDict = json.loads(r.get('coinDict'))
 
     switch = False
@@ -644,10 +646,10 @@ def addDeltaBlock(units, blocks, mode, coin):
         'switch' : switch
     }
 
-    if sellCount < 0 and 'block' in mode:
-        print('SELL COUNT LESS THAN ZERO')
-    if buyCount < 0  and 'block' in mode:
-        print('BUY COUNT LESS THAN ZERO')
+    # if sellCount < 0 and 'block' in mode:
+    #     print('SELL COUNT LESS THAN ZERO')
+    # if buyCount < 0  and 'block' in mode:
+    #     print('BUY COUNT LESS THAN ZERO')
 
     print('NEW DELTA CANDLE ' + str(sellCount) + ' // ' + str(buyCount))
 
@@ -866,13 +868,13 @@ def getDeltaStatus(deltaflow, deltaCount):
         ## 13K Sells
         ## delta -9K
 
-        # newDeltaflowList.append([
-        #     {
-        #         "side": d['side'],
-        #         "size": d['size'],
-        #         'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
-        #     }
-        # ])
+        newDeltaflowList.append([
+            {
+                "side": d['side'],
+                "size": d['size'],
+                'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
+            }
+        ])
 
         excess = 0
 
@@ -911,17 +913,17 @@ def getDeltaStatus(deltaflow, deltaCount):
             # print('surplus unit added ' + str(excess))
 
 
-            # printDict = {
-            #     'UNIT SIZE': completeUnit['size'],
-            #     'SIDE' : completeUnit['side'],
-            #     'LENGTH' : len(deltaflow),
-            #     'totalBS' : [totalBuys , totalSells],
-            #     'abs' : abs((totalBuys - totalSells)),
-            #     'excess' : excess,
-            #     'counted unit' : newDeltaflowList,
-            #     'currentnewList' : deltaflowList
-            # }
-            # print('EXCESS ' + json.dumps(printDict))
+            printDict = {
+                'UNIT SIZE': completeUnit['size'],
+                'SIDE' : completeUnit['side'],
+                'LENGTH' : len(deltaflow),
+                'totalBS' : [totalBuys , totalSells],
+                'abs' : abs((totalBuys - totalSells)),
+                'excess' : excess,
+                'counted unit' : newDeltaflowList,
+                'currentnewList' : deltaflowList
+            }
+            print('EXCESS ' + json.dumps(printDict))
 
             fillMarker = False
             totalBuys = 0
@@ -980,23 +982,30 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         if deltaStatus['blockfill']:
             # store current candle and start a new Candle
 
-            # if LOCAL:
-            #     print('ADD DELTA CANDLE', len(deltablocks), len(deltaflow))
-            #     r.set('discord_' + coin, 'NEW DELTA: ' +  json.dumps(deltaStatus))
-
             # replace current candle with completed candle
-
+            dcount = 0
             for flow in deltaStatus['deltaflowList']:
+                print('DeltaFlowList ' + str(dcount) + ' ' + json.dumps(flow))
                 if deltaStatus['deltaflowList'].index(flow) == 0:
                     ### replace first completed block
                     newCandle = addDeltaBlock(flow, deltablocks, 'deltablock', coin)
                     deltablocks[-1] = newCandle
                 else:
-                    currentCandle = addDeltaBlock(flow, deltablocks, 'deltamode', coin)
+
+                    mode = 'deltamode'
+
+                    percentBlock = deltablocks[-1]['delta'] == deltaCount or deltablocks[-1]['delta'] == -deltaCount #100_000
+
+                    if percentBlock:
+                        mode = 'deltablock'
+
+                    currentCandle = addDeltaBlock(flow, deltablocks, mode, coin)
                     deltablocks.append(currentCandle)
                     if deltaStatus['deltaflowList'].index(flow) == len(deltaStatus['deltaflowList']) - 1:
                         # reset deltaflow - the last delta block
                         deltaflow = flow
+
+                dcount += 1
 
             # dbList = []
 
