@@ -55,7 +55,7 @@ def startDiscord():
         if not r.get('channelDict'):
             r.set('channelDict', json.dumps(DISCORD_CHANNEL))
 
-        channelDict = json.loads()
+        channelDict = json.loads(r.get('channelDict'))
 
         for coin in channelDict:
 
@@ -213,6 +213,8 @@ def marketOrder(side, fraction, stop, profit, mode):
     if positionSize > 0 or positionLev > 2:
         print('Position already open: ' + positionSide)
         return False
+    else:
+        print('Order continue')
 
     price = float(session.latest_information_for_symbol(symbol=pair)['result'][0]['last_price'])
     funds = session.get_wallet_balance()['result']['BTC']['equity']
@@ -337,6 +339,7 @@ def actionDELTA(blocks, coin, coinDict):
 
 
     if deltaControl[side]['active'] and threshold:
+        print('PLACE DELTA')
 
         MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'deltaswitch')
 
