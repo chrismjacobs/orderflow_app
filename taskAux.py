@@ -52,7 +52,10 @@ def startDiscord():
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
 
-        channelDict = json.loads(r.get('channelDict'))
+        if not r.get('channelDict'):
+            r.set('channelDict', json.dumps(DISCORD_CHANNEL))
+
+        channelDict = json.loads()
 
         for coin in channelDict:
 
@@ -252,11 +255,10 @@ def marketOrder(side, fraction, stop, profit, mode):
     )
 
     message = order['ret_msg']
-    data = json.dumps(order['result'])
+    # data = json.dumps(order['result'])
 
-    print('ORDER', order)
-    print('MESSAGE', message)
-    print('DATA', data)
+    print('ORDER MESSAGE ', + json.dumps(message))
+
 
     return True
 
@@ -340,9 +342,9 @@ def actionDELTA(blocks, coin, coinDict):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = 'Delta Action: ' + deltaControl['side'] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
-            print('MARKET MESSAGE ' + msg)
-            return 'M0'
+            msg = 'Delta Action: ' + deltaControl[side] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
+            print('DELTA ORDER MESSAGE ' + msg)
+            return 'MO'
         else:
             return 'MF'
 

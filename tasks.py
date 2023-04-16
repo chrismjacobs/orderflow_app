@@ -985,7 +985,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             # replace current candle with completed candle
             dcount = 0
             for flow in deltaStatus['deltaflowList']:
-                print('DeltaFlowList ' + str(dcount) + ' ' + json.dumps(flow))
+                # print('DeltaFlowList ' + str(dcount) + ' ' + json.dumps(flow))
                 if deltaStatus['deltaflowList'].index(flow) == 0:
                     ### replace first completed block
                     newCandle = addDeltaBlock(flow, deltablocks, 'deltablock', coin)
@@ -1447,11 +1447,6 @@ def runStream():
 
     if not r.get('coinDict'):
         setCoinDict()
-        channelDict = {
-            'BTC' : 1064447410350329876,
-            'ETH' : 1064447463936765952
-        }
-        r.set('channelDict', json.dumps(channelDict))
 
     coinDict = json.loads(r.get('coinDict'))
 
