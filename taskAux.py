@@ -257,9 +257,9 @@ def marketOrder(side, fraction, stop, profit, mode):
     )
 
     message = order['ret_msg']
-    # data = json.dumps(order['result'])
+    data = json.dumps(order['result'])
 
-    print('ORDER MESSAGE ', + json.dumps(message))
+    print('ORDER MESSAGE ', + data)
 
 
     return True
