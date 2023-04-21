@@ -198,8 +198,8 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
         deltaOI =  streamOI - stream['1mOI'][1]
         deltaOIstr = str(round(deltaOI/100_000)/10) + 'm '
-        deltaBuyStr = str(round(currentBuys/1_000)) + 'k '
-        deltaSellStr = str(round(currentSells/1_000)) + 'k '
+        deltaBuyStr = str(round(currentBuys/100_000)/10) + 'm '
+        deltaSellStr = str(round(currentSells/100_000)/10) + 'm '
 
         if stream['oiMarkers'][0] > 0 and deltaOI > stream['oiMarkers'][0]:
             message = coin + ' Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
@@ -571,8 +571,7 @@ def addDeltaBlock(units, blocks, mode, coin):
 
     if coin == 'BTC' and 'block' in mode:
         switch = actionDELTA(blocks, coin, coinDict)
-    elif coin == 'BIT':
-        switch = addDeltaBIT(blocks, coin, coinDict)
+
 
     ''' BLOCK DATA '''
 
@@ -601,7 +600,6 @@ def addDeltaBlock(units, blocks, mode, coin):
     #     print('TIME CHECK', previousTime, newClose, newStart, type(newClose), type(newStart))
 
     timeDelta = newClose - newStart
-    timeDelta2 = newClose - previousTime
 
     buyCount = 0
     sellCount = 0
@@ -913,17 +911,17 @@ def getDeltaStatus(deltaflow, deltaCount):
             # print('surplus unit added ' + str(excess))
 
 
-            printDict = {
-                'UNIT SIZE': completeUnit['size'],
-                'SIDE' : completeUnit['side'],
-                'LENGTH' : len(deltaflow),
-                'totalBS' : [totalBuys , totalSells],
-                'abs' : abs((totalBuys - totalSells)),
-                'excess' : excess,
-                'counted unit' : newDeltaflowList,
-                'currentnewList' : deltaflowList
-            }
-            print('EXCESS ' + json.dumps(printDict))
+            # printDict = {
+            #     'UNIT SIZE': completeUnit['size'],
+            #     'SIDE' : completeUnit['side'],
+            #     'LENGTH' : len(deltaflow),
+            #     'totalBS' : [totalBuys , totalSells],
+            #     'abs' : abs((totalBuys - totalSells)),
+            #     'excess' : excess,
+            #     'counted unit' : newDeltaflowList,
+            #     'currentnewList' : deltaflowList
+            # }
+            # print('EXCESS ' + json.dumps(printDict))
 
             fillMarker = False
             totalBuys = 0

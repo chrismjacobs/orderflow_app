@@ -345,7 +345,7 @@ def actionDELTA(blocks, coin, coinDict):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = 'Delta Action: ' + deltaControl[side] + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
+            msg = 'Delta Action: ' + side + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:
