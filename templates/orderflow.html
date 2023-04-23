@@ -522,7 +522,7 @@
 
                 <div v-if="showTable != 'Notes' && coin == 'BTC'" class="mt-3">
                     <div class="border border-success text-success rounded pt-2 pb-1" style="text-align:center"  >
-                        <h3> <span> Delta Blocks <br> <input type="number" step="100" style="width:90px;background:black;color:green;" v-model="dbcount"> </input></span>
+                        <h3> <span @click="dbcount += 100"> Delta Blocks <br> <input type="number" step="100" style="width:90px;background:black;color:green;" v-model="dbcount"> </input></span>
                             </h3>
                     </div>
                     <table style="display:none" class="table table-dark table-sm vert">
@@ -624,7 +624,7 @@
                                     <td  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                     <td  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                     <td  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
-                                    <td :style="getLevel(item.high)">[[item.high]]</td>
+                                    <td :style="getLevel(item.high)"> [[item.high]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
                                     <td :style="getLevel(item.close)">[[item.close]]</td>
                                 </tr>
@@ -853,8 +853,6 @@ let vue = new Vue({
         dbcount: 100,
         deltaswitchOBJ: {},
         volswitchOBJ: {},
-        levelHigh: 0,
-        levelLow: 0,
         flowPositionVol: 2,
         flowPositionTime: 2,
         OIchart: 100,
@@ -1463,8 +1461,8 @@ let vue = new Vue({
                     low : this.localLow,
                 }
             let colors = {
-                    high : '#004D40',
-                    low : 'firebrick',
+                    low : '#004D40',
+                    high : 'firebrick',
                 }
 
             if (this.timeBlockSize == 5) {
@@ -1600,9 +1598,9 @@ let vue = new Vue({
         trueStyleDelta: function (bool) {
 
             let colorOBJ = {
+                MO : 'orange',
                 MF : 'red',
                 SW : 'springgreen',
-                MO : 'orange',
                 AT : 'aqua',
                 AF : 'hotpink'
             }
@@ -1613,19 +1611,27 @@ let vue = new Vue({
 
         },
         getLevel: function (level) {
-            // console.log(this.levelHigh, level, level > this.levelHigh)
-            if (this.deltaswitchOBJ['Sell']['price'] > 0) {
 
+            let background = { background: null }
+            if (this.deltaswitchOBJ['Sell']['price'] > 0) {
                 if (level > this.deltaswitchOBJ['Sell']['price']) {
-                    return {background: 'firebrick' }
+                    background = { background: 'firebrick' }
                 }
-            }
-            if (this.deltaswitchOBJ['Buy']['price'] > 0) {
+            } else if (this.deltaswitchOBJ['Buy']['price'] > 0) {
                 target = this.deltaswitchOBJ['Buy']['price']
                 if (level < target) {
-                    return {background: 'green' }
+                    background =  {background: 'green' }
                 }
             }
+
+            if (level == this.localHigh) {
+                background = { background: 'red' }
+            } else if (level == this.localLow) {
+                background = { background: 'green' }
+            }
+
+            return background
+
         },
         getCandleStyle: function(open, close) {
             let style = {color : '#E53935'}
@@ -1840,7 +1846,6 @@ let vue = new Vue({
                     }
                 }
 
-
                 if (vue.showChart > 0) {
                    vue.updateCharts()
                 }
@@ -1887,7 +1892,8 @@ let vue = new Vue({
                     if (isNaN(parseFloat(object[x][y]))) {
                         object[x][y] = false
                     } else {
-                        object[x][y] = parseFloat(object[x][y])
+                        let float = parseFloat(object[x][y])
+                        object[x][y] = float
                     }
                 }
             }
