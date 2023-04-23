@@ -33,6 +33,32 @@ session = inverse_perpetual.HTTP(
     api_secret=API_SECRET
 )
 
+def monitorLimits():
+    pair = "BTCUSD"
+
+    position = session.my_position(symbol=pair)['result']
+
+    positionSize = int(position['size'])
+
+    if positionSize == 0:
+        ### Trade exited so delete left limit order
+        recentOrders = session.get_active_order(symbol=pair)['result']['data']
+        orderID = 0
+        for ro in recentOrders:
+            if ro['order_status'] == 'New':
+                orderID = ro['order_id']
+                result = session.cancel_all_active_orders(symbol="BTCUSD")['ret_msg']
+                print('CANCEL', result)
+                break
+
+
+
+
+
+
+
+
+
 def startDiscord():
     ## intents controls what the bot can do; in this case read message content
     intents = discord.Intents.default()
@@ -52,13 +78,20 @@ def startDiscord():
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
 
+
+
         if not r.get('channelDict'):
-            r.set('channelDict', json.dumps(DISCORD_CHANNEL))
+            r.set('channelDict', DISCORD_CHANNEL)
 
         channelDict = json.loads(r.get('channelDict'))
 
-        for coin in channelDict:
+        if not r.get('monitor'):
+            r.set('monitor', 'on')
 
+        if r.get('monitor') == 'on':
+            monitorLimits()
+
+        for coin in channelDict:
             ## need incase redis gets wiped
             if not r.get('discord_' + coin):
                 r.set('discord_' + coin, 'discord set')
@@ -78,11 +111,19 @@ def startDiscord():
                 await channel.send(msg_h)
                 r.set('discord_' + coin + '_holder', 'blank')
 
+
     @bot.event
     async def on_message(msg):
         user = bot.get_user(int(DISCORD_USER))
         # print('MESSAGE DDDDDDDDD', msg.content)
         replyText = 'ho'
+
+        deltaSet = {
+            'db' : ['deltaswitch', 'Buy'],
+            'ds' : ['deltaswitch', 'Sell'],
+            'vb' : ['volswitch', 'Buy'],
+            'vs' : ['volswitch', 'Sell']
+        }
 
         if msg.content == 'B':
             lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
@@ -91,28 +132,49 @@ def startDiscord():
             b = round(lastCandle['buys']/1000)
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
-        elif msg.content == 'D':
-            coinDict = json.loads(r.get('coinDict'))['BTC']
-            deltaOBJ = coinDict['deltaswitch']
 
-        if 'nsi' in msg.content and r.get('ansi') == 'on':
+        elif 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
             replyText = 'Ansi off'
         elif 'nsi' in msg.content and r.get('ansi') == 'off':
             r.set('ansi', 'on')
             replyText = 'Ansi on'
-
-        if 'tack' in msg.content and r.get('stack') == 'on':
+        elif 'tack' in msg.content and r.get('stack') == 'on':
             r.set('stack', 'off')
-            replyText = 'Stacks on'
+            replyText = 'Stacks off'
         elif 'tack' in msg.content and r.get('stack') == 'off':
             r.set('stack', 'on')
-            replyText = 'Stacks off'
-
-        if msg.content == 'Dict' or msg.content == 'dict':
+            replyText = 'Stacks on'
+        elif 'onitor' in msg.content and r.get('monitor') == 'on':
+            r.set('monitor', 'off')
+            replyText = 'Monitor off'
+        elif 'onitor' in msg.content and r.get('monitor') == 'off':
+            r.set('monitor', 'on')
+            replyText = 'Monitor on'
+        elif msg.content == 'Dict' or msg.content == 'dict':
             setCoinDict()
             replyText = 'Coin Dict Set'
-
+        elif msg.content.split(' ')[0] in deltaSet:
+            latestprice = float(session.latest_information_for_symbol(symbol='BTCUSD')['result'][0]['last_price'])
+            coinDict = json.loads(r.get('coinDict'))
+            code = msg.content.split(' ')[0]
+            price = int(msg.content.split(' ')[1])
+            if price > 100_000 or price < 10_000:
+                replyText = 'Price out of range'
+            elif 's' in code and price < latestprice:
+                replyText = 'Price too low'
+            elif 'b' in code and price > latestprice:
+                replyText = 'Price too high'
+            else:
+                try:
+                    switch = deltaSet[code][0]
+                    side = deltaSet[code][1]
+                    coinDict['BTC'][switch][side]['price'] = price
+                    r.set('coinDict', json.dumps(coinDict))
+                    replyText = 'Set: ' + side + ' ' + str(price)
+                except Exception as e:
+                    print('DELTA SET ERROR', e)
+                    replyText = 'DELTA SET ERROR'
 
         if msg.author == user:
             await user.send(replyText)
@@ -159,10 +221,10 @@ def sendMessage(coin, string, bg, text):
     else:
         r.set('discord_' + coin + '_holder', msg)
 
-
 def actionBIT(side):
     r.set('discord_BIT', side)
     print('ACTION BIT')
+
 
 def getHL(side, current, stop, mode):
 
@@ -231,11 +293,14 @@ def marketOrder(side, fraction, stop, profit, mode):
         'Sell' : 1
     }
 
+    sideRev = None
+
     if side == 'Buy':
         take_profit = price + profit
-
+        sideRev = 'Sell'
     if side == 'Sell':
         take_profit = price - profit
+        sideRev = 'Buy'
 
     oType = 'Market'
     oPrice = None
@@ -257,9 +322,32 @@ def marketOrder(side, fraction, stop, profit, mode):
     )
 
     message = order['ret_msg']
+    return_code = order['ret_code']  # 0  = 'good'
     # data = json.dumps(order['result'])
 
+
+    return_price = order["result"]["price"]  # float
+
     print('ORDER MESSAGE ' + message)
+
+    if message == 'OK':
+        position = session.my_position(symbol="BTCUSD")['result']
+        positionPrice = position['entry_price']
+
+        try:
+        ### place limit TP
+            newLimit = session.place_active_order(
+            symbol = pair,
+            side = sideRev,
+            order_type = 'limit',
+            price =  positionPrice + (50*limits[sideRev]),
+            qty = qty/2,
+            time_in_force = "GoodTillCancel"
+            )
+        except Exception as e:
+            print('LIMIT ERROR', e)
+        else:
+            print('LIMIT SUCCESS')
 
 
     return True
@@ -468,7 +556,7 @@ def setCoinDict():
                     'price' : 0,
                     'swing' : False,
                     'active' : False,
-                    'fraction' : 0.4,
+                    'fraction' : 0.6,
                     'stop' : 70,
                     'profit' : 200,
                     'backup' : 0
@@ -477,7 +565,7 @@ def setCoinDict():
                     'price' : 0,
                     'swing' : False,
                     'active' : False,
-                    'fraction' : 0.4,
+                    'fraction' : 0.6,
                     'stop' : 70,
                     'profit' : 200,
                     'backup' : 0
@@ -488,7 +576,7 @@ def setCoinDict():
                     'Sell' : {
                         'price' : 0,
                         'swing' : False,
-                        'fraction' : 0.4,
+                        'fraction' : 0.6,
                         'stop' : 100,
                         'profit' : 300,
                         'backup' : 0
@@ -496,7 +584,7 @@ def setCoinDict():
                     'Buy' : {
                         'price' : 0,
                         'swing' : False,
-                        'fraction' : 0.4,
+                        'fraction' : 0.6,
                         'stop' : 100,
                         'profit' : 300,
                         'backup' : 0

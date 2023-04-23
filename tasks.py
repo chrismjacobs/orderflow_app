@@ -332,7 +332,7 @@ def addBlock(units, blocks, mode, coin):
 
     ''' BLOCK DATA '''
 
-    print('BLOCK DATA: ' + mode + ' -- ' + coin)
+    # print('BLOCK DATA: ' + mode + ' -- ' + coin)
     previousOICum = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
     newOpen = units[0]['streamPrice']
@@ -517,12 +517,12 @@ def addBlock(units, blocks, mode, coin):
 
     if coin == 'BTC' and volblockcandle:
 
-        print('VOL DIV CHECK')
+        # print('VOL DIV CHECK')
 
         deltaPercent = round( (  newCandle['delta']  /  newCandle['total']  ) * 100  )
 
         if abs(deltaPercent) > 20:
-            print('VOL DIV CHECK 2')
+            # print('VOL DIV CHECK 2')
             timeSecs = round(newCandle['time_delta']/1000)
             oiCheck = round(newCandle['oi_delta']/1000)
             tots = round(newCandle['total']/1_000_000)
@@ -534,7 +534,7 @@ def addBlock(units, blocks, mode, coin):
                 if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'green')
 
-            print('VOL DIV CHECK 3')
+            # print('VOL DIV CHECK 3')
             if newCandle['delta'] > 0 and newCandle['price_delta'] < 0 and newCandle['time_delta'] > 30000:
                 newCandle['volDiv'] = True
                 bearDiv = True
@@ -542,7 +542,7 @@ def addBlock(units, blocks, mode, coin):
                 if newCandle['total'] > 2_500_000:
                     sendMessage(coin, msg, '', 'red')
 
-            print('VOL DIV CHECK COMPLETE')
+            # print('VOL DIV CHECK COMPLETE')
 
         try:
             newCandle['switch'] = actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv)
@@ -575,7 +575,7 @@ def addDeltaBlock(units, blocks, mode, coin):
 
     ''' BLOCK DATA '''
 
-    print('BLOCK DATA: ' + mode + ' -- ' + coin)
+    #  print('BLOCK DATA: ' + mode + ' -- ' + coin)
 
     previousTime = units[0]['trade_time_ms']
     newOpen = units[0]['streamPrice']
@@ -649,7 +649,7 @@ def addDeltaBlock(units, blocks, mode, coin):
     # if buyCount < 0  and 'block' in mode:
     #     print('BUY COUNT LESS THAN ZERO')
 
-    print('NEW DELTA CANDLE ' + str(sellCount) + ' // ' + str(buyCount))
+    # print('NEW DELTA CANDLE ' + str(sellCount) + ' // ' + str(buyCount))
 
     return newDeltaCandle
 
@@ -838,8 +838,8 @@ def logTimeUnit(buyUnit, sellUnit, coin):
 
 def getDeltaStatus(deltaflow, deltaCount):
 
-    if LOCAL:
-        print('GET DELTA STATUS', len(deltaflow))
+    # if LOCAL:
+    #     print('GET DELTA STATUS', len(deltaflow))
 
     newDeltaflowList = []
 
@@ -974,8 +974,8 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
         deltaStatus = getDeltaStatus(deltaflow, deltaCount)
 
-        if LOCAL:
-            print('DELTA 1', len(deltablocks), len(deltaflow), len(deltaStatus['deltaflowList']))
+        # if LOCAL:
+        #     print('DELTA 1', len(deltablocks), len(deltaflow), len(deltaStatus['deltaflowList']))
 
         if deltaStatus['blockfill']:
             # store current candle and start a new Candle
@@ -1014,14 +1014,14 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
 
             # add fresh current candle to timeblock
-            if LOCAL:
-                print('DELTA FLOW RESET', len(deltaflow), len(deltablocks))
+            # if LOCAL:
+            #     print('DELTA FLOW RESET', len(deltaflow), len(deltablocks))
             r.set('deltablocks_' + coin, json.dumps(deltablocks))
             r.set('deltaflow_' + coin, json.dumps(deltaflow))
 
         else: # add the unit to the delta flow
-            if LOCAL:
-                print('ADD DELTA UNIT', len(deltablocks), len(deltaflow))
+
+            # print('ADD DELTA UNIT', len(deltablocks), len(deltaflow))
 
             # update current candle with new unit data
             currentCandle = addDeltaBlock(deltaflow, deltablocks, 'deltamode', coin)
@@ -1391,7 +1391,7 @@ def handle_trade_message(msg):
     # print(coinDict)
 
     if not coinDict[coin] or not coinDict[coin]['active']:
-        print('not active ' + coin)
+        ## print('not active ' + coin)
         return False
 
     if coinDict[coin] and coinDict[coin]['purge']:
@@ -1403,7 +1403,7 @@ def handle_trade_message(msg):
     ### check time and reset
     historyReset(coin)
 
-    print(coin + ' handle_trade_message: ' + str(len(msg['data'])))
+    # print(coin + ' handle_trade_message: ' + str(len(msg['data'])))
     # print(msg['data'])
 
 
