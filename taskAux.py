@@ -175,6 +175,8 @@ def startDiscord():
                 except Exception as e:
                     print('DELTA SET ERROR', e)
                     replyText = 'DELTA SET ERROR'
+        else:
+            return False
 
         if msg.author == user:
             await user.send(replyText)
@@ -308,6 +310,7 @@ def marketOrder(side, fraction, stop, profit, mode):
     if mode == 'volswitch':
         oType == 'Limt'
         oPrice = price + limits[side]
+        r.set('monitor', 'off')
 
 
     order = session.place_active_order(
@@ -330,9 +333,10 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     print('ORDER MESSAGE ' + message)
 
-    if message == 'OK':
+    if message == 'OK' and mode == 'deltaswitch':
+        r.set('monitor', 'on')
         position = session.my_position(symbol="BTCUSD")['result']
-        positionPrice = position['entry_price']
+        positionPrice = float(position['entry_price'])
 
         try:
         ### place limit TP
@@ -515,7 +519,7 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
         r.set('discord_' + 'BTC', 'VOLSWITCH CONDITIONS: ' + conditionString)
 
-        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volswtich')
+        MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volswitch')
 
         if MO:
             resetCoinDict(coinDict, side, 'volswtich')
@@ -557,8 +561,8 @@ def setCoinDict():
                     'swing' : False,
                     'active' : False,
                     'fraction' : 0.6,
-                    'stop' : 70,
-                    'profit' : 200,
+                    'stop' : 100,
+                    'profit' : 300,
                     'backup' : 0
                 },
                 'Buy' : {
@@ -566,8 +570,8 @@ def setCoinDict():
                     'swing' : False,
                     'active' : False,
                     'fraction' : 0.6,
-                    'stop' : 70,
-                    'profit' : 200,
+                    'stop' : 100,
+                    'profit' : 300,
                     'backup' : 0
                 }
             }
