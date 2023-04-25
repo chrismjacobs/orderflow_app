@@ -53,12 +53,6 @@ def monitorLimits():
 
 
 
-
-
-
-
-
-
 def startDiscord():
     ## intents controls what the bot can do; in this case read message content
     intents = discord.Intents.default()
@@ -78,8 +72,6 @@ def startDiscord():
     async def checkRedis(user):
         print('DISCORD REDIS CHECK')
 
-
-
         if not r.get('channelDict'):
             r.set('channelDict', DISCORD_CHANNEL)
 
@@ -89,7 +81,11 @@ def startDiscord():
             r.set('monitor', 'on')
 
         if r.get('monitor') == 'on':
-            monitorLimits()
+            try:
+                monitorLimits()
+            except Exception as e:
+                print('MONITOR ERROR', e)
+                await channel.send('MONITOR ERROR: ' + e)
 
         for coin in channelDict:
             ## need incase redis gets wiped
@@ -132,7 +128,8 @@ def startDiscord():
             b = round(lastCandle['buys']/1000)
             s = round(lastCandle['sells']/1000)
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
-
+        elif 'check' in msg.content:
+            checkRedis.start(user)
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
             replyText = 'Ansi off'
@@ -308,7 +305,7 @@ def marketOrder(side, fraction, stop, profit, mode):
     oPrice = None
 
     if mode == 'volswitch':
-        oType == 'Limt'
+        oType == 'Limit'
         oPrice = price + limits[side]
         r.set('monitor', 'off')
 
@@ -343,9 +340,9 @@ def marketOrder(side, fraction, stop, profit, mode):
             newLimit = session.place_active_order(
             symbol = pair,
             side = sideRev,
-            order_type = 'limit',
-            price =  positionPrice + (50*limits[sideRev]),
-            qty = qty/2,
+            order_type = 'Limit',
+            price =  round(positionPrice + (50*limits[sideRev])),
+            qty = round(qty/2),
             time_in_force = "GoodTillCancel"
             )
         except Exception as e:

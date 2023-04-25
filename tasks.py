@@ -1054,7 +1054,9 @@ def logVolumeUnit(buyUnit, sellUnit, coin, size):    ## load vol flow
 
     totalMsgSize = buyUnit['size'] + sellUnit['size']
 
-    print(coin + ' LOG VOLUME UNIT ' + str(totalMsgSize))
+    # if LOCAL:
+    #     print(coin + ' LOG VOLUME UNIT ' + str(totalMsgSize))
+
     ## calculate current candle size
     volumeflowTotal = 0
     for t in volumeflow:
