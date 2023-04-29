@@ -202,12 +202,12 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
         deltaSellStr = str(round(currentSells/100_000)/10) + 'm '
 
         if stream['oiMarkers'][0] > 0 and deltaOI > stream['oiMarkers'][0]:
-            message = coin + ' Sudden OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
+            message = 'OI INC: ' + deltaOIstr + ' Buys:' + deltaBuyStr + ' Sells: ' + deltaSellStr + ' Price: ' + str(stream['lastPrice'])
             sendMessage(coin, message, '', 'blue')
             streamAlert(message, 'OI', coin)
 
         if stream['oiMarkers'][1] > 0 and deltaOI < - stream['oiMarkers'][1]:
-            message = coin + ' Sudden OI DEC: ' + deltaOIstr + ' Buys: ' + deltaBuyStr + ' Sells: ' + deltaSellStr  + ' Price: ' + str(stream['lastPrice'])
+            message = 'OI DEC: ' + deltaOIstr + ' Buys: ' + deltaBuyStr + ' Sells: ' + deltaSellStr  + ' Price: ' + str(stream['lastPrice'])
             sendMessage(coin, message, '', 'pink')
             streamAlert(message, 'OI', coin)
 
@@ -386,7 +386,7 @@ def addBlock(units, blocks, mode, coin):
 
     priceList = []
 
-    tickCoins = ['BTC', 'ETH']
+    tickCoins = ['BTC']
 
 
     for d in units:
@@ -434,6 +434,21 @@ def addBlock(units, blocks, mode, coin):
     lowPrice = min(priceList)
     total = buyCount + sellCount
 
+    oiList.sort()
+
+    OIlow = oiList[0]
+    OIhigh = oiList[-1]
+
+    delta = buyCount - sellCount
+    OIdelta =  OIclose - previousOICum
+
+    priceDelta = price - newOpen
+
+    if coin == 'ETH':
+        priceDelta = round(priceDelta*100)/100
+    if coin == 'GALA':
+        priceDelta = round(priceDelta*10000)/10000
+
     tickList = []
 
     if coin in tickCoins:
@@ -452,7 +467,7 @@ def addBlock(units, blocks, mode, coin):
             stack = 'off'
             r.set('stack', stack)
 
-        if stack and total > 2_000_000:
+        if stack and total > 2_000_000 and OIdelta > 0:
             getIMBs = getImbalances(tickList, mode)
             tickList = getIMBs[0]
             stackBuys = getIMBs[1]
@@ -463,20 +478,7 @@ def addBlock(units, blocks, mode, coin):
             if stackSells >= 3 and 'time' in mode:
                 sendMessage(coin, 'Stack IMBS SELL', '', 'white')
 
-    oiList.sort()
 
-    OIlow = oiList[0]
-    OIhigh = oiList[-1]
-
-    delta = buyCount - sellCount
-    OIdelta =  OIclose - previousOICum
-
-    priceDelta = price - newOpen
-
-    if coin == 'ETH':
-        priceDelta = round(priceDelta*100)/100
-    if coin == 'GALA':
-        priceDelta = round(priceDelta*10000)/10000
 
 
     newCandle = {
@@ -739,11 +741,12 @@ def getPVAstatus(timeblocks, coin):
             'flatOI' : flatOI
             }
 
-        print('RETURN PVA')
+        if LOCAL:
+            print('RETURN PVA')
 
         volString = str(round(returnPVA['vol']/100_000)/10)
 
-        if pva200 and flatOI and lastVolume > 1_000_000:
+        if pva200 and flatOI and lastVolume > 10_000_000:
             msg = coin + ' PVA flatOI  Vol:' + volString  + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm'
             sendMessage(coin, msg, '', 'yellow')
             streamAlert('PVA candle with flat OI', 'PVA', coin)

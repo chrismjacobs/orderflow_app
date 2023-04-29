@@ -85,6 +85,7 @@ def startDiscord():
                 monitorLimits()
             except Exception as e:
                 print('MONITOR ERROR', e)
+                channel = bot.get_channel(int(channelDict['BTC']))
                 await channel.send('MONITOR ERROR: ' + e)
 
         for coin in channelDict:
@@ -130,24 +131,25 @@ def startDiscord():
             replyText = str(lastCandle['total']) + ' OI: ' + str(oi) + 'k Buys: ' + str(b) + 'k Sells: ' + str(s) + 'k'
         elif 'check' in msg.content:
             checkRedis.start(user)
+            replyText = 'check'
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
-            replyText = 'Ansi off'
+            replyText = 'Ansi ' + r.get('ansi')
         elif 'nsi' in msg.content and r.get('ansi') == 'off':
             r.set('ansi', 'on')
-            replyText = 'Ansi on'
+            replyText = 'Ansi ' + r.get('ansi')
         elif 'tack' in msg.content and r.get('stack') == 'on':
             r.set('stack', 'off')
-            replyText = 'Stacks off'
+            replyText = 'Stacks ' + r.get('stack')
         elif 'tack' in msg.content and r.get('stack') == 'off':
             r.set('stack', 'on')
-            replyText = 'Stacks on'
+            replyText = 'Stacks ' + r.get('stack')
         elif 'onitor' in msg.content and r.get('monitor') == 'on':
             r.set('monitor', 'off')
-            replyText = 'Monitor off'
+            replyText = 'Monitor ' + r.get('monitor')
         elif 'onitor' in msg.content and r.get('monitor') == 'off':
             r.set('monitor', 'on')
-            replyText = 'Monitor on'
+            replyText = 'Monitor ' + r.get('monitor')
         elif msg.content == 'Dict' or msg.content == 'dict':
             setCoinDict()
             replyText = 'Coin Dict Set'
