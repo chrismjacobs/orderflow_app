@@ -1619,7 +1619,8 @@ let vue = new Vue({
                 if (level > this.deltaswitchOBJ['Sell']['price']) {
                     background = { background: 'firebrick' }
                 }
-            } else if (this.deltaswitchOBJ['Buy']['price'] > 0) {
+            }
+            if (this.deltaswitchOBJ['Buy']['price'] > 0) {
                 target = this.deltaswitchOBJ['Buy']['price']
                 if (level < target) {
                     background =  {background: 'green' }
