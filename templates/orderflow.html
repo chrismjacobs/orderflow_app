@@ -2044,7 +2044,7 @@ let vue = new Vue({
             return this.volumeBlocks.slice().reverse()
         },
         getReverseDeltaBlocks() {
-            return this.deltaBlocks.slice(-this.dbcount).reverse()
+            return this.deltaBlocks.slice(-this.dbcount - 300, -this.dbcount).reverse()
         },
         getReverseTimeBlocks() {
             return this.timeBlocks.slice().reverse()
@@ -2148,13 +2148,13 @@ let vue = new Vue({
         },
         flowPositionTime: function () {
             if (this.flowPositionTime > 2) {
-                this.flowPositionTime = 0
+                this.flowPositionTime = 1
             }
             localStorage.setItem('flowPositionTime', this.flowPositionTime)
         },
         flowPositionVol: function () {
             if (this.flowPositionVol > 2) {
-                this.flowPositionVol = 0
+                this.flowPositionVol = 1
             }
             localStorage.setItem('flowPositionVol', this.flowPositionVol)
         },
