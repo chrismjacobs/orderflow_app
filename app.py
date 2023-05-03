@@ -7,6 +7,7 @@ from time import sleep
 import json
 import redis
 import os
+import time
 from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 import datetime as dt
@@ -188,7 +189,7 @@ def worker():
             if t.minute%5 == 0:
                 block = False
             else:
-                sleep(1)
+                time.sleep(1)
 
 
         task = runStream.delay()
