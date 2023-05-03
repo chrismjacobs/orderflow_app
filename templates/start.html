@@ -11,6 +11,7 @@
 
 
             <button class="btn btn-primary" @click="startAction()">Start Code</button>
+            <button class="btn btn-danger" @click="stopAction()">Stop Action</button>
 
 
 </div>
@@ -85,6 +86,26 @@ let vue = new Vue({
             })
             .fail(function(){
                   alert('error has occurred with worker start');
+            });
+        },
+        stopAction: function () {
+            console.log('stop')
+
+            $.ajax({
+                data : {
+                    passcode : this.passcode,
+                },
+                type : 'POST',
+                url : '/workerStop'
+
+            })
+            .done(function(data) {
+                console.log(data)
+                vue.goTo()
+
+            })
+            .fail(function(){
+                  alert('error has occurred with worker stop');
             });
         },
     }

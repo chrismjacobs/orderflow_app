@@ -4,8 +4,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 import json
+import redis
+import os
 from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
+import datetime as dt
+
+try:
+    import config
+    REDIS_URL = config.REDIS_URL
+    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+except:
+    REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    r = redis.from_url(REDIS_URL, decode_responses=True)
 
 if not LOCAL:
     from tasks import runStream
@@ -167,9 +178,34 @@ def worker():
     print('workerAction', x, START_CODE)
 
     if x == int(START_CODE):
+        block = True
+
+        while block:
+            t = dt.datetime.today()
+            print(t.minute, t.minute%5)
+            if t.minute%2 == 0:
+                block = False
+
         task = runStream.delay()
         r.set('task_id', str(task))
         print('task_id', str(task))
+        flash("Your command has been submitted: " + str(task))
+    else:
+        flash("Your command has failed: " + str(x))
+
+    return render_template('start.html')
+
+@app.route('/workerStop', methods=['POST'])
+@login_required
+def taskend():
+    x = int(request.form['passcode'])
+    print('workerStop', x, START_CODE)
+
+    if x == int(START_CODE):
+        task_id = r.get('task_id')
+        task = runStream.AsyncResult(task_id)
+        task.abort()
+        print('task aborted', str(task))
         flash("Your command has been submitted: " + str(task))
     else:
         flash("Your command has failed: " + str(x))
