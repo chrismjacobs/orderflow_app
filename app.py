@@ -184,8 +184,8 @@ def worker():
         while block:
 
             t = dt.datetime.today()
-            print(t.minute, t.minute%2)
-            if t.minute%2 == 0:
+            print(t.minute, t.minute%5)
+            if t.minute%5 == 0:
                 block = False
             else:
                 sleep(1)
