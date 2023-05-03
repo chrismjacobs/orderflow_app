@@ -1446,7 +1446,7 @@ def runStream(self):
 
 
     for k in r.keys():
-        if k[0] != '_' and k != 'coinDict' and k != 'channelDict':
+        if k[0] != '_' and k != 'coinDict' and k != 'channelDict' and k != 'task_id':
             r.delete(k)
 
     if not r.get('coinDict'):
