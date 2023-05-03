@@ -3,6 +3,7 @@ from flask_login import current_user, login_required, LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
+from time import sleep
 import json
 import redis
 import os
@@ -181,10 +182,14 @@ def worker():
         block = True
 
         while block:
+
             t = dt.datetime.today()
-            print(t.minute, t.minute%5)
+            print(t.minute, t.minute%2)
             if t.minute%2 == 0:
                 block = False
+            else:
+                sleep(1)
+
 
         task = runStream.delay()
         r.set('task_id', str(task))
