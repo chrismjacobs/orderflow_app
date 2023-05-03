@@ -1,6 +1,7 @@
 import os, json, math
 from celery import Celery
 from celery.utils.log import get_task_logger
+from celery.contrib.abortable import AbortableTask
 from time import sleep
 from pybit import inverse_perpetual, usdt_perpetual
 import datetime as dt
@@ -750,10 +751,10 @@ def getPVAstatus(timeblocks, coin):
             msg = coin + ' PVA flatOI  Vol:' + volString  + ' ' + str(returnPVA['percentage']*100) + '%   OI Range: ' + str(returnPVA['rangeOI']) + 'm'
             sendMessage(coin, msg, '', 'yellow')
             streamAlert('PVA candle with flat OI', 'PVA', coin)
-        elif pva200 and divergenceBear and lastVolume > 1_000_000:
+        elif pva200 and divergenceBear and lastVolume > 4_000_000:
             msg = coin + ' PVA divergence Bear: ' + volString  + ' ' + str(returnPVA['percentage'])
             sendMessage(coin, msg, '', 'red')
-        elif pva200 and divergenceBull and lastVolume > 1_000_000:
+        elif pva200 and divergenceBull and lastVolume > 4_000_000:
             msg = coin + ' PVA divergence Bull: ' +  volString  + ' ' + str(returnPVA['percentage'])
             sendMessage(coin, msg, '', 'cyan')
 
@@ -1438,8 +1439,8 @@ def handle_trade_message(msg):
 
 
 
-@app.task() #bind=True, base=AbortableTask  // (self)
-def runStream():
+@app.task(bind=True, base=AbortableTask)
+def runStream(self):
 
     print('RUN_STREAM')
 
@@ -1505,6 +1506,10 @@ def runStream():
     startDiscord()
 
     while True:
+        if self.is_aborted():
+            msg = 'Stream Cancelled'
+            print(msg)
+            return msg
         sleep(0.1)
 
     return print('Task Closed')

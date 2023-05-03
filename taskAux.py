@@ -407,11 +407,12 @@ def actionDELTA(blocks, coin, coinDict):
                 fastCandles += 1
         count += 1
 
-    percentDelta = blocks[-1]['delta']/blocks[-1]['total']
+    percentDelta1 = blocks[-1]['delta']/blocks[-1]['total']
+    percentDelta2 = blocks[-2]['delta']/blocks[-2]['total']
 
-    threshold = percentDelta > 0.9
+    threshold = percentDelta1 > 0.99 and percentDelta2 > 0.99
     if side == 'Sell':
-        threshold = percentDelta < -0.9
+        threshold = threshold = percentDelta1 < -0.99 and percentDelta2 < -0.99
 
     print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta) + ' Threshold: ' + str(threshold))
 
@@ -505,8 +506,8 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
     fcString = json.dumps(fastCandles)
     print('volswitch pass:  FC= ' + fcString)
 
-    cond1 = side == 'Buy' and percentDelta > 0.3 and oiDelta > - 100_000 and not bearDiv
-    cond2 = side == 'Sell' and percentDelta < 0.3 and oiDelta > - 100_000 and not bullDiv
+    cond1 = side == 'Buy' and percentDelta >= 0.3 and oiDelta > - 100_000 and not bearDiv
+    cond2 = side == 'Sell' and percentDelta <= -0.3 and oiDelta > - 100_000 and not bullDiv
     cond3 = side == 'Buy' and bullDiv
     cond4 = side == 'Sell' and bearDiv
 
