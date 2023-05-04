@@ -414,7 +414,7 @@ def actionDELTA(blocks, coin, coinDict):
     if side == 'Sell':
         threshold = threshold = percentDelta1 < -0.99 and percentDelta2 < -0.99
 
-    print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta) + ' Threshold: ' + str(threshold))
+    # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
 
     if currentTimeDelta > 5 and fastCandles == fcCheck:
         ## delta action has stalled: lookout is active
@@ -437,7 +437,7 @@ def actionDELTA(blocks, coin, coinDict):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = 'Delta Action: ' + side + ' ' +  str(percentDelta) + ' ' + str(currentTimeDelta)
+            msg = 'Delta Action: ' + side + ' ' +  str(percentDelta1) + ' ' + str(currentTimeDelta)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:

@@ -1505,11 +1505,7 @@ def runStream(self):
 
     startDiscord()
 
-    while True:
-        if self.is_aborted():
-            msg = 'Stream Cancelled'
-            print(msg)
-            return msg
+    while not self.is_aborted():
         sleep(0.1)
 
     return print('Task Closed')
