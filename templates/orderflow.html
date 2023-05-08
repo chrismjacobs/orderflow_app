@@ -622,7 +622,7 @@
                                 <tr>
                                     <th class="text-success" :style="trueStyleDelta(item.switch, key)" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                     <td :style="timeStyleDelta(item.time_delta, key)">[[calculateTime(item.time_delta)]]</td>
-                                    <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
+                                    <td :style="getDeltaVolumeBlockStyle(item, key, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                     <td  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                     <td  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
@@ -1768,6 +1768,22 @@ let vue = new Vue({
 
             return style
         },
+        getDeltaVolumeBlockStyle: function(item, key, price) {
+
+            let timeFast = Math.round((item.time_delta/1000)) < 5
+
+            let style = {}
+
+            if (item.total && item.total > 200000 && timeFast) {
+                style = {background: '#641E16'}
+            } else if (item.total && item.total > 300000) {
+                style = {background: '#273746'}
+            } else if (item.total && item.total > 200000) {
+                style = {background: '#1C2833'}
+            }
+
+            return style
+        },
         ofTimer: function () {
             this.of_timer = setInterval(this.getOFData, 3000)
             //console.log('timer', this.of_timer)
@@ -2046,11 +2062,10 @@ let vue = new Vue({
         getReverseDeltaBlocks() {
             let x = this.dbcount
             if (x == 100) {
-                return this.deltaBlocks.slice(-this.dbcount).reverse()
+                return this.deltaBlocks.slice(-this.dbcount*2).reverse()
             } else {
                 return this.deltaBlocks.slice(-this.dbcount - 300, -this.dbcount).reverse()
             }
-
         },
         getReverseTimeBlocks() {
             return this.timeBlocks.slice().reverse()
