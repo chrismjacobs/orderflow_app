@@ -70,7 +70,7 @@ def startDiscord():
 
     @tasks.loop(seconds=3)
     async def checkRedis(user):
-        print('DISCORD REDIS CHECK')
+        #print('DISCORD REDIS CHECK')
 
         if not r.get('channelDict'):
             r.set('channelDict', DISCORD_CHANNEL)
