@@ -1412,30 +1412,35 @@ def handle_trade_message(msg):
     # print(coin + ' handle_trade_message: ' + str(len(msg['data'])))
     # print(msg['data'])
 
-
+    print( 'Start: ' + str(len(msg['data'])))
     compiledMessage = compiler(msg['data'], pair, coin)
+
 
     # print('COMPILER DONE')
 
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
 
+    print('Compiled B:' + str(buyUnit['size']) + ' S:' + str(sellUnit['size']))
+
     volControl = coinDict[coin]['volume']
     deltaControl = coinDict[coin]['deltaswitch']
     pause = coinDict[coin]['pause']
-
+    print('LOG TIME')
     logTimeUnit(buyUnit, sellUnit, coin)
 
 
-
+    print('LOG VOLUME')
     if volControl[0] and buyUnit['size'] + sellUnit['size'] > 1: # ignore small size trades
         logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
 
+    print('LOG DELTA')
     if deltaControl['fcCheck'] > 0:
         deltaCount = deltaControl['block']
         if LOCAL:
             deltaCount = 100000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
+    print('All done')
 
 
 
@@ -1479,7 +1484,7 @@ def runStream(self):
         domain="bybit"  # the default is "bybit"
     )
 
-    coins = ["BTCUSD", "ETHUSD"] #"BITUSD"
+    coins = ["BTCUSD"] #"BITUSD"
     if LOCAL:
         coins = ["BTCUSD"]
 
