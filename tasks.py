@@ -1420,27 +1420,34 @@ def handle_trade_message(msg):
 
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
-
     print('Compiled B:' + str(buyUnit['size']) + ' S:' + str(sellUnit['size']))
+
+    if buyUnit['size'] + sellUnit['size'] <= 2:
+        return False
 
     volControl = coinDict[coin]['volume']
     deltaControl = coinDict[coin]['deltaswitch']
     pause = coinDict[coin]['pause']
-    print('LOG TIME')
+
     logTimeUnit(buyUnit, sellUnit, coin)
 
+    print('LOG TIME')
 
-    print('LOG VOLUME')
-    if volControl[0] and buyUnit['size'] + sellUnit['size'] > 1: # ignore small size trades
+
+    if volControl[0]: # ignore small size trades
         logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
 
-    print('LOG DELTA')
+    print('LOG VOLUME')
+
+
     if deltaControl['fcCheck'] > 0:
         deltaCount = deltaControl['block']
         if LOCAL:
             deltaCount = 100000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
-    print('All done')
+
+    print('LOG DELTA')
+
 
 
 
