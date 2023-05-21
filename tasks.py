@@ -870,13 +870,13 @@ def getDeltaStatus(deltaflow, deltaCount):
         ## 13K Sells
         ## delta -9K
 
-        newDeltaflowList.append([
-            {
-                "side": d['side'],
-                "size": d['size'],
-                'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
-            }
-        ])
+        # newDeltaflowList.append([
+        #     {
+        #         "side": d['side'],
+        #         "size": d['size'],
+        #         'totalBS_ABS' : [str(totalBuys) , str(totalSells), str(abs((totalBuys - totalSells)))]
+        #     }
+        # ])
 
         excess = 0
 
@@ -977,6 +977,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             deltaflow.append(sellUnit)
 
         deltaStatus = getDeltaStatus(deltaflow, deltaCount)
+        print('DELTA STATUS')
 
         # if LOCAL:
         #     print('DELTA 1', len(deltablocks), len(deltaflow), len(deltaStatus['deltaflowList']))
@@ -1009,17 +1010,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
                 dcount += 1
 
-            # dbList = []
 
-            # if not r.get('deltablocklist_' + coin):
-            #     r.set('deltablocklist_' + coin, json.dumps([]))
-            # else:
-            #     dbList = json.loads(r.get('deltablocklist_' + coin))
-
-
-            # add fresh current candle to timeblock
-            # if LOCAL:
-            #     print('DELTA FLOW RESET', len(deltaflow), len(deltablocks))
             r.set('deltablocks_' + coin, json.dumps(deltablocks))
             r.set('deltaflow_' + coin, json.dumps(deltaflow))
 

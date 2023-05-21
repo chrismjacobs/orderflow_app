@@ -132,6 +132,12 @@ def startDiscord():
         elif 'check' in msg.content:
             checkRedis.start(user)
             replyText = 'check'
+        elif 'elta purge' in msg.content:
+            coin = 'BTC'
+            dFlow = 'deltaflow_' + coin
+            dBlocks = 'deltablocks_' + coin
+            r.set(dFlow, json.dumps([]))
+            r.set(dBlocks, json.dumps([]))
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
             replyText = 'Ansi ' + r.get('ansi')
@@ -144,12 +150,12 @@ def startDiscord():
         elif 'tack' in msg.content and r.get('stack') == 'off':
             r.set('stack', 'on')
             replyText = 'Stacks ' + r.get('stack')
-        elif 'onitor' in msg.content and r.get('monitor') == 'on':
+        elif 'onitor off' in msg.content:
             r.set('monitor', 'off')
-            replyText = 'Monitor ' + r.get('monitor')
-        elif 'onitor' in msg.content and r.get('monitor') == 'off':
+            replyText = 'Set Monitor ' + r.get('monitor')
+        elif 'onitor on' in msg.content:
             r.set('monitor', 'on')
-            replyText = 'Monitor ' + r.get('monitor')
+            replyText = 'Set Monitor ' + r.get('monitor')
         elif msg.content == 'Dict' or msg.content == 'dict':
             setCoinDict()
             replyText = 'Coin Dict Set'
@@ -257,8 +263,6 @@ def getHL(side, current, stop, mode):
             stop_loss = current + stop
         else:
             stop_loss = mHi + 45
-
-
 
 
     return stop_loss
@@ -410,9 +414,9 @@ def actionDELTA(blocks, coin, coinDict):
     percentDelta1 = blocks[-1]['delta']/blocks[-1]['total']
     percentDelta2 = blocks[-2]['delta']/blocks[-2]['total']
 
-    threshold = percentDelta1 > 0.99 and percentDelta2 > 0.99
+    threshold = percentDelta1 >= 0.99 and percentDelta2 >= 0.99
     if side == 'Sell':
-        threshold = threshold = percentDelta1 < -0.99 and percentDelta2 < -0.99
+        threshold = threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
 
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
 
