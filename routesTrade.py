@@ -1,4 +1,4 @@
-from app import app
+from app import app, r
 import json
 from flask import Flask, request, render_template, jsonify, abort
 from flask_login import login_required
@@ -137,6 +137,8 @@ def getOrder():
 
     if profit == 0:
         profit = None
+
+    r.set('monitor', 'off')
 
     for value in spreadArray:
         result = placeOrder(side, value, stop, qty/len(spreadArray), profit)
