@@ -8,6 +8,7 @@ import json
 import redis
 import os
 import time
+import requests
 from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
 import datetime as dt
@@ -16,8 +17,12 @@ try:
     import config
     REDIS_URL = config.REDIS_URL
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+    RENDER_API = config.RENDER_API
+    RENDER_SERVICE = config.RENDER_SERVICE
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    RENDER_API = os.getenv('RENDER_API')
+    RENDER_SERVICE = os.getenv('RENDER_SERVICE')
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 if not LOCAL:
@@ -73,7 +78,6 @@ def setPrices():
 
 @app.route('/getOF', methods=['POST'])
 def getOF():
-
     timeBlockSize = int(request.form ['timeBlockSize'])
     coin = request.form ['coin']
 
@@ -163,6 +167,40 @@ def getOF():
     }
 
     jx = jsonify(jDict)
+
+    # print('JSONIFY X', jDict)
+
+    return jx
+
+
+
+
+@app.route('/serviceAction', methods=['POST'])
+def serviceAction():
+
+    action = request.form ['action']
+
+    ## action = suspend or resume
+
+    url = "https://api.render.com/v1/services/" + RENDER_SERVICE
+
+    headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
+
+    response = requests.get(url, headers=headers)
+
+    suspended = json.loads(response.text)['suspended']
+
+    surl = url + "/" + action
+
+    response = requests.post(surl, headers=headers)
+
+    print(response.text)
+
+    sDict = {
+        'suspended' : suspended
+    }
+
+    jx = jsonify(sDict)
 
     # print('JSONIFY X', jDict)
 
