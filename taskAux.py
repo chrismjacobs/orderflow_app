@@ -175,8 +175,15 @@ def startDiscord():
                     switch = deltaSet[code][0]
                     side = deltaSet[code][1]
                     coinDict['BTC'][switch][side]['price'] = price
+                    if msg.content.split(' ')[2]:
+                        add = msg.content.split(' ')[2]
+                        if '.' in add:
+                            coinDict['BTC'][switch][side]['fraction'] = float(msg.content.split(' ')[2])
+                        else:
+                            coinDict['BTC'][switch][side]['stop'] = int(msg.content.split(' ')[2])
+
                     r.set('coinDict', json.dumps(coinDict))
-                    replyText = 'Set: ' + side + ' ' + str(price)
+                    replyText = 'Set: ' + side + ' ' + str(price) + ' ' + str(coinDict['BTC'][switch][side]['fraction']) + ' ' + str(coinDict['BTC'][switch][side]['stop'])
                 except Exception as e:
                     print('DELTA SET ERROR', e)
                     replyText = 'DELTA SET ERROR'
