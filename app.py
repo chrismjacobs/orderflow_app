@@ -186,18 +186,24 @@ def serviceAction():
 
     headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
 
-    response = requests.get(url, headers=headers)
+    if action != 'check':
+        surl = url + "/" + action
 
-    suspended = json.loads(response.text)['suspended']
+        response = requests.post(surl, headers=headers)
 
-    surl = url + "/" + action
+        print(response.text)
 
-    response = requests.post(surl, headers=headers)
+    sResponse = requests.get(url, headers=headers)
+    suspended = json.loads(sResponse.text)['suspended']
 
-    print(response.text)
+    durl = url + "/deploys?limit=20"
+    dResponse = requests.get(durl, headers=headers)
+    print(json.loads(dResponse.text)[0]['deploy'])
+    status = json.loads(dResponse.text)[0]['deploy']['status']
 
     sDict = {
-        'suspended' : suspended
+        'suspended' : suspended,
+        'status' : status
     }
 
     jx = jsonify(sDict)

@@ -19,6 +19,7 @@
 
             <button v-if="!user" @click="serviceAction('suspend')" type="button" class="btn btn-danger">Suspend</button>
             <button v-if="!user" @click="serviceAction('resume')" type="button" class="btn btn-info">Resume</button>
+            <button v-if="!user" @click="serviceAction('check')" type="button" class="btn">Check</button>
 
 
 </div>
@@ -126,7 +127,8 @@ let vue = new Vue({
 
             })
             .done(function(data) {
-                alert(data)
+                console.log(data)
+                alert(data.suspended, data.status)
             })
             .fail(function(){
                 alert('error')
