@@ -13,6 +13,13 @@
             <button class="btn btn-primary" @click="startAction()">Start Code</button>
             <button class="btn btn-danger" @click="stopAction()">Stop Action</button>
 
+            <br>
+            <br>
+            <br>
+
+            <button v-if="!user" @click="serviceAction('suspend')" type="button" class="btn btn-danger">Suspend</button>
+            <button v-if="!user" @click="serviceAction('resume')" type="button" class="btn btn-info">Resume</button>
+
 
 </div>
 
@@ -108,6 +115,23 @@ let vue = new Vue({
                   alert('error has occurred with worker stop');
             });
         },
+        serviceAction: function (action) {
+
+            $.ajax({
+                data : {
+                    action: action
+                },
+                type : 'POST',
+                url : '/serviceAction'
+
+            })
+            .done(function(data) {
+                alert(data)
+            })
+            .fail(function(){
+                alert('error')
+            });
+        }
     }
 })// end NEW VUE
 
