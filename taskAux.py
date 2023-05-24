@@ -164,7 +164,9 @@ def startDiscord():
             coinDict = json.loads(r.get('coinDict'))
             code = msg.content.split(' ')[0]
             price = int(msg.content.split(' ')[1])
-            if price > 100_000 or price < 10_000:
+            if price == 0:
+                replyText = 'Price reset to Zero'
+            elif price > 100_000 or price < 10_000:
                 replyText = 'Price out of range'
             elif 's' in code and price < latestprice:
                 replyText = 'Price too low'
@@ -175,7 +177,7 @@ def startDiscord():
                     switch = deltaSet[code][0]
                     side = deltaSet[code][1]
                     coinDict['BTC'][switch][side]['price'] = price
-                    if msg.content.split(' ')[2]:
+                    if len(msg.content.split(' ')) > 2:
                         add = msg.content.split(' ')[2]
                         if '.' in add:
                             coinDict['BTC'][switch][side]['fraction'] = float(msg.content.split(' ')[2])
@@ -427,7 +429,8 @@ def actionDELTA(blocks, coin, coinDict):
 
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
 
-    if currentTimeDelta > 5 and fastCandles == fcCheck:
+    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 400 or currentTimeDelta > 5
+    if stallCondition and fastCandles == fcCheck:
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         print('DELTA STALL')
