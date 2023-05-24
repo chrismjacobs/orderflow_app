@@ -8,10 +8,8 @@
         <h1 class="mb-5 text-light">Orderflow Worker Start Command</h1>
 
             <input  type="number" v-model="passcode"></input>
-
-
-            <button class="btn btn-primary" @click="startAction()">Start Code</button>
-            <button class="btn btn-danger" @click="stopAction()">Stop Action</button>
+            <button class="btn btn-primary" @click="setTimeout(startAction(), wait*60000)">Start Code</button>
+            <input  type="number" v-model="wait"></input>
 
             <br>
             <br>
@@ -63,7 +61,8 @@ let vue = new Vue({
     },
     data: {
         user : '',
-        passcode : ''
+        passcode : '',
+        wait : 0
     },
     methods: {
         goTo: function(){
@@ -77,6 +76,7 @@ let vue = new Vue({
 
         },
         startAction: function () {
+
             console.log('start')
 
             $.ajax({
@@ -128,7 +128,7 @@ let vue = new Vue({
             })
             .done(function(data) {
                 console.log(data)
-                alert(data.suspended, data.status)
+                alert(data.suspended + ' ' + data.status)
             })
             .fail(function(){
                 alert('error')
