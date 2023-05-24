@@ -227,16 +227,11 @@ def worker():
         block = True
 
         while block:
-
-            minStr = ['1', '2', '3']
-
             t = dt.datetime.today()
             print(t.minute, t.minute%5)
             if t.minute%5 == 0:
                 ## multiple of 5 mins
                 block = False
-            elif str(t.minute)[-1] in minStr:
-                time.sleep(60)
             else:
                 time.sleep(5)
 
