@@ -287,7 +287,9 @@ def marketOrder(side, fraction, stop, profit, mode):
     positionLev = float(position['leverage'])
 
     if positionSize > 0 or positionLev > 2:
-        print('Position already open: ' + positionSide)
+        message = 'Position already open: ' + positionSide + ' ' + str(positionLev)
+        print(message)
+        sendMessage('BTC', message, '', 'red')
         return False
     else:
         print('Order continue')
@@ -352,12 +354,13 @@ def marketOrder(side, fraction, stop, profit, mode):
 
         try:
         ### place limit TP
+            limitPrice = profit / 6
             newLimit = session.place_active_order(
             symbol = pair,
             side = sideRev,
             order_type = 'Limit',
-            price =  round(positionPrice + (50*limits[sideRev])),
-            qty = round(qty/2),
+            price =  round(positionPrice + (limitPrice*limits[sideRev])),
+            qty = round(qty*0.5),
             time_in_force = "GoodTillCancel"
             )
         except Exception as e:
@@ -425,12 +428,12 @@ def actionDELTA(blocks, coin, coinDict):
 
     threshold = percentDelta1 >= 0.99 and percentDelta2 >= 0.99
     if side == 'Sell':
-        threshold = threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
+        threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
 
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
 
-    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 400 or currentTimeDelta > 5
-    if stallCondition and fastCandles == fcCheck:
+    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 400_000 or currentTimeDelta > 5
+    if stallCondition and fastCandles == fcCheck and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         print('DELTA STALL')
