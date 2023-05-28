@@ -3,6 +3,7 @@ import redis
 import json
 import discord
 from discord.ext import tasks, commands
+from discord import SyncWebhook
 from datetime import datetime
 from pybit import inverse_perpetual, usdt_perpetual
 
@@ -16,6 +17,7 @@ try:
     DISCORD_USER = config.DISCORD_USER
     API_KEY = config.API_KEY
     API_SECRET = config.API_SECRET
+    DISCORD_WEBHOOK = config.DISCORD_WEBHOOK
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
@@ -24,6 +26,7 @@ except:
     DISCORD_USER = os.getenv('DISCORD_USER')
     API_KEY = os.getenv('API_KEY')
     API_SECRET = os.getenv('API_SECRET')
+    DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK')
     r = redis.from_url(REDIS_URL, decode_responses=True)
 
 
@@ -50,7 +53,6 @@ def monitorLimits():
                 result = session.cancel_all_active_orders(symbol="BTCUSD")['ret_msg']
                 print('CANCEL', result)
                 break
-
 
 
 def startDiscord():
@@ -300,7 +302,9 @@ def marketOrder(side, fraction, stop, profit, mode):
     # session.set_leverage(symbol=pair, leverage=leverage)
     qty = (price * funds * 2) * fraction
 
-    stop_loss = getHL(side, price, stop, mode)
+    #stop_loss = getHL(side, price, stop, mode)
+
+
 
     print('MARKET ORDER ' + str(price))
 
@@ -313,9 +317,11 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     if side == 'Buy':
         take_profit = price + profit
+        stop_loss = price - stop
         sideRev = 'Sell'
     if side == 'Sell':
         take_profit = price - profit
+        stop_loss = price + stop
         sideRev = 'Buy'
 
     oType = 'Market'
@@ -349,6 +355,12 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     if message == 'OK' and mode == 'deltaswitch':
         r.set('monitor', 'on')
+        try:
+            webhook = SyncWebhook.from_url(DISCORD_WEBHOOK)
+            webhook.send("check")
+        except Exception as e:
+            print('DISCORD WEBHOOK EXCEPION ' + e)
+
         position = session.my_position(symbol="BTCUSD")['result']
         positionPrice = float(position['entry_price'])
 
@@ -460,9 +472,15 @@ def actionDELTA(blocks, coin, coinDict):
         else:
             return 'MF'
 
-    print('ACTION DELTA')
+    switchMessage = 'nothing'
+    try:
+        switchMessage = side + ' ' + str(percentDelta1) + ' ' + str(percentDelta2) + str(blocks[-1]['total']) + ' ' + str(blocks[-2]['total']) + str(currentTimeDelta) + ' ' + str(fastCandles)
+        print('ACTION DELTA RESULT: ' + switchMessage)
+    except Exception as e:
+        print('ACTION DELTA EXCEPTION: ' + e)
 
-    return threshold
+
+    return switchMessage
 
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
