@@ -1627,10 +1627,14 @@ let vue = new Vue({
                 }
             }
 
-            if (level == this.localHigh) {
-                background = { background: 'red' }
-            } else if (level == this.localLow) {
-                background = { background: 'green' }
+            if (level == 26211) {
+                console.log(level, this.localHigh, this.getReverseTimeBlocks[this.localHigh + 1])
+            }
+
+            if (level == this.getReverseTimeBlocks[this.localHigh + 1]['high']) {
+                background = { background: 'hotpink' }
+            } else if (level == this.getReverseTimeBlocks[this.localLow + 1]['low']) {
+                background = { background: 'springgreen' }
             }
 
             return background

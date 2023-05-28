@@ -8,7 +8,7 @@
         <h1 class="mb-5 text-light">Orderflow Worker Start Command</h1>
 
             <input  type="number" v-model="passcode"></input>
-            <button class="btn btn-primary" @click="setTimeout(startAction(), wait*60000)">Start Code</button>
+            <button class="btn btn-primary" @click="setTimeout(startAction(), wait*60000)">Start Code [[wait * 60000]]</button>
             <input  type="number" v-model="wait"></input>
 
             <br>
