@@ -1631,9 +1631,12 @@ let vue = new Vue({
                 console.log(level, this.localHigh, this.getReverseTimeBlocks[this.localHigh + 1])
             }
 
-            if (this.getReverseTimeBlocks[this.localHigh + 1]['high'] && level == this.getReverseTimeBlocks[this.localHigh + 1]['high']) {
+            var getBlockHigh = this.getReverseTimeBlocks[this.localHigh + 1]
+            var getBlockLow = this.getReverseTimeBlocks[this.localLow + 1]
+
+            if (getBlockHigh && level == getBlockHigh['high']) {
                 background = { background: 'hotpink' }
-            } else if (this.getReverseTimeBlocks[this.localLow + 1]['low'] && level == this.getReverseTimeBlocks[this.localLow + 1]['low']) {
+            } else if (getBlockLow && level == getBlockLow['low']) {
                 background = { background: 'springgreen' }
             }
 
