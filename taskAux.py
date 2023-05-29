@@ -451,7 +451,7 @@ def actionDELTA(blocks, coin, coinDict):
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
     switchMessage = 'nothing'
 
-    switchMessage = side + 'active: ' + str(deltaControl[side]['active']) + ' threshold: ' + str(threshold) + ' ' + str(round(percentDelta1, 3)) + ' ' + str(round(percentDelta2, 3)) + ' total-1: ' +  str(blocks[-1]['total']) + ' total-2 ' + str(blocks[-2]['total']) + ' time: ' + str(currentTimeDelta) + ' fc: ' + str(fastCandles)
+    switchMessage = side + ' active: ' + str(deltaControl[side]['active']) + ' threshold: ' + str(threshold) + ' ' + str(round(percentDelta1, 3)) + ' ' + str(round(percentDelta2, 3)) + ' total-1: ' +  str(blocks[-1]['total']) + ' total-2 ' + str(blocks[-2]['total']) + ' time: ' + str(currentTimeDelta) + ' fc: ' + str(fastCandles)
 
 
 
@@ -460,7 +460,7 @@ def actionDELTA(blocks, coin, coinDict):
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        print('DELTA STALL: ' + switchMessage + ' ' + deltaControl[side]['active'] )
+        print('DELTA STALL: ' + switchMessage + ' ' + str(deltaControl[side]['active']) )
         return 'AT'
 
     elif deltaControl[side]['active'] and threshold:
