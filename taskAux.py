@@ -134,6 +134,12 @@ def startDiscord():
         elif 'check' in msg.content:
             checkRedis.start(user)
             replyText = 'check'
+        elif 'try' in msg.content:
+            try:
+                webhook = SyncWebhook.from_url(DISCORD_WEBHOOK)
+                webhook.send("check")
+            except Exception as e:
+                print('DISCORD WEBHOOK EXCEPION ' + e)
         elif 'elta purge' in msg.content:
             coin = 'BTC'
             dFlow = 'deltaflow_' + coin
@@ -443,23 +449,25 @@ def actionDELTA(blocks, coin, coinDict):
         threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
 
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
+    switchMessage = 'nothing'
+    try:
+        switchMessage = side + ' threshold: ' + str(threshold) + ' ' + str(round(percentDelta1, 3)) + ' ' + str(round(percentDelta2, 3)) + ' total-1: ' +  str(blocks[-1]['total']) + ' total-2' + str(blocks[-2]['total']) + ' time: ' + str(currentTimeDelta) + ' fc: ' + str(fastCandles)
+        print('ACTION DELTA RESULT: ' + switchMessage)
+    except Exception as e:
+        print('ACTION DELTA EXCEPTION: ' + e)
 
-    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 400_000 or currentTimeDelta > 5
+
+
+
+    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 500_000 or currentTimeDelta > 5
     if stallCondition and fastCandles == fcCheck and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         print('DELTA STALL')
         r.set('coinDict', json.dumps(coinDict))
         return 'AT'
-    elif fastCandles == fcCheck:
-        deltaControl[side]['active'] = False
-        print('DELTA FAST RESET')
-        r.set('coinDict', json.dumps(coinDict))
-        return 'AF'
 
-
-
-    if deltaControl[side]['active'] and threshold:
+    elif deltaControl[side]['active'] and threshold:
         print('PLACE DELTA')
 
         MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'deltaswitch')
@@ -472,12 +480,12 @@ def actionDELTA(blocks, coin, coinDict):
         else:
             return 'MF'
 
-    switchMessage = 'nothing'
-    try:
-        switchMessage = side + ' ' + str(percentDelta1) + ' ' + str(percentDelta2) + str(blocks[-1]['total']) + ' ' + str(blocks[-2]['total']) + str(currentTimeDelta) + ' ' + str(fastCandles)
-        print('ACTION DELTA RESULT: ' + switchMessage)
-    except Exception as e:
-        print('ACTION DELTA EXCEPTION: ' + e)
+    elif fastCandles == fcCheck:
+
+        deltaControl[side]['active'] = False
+        print('DELTA FAST RESET')
+        r.set('coinDict', json.dumps(coinDict))
+        return 'AF'
 
 
     return switchMessage
