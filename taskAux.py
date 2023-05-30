@@ -491,12 +491,16 @@ def actionDELTA(blocks, coin, coinDict, mode):
     elif fastCandles == fcCheck:
 
         deltaControl[side]['active'] = False
-        print('DELTA FAST RESET: ' + switchMessage )
+        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+
+        print('DELTA FAST RESET: ' + msg)
         r.set('coinDict', json.dumps(coinDict))
         return 'AF'
 
 
-    return switchMessage
+    msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+
+    return msg
 
 
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
