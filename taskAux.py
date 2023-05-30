@@ -7,6 +7,7 @@ from discord import SyncWebhook
 from datetime import datetime
 from pybit import inverse_perpetual, usdt_perpetual
 
+LOCAL = False
 
 try:
     import config
@@ -477,12 +478,14 @@ def actionDELTA(blocks, coin, coinDict, mode):
 
     elif deltaControl[side]['active'] and threshold:
         print('PLACE DELTA')
+        if LOCAL:
+            return 'MO'
 
         MO = marketOrder(side, deltaControl[side]['fraction'], deltaControl[side]['stop'], deltaControl[side]['profit'], 'deltaswitch')
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+            msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:
@@ -491,14 +494,14 @@ def actionDELTA(blocks, coin, coinDict, mode):
     elif fastCandles == fcCheck:
 
         deltaControl[side]['active'] = False
-        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
 
         print('DELTA FAST RESET: ' + msg)
         r.set('coinDict', json.dumps(coinDict))
         return 'AF'
 
 
-    msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+    msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
 
     return msg
 
