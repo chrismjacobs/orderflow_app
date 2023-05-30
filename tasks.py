@@ -573,7 +573,7 @@ def addDeltaBlock(units, blocks, mode, coin):
     switch = False
 
     if coin == 'BTC' and 'block' in mode:
-        switch = actionDELTA(blocks, coin, coinDict)
+        switch = actionDELTA(blocks, coin, coinDict, mode)
 
 
     ''' BLOCK DATA '''
@@ -1000,6 +1000,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
                     percentBlock = deltablocks[-1]['delta'] == deltaCount or deltablocks[-1]['delta'] == -deltaCount #100_000
 
                     if percentBlock:
+                        print('MODE CHANGE')
                         mode = 'deltablock'
 
                     currentCandle = addDeltaBlock(flow, deltablocks, mode, coin)

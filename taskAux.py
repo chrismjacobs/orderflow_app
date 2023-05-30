@@ -390,7 +390,19 @@ def marketOrder(side, fraction, stop, profit, mode):
     return True
 
 
-def actionDELTA(blocks, coin, coinDict):
+def getSwitchMessage(SIDE, ACTIVE, THD, PD1, PD2, B1, B2, CTD, FC):
+
+    switchMessage = 'nothing'
+
+    try:
+        switchMessage = SIDE + ' Active: ' + str(ACTIVE) + ' Threshold: ' + str(THD) + ' ' + str(round(PD1, 3)) + ' ' + str(round(PD2, 3)) + ' total-1: ' +  str(B1) + ' total-2 ' + str(B2) + ' time: ' + str(CTD) + ' fc: ' + str(FC)
+    except Exception as e:
+        print('SWITCH MESSAGE ' + e)
+
+    return switchMessage
+
+
+def actionDELTA(blocks, coin, coinDict, mode):
 
     deltaControl = coinDict[coin]['deltaswitch']
 
@@ -419,6 +431,8 @@ def actionDELTA(blocks, coin, coinDict):
         side = 'Buy'
     else:
         return False
+
+    print('ACTION DELTA CHECK: ' + mode + ' ' + str(deltaControl[side]['swing']) + ' ' + str(deltaControl[side]['active']) )
 
     fastCandles = 0
 
@@ -449,9 +463,6 @@ def actionDELTA(blocks, coin, coinDict):
         threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
 
     # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
-    switchMessage = 'nothing'
-
-    switchMessage = side + ' Active: ' + str(deltaControl[side]['active']) + ' Threshold: ' + str(threshold) + ' ' + str(round(percentDelta1, 3)) + ' ' + str(round(percentDelta2, 3)) + ' total-1: ' +  str(blocks[-1]['total']) + ' total-2 ' + str(blocks[-2]['total']) + ' time: ' + str(currentTimeDelta) + ' fc: ' + str(fastCandles)
 
 
 
@@ -460,7 +471,8 @@ def actionDELTA(blocks, coin, coinDict):
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        print('DELTA STALL: ' + switchMessage + ' ' + str(deltaControl[side]['active']) )
+        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+        print('DELTA STALL: ' + msg)
         return 'AT'
 
     elif deltaControl[side]['active'] and threshold:
@@ -470,7 +482,7 @@ def actionDELTA(blocks, coin, coinDict):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = 'Delta Action: ' + side + ' ' +  str(percentDelta1) + ' ' + str(currentTimeDelta)
+            msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:
