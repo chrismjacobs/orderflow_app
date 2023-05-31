@@ -613,8 +613,8 @@
                                 <th scope="col">Buys</th>
 
                                 <th scope="col" style="width:2%">High</th>
-                                <th scope="col" style="width:2%">Low</th>
                                 <th scope="col" style="width:2%">Close</th>
+                                <th scope="col" style="width:2%">Low</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -627,8 +627,9 @@
                                     <td  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
                                     <td  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                     <td :style="getLevel(item.high)"> [[item.high]]</td>
+                                    <td :style="getLevel(item.close, item.high, item.low, getPercent(item.delta, item.total))">[[item.close]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
-                                    <td :style="getLevel(item.close)">[[item.close]]</td>
+
                                 </tr>
                                         <template v-if="showCandle == key">
                                             <tr>
@@ -1612,9 +1613,28 @@ let vue = new Vue({
             }
 
         },
-        getLevel: function (level) {
+        getLevel: function (level, high, low, percent) {
+
+            if (high && low) {
+                let background = { }
+                if (level == high && level == low) {
+                    background['color'] = 'white'
+                } else if (level == high && percent < 0) {
+                    background['color'] = 'yellow'
+                } else if (level == low && percent > 0) {
+                    background['color'] = 'orange'
+                } else if (level == high && percent > 0) {
+                    background['color'] = 'red'
+                } else if (level == low && percent < 0 ) {
+                    background['color'] = 'green'
+                }
+                return background
+            }
+
+            // high and low variable only passed for close
 
             let background = { background: null }
+
             if (this.deltaswitchOBJ['Sell']['price'] > 0) {
                 if (level > this.deltaswitchOBJ['Sell']['price']) {
                     background = { background: 'firebrick' }
