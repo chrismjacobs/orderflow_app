@@ -564,16 +564,11 @@ def addBlock(units, blocks, mode, coin):
 
     return newCandle
 
-def addDeltaBlock(units, blocks, mode, coin):
+def addDeltaBlock(units, blocks, deltaCount, coin):
 
     # units == flow
 
     coinDict = json.loads(r.get('coinDict'))
-
-    switch = False
-
-    if coin == 'BTC' and 'block' in mode:
-        switch = actionDELTA(blocks, coin, coinDict, mode)
 
 
     ''' BLOCK DATA '''
@@ -585,12 +580,14 @@ def addDeltaBlock(units, blocks, mode, coin):
     price = units[-1]['streamPrice']
 
     ## if just one block than that is the current candle
-    ## last block is the previous one
-    ## but if its the start of the day then we need to get Historical last block
+    ## if last candle is not filled then get previous candle
 
     if len(blocks) > 1:
+        lastCandle = blocks[-1]
+        lastCandleisBlock = lastCandle['delta'] == deltaCount or lastCandle['delta'] == -deltaCount
 
-        lastCandle = blocks[-2] # ignore last unit which is the current one
+        if not lastCandleisBlock:
+            lastCandle = blocks[-2] # ignore last unit which is the current one
 
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
@@ -611,8 +608,12 @@ def addDeltaBlock(units, blocks, mode, coin):
 
     priceList = []
 
+    tradecount = 0
+
     for d in units:
         # print('BLOCK LOOP', d)
+
+        tradecount += d['tradecount']
 
         if d['side'] == 'Buy':
             buyCount += d['size']
@@ -631,6 +632,14 @@ def addDeltaBlock(units, blocks, mode, coin):
     delta = buyCount - sellCount
     priceDelta = price - newOpen
 
+    switch = False
+
+
+    newCandleisBlock = delta == deltaCount or delta == -deltaCount
+
+    if coin == 'BTC' and newCandleisBlock:
+        switch = actionDELTA(blocks, coin, coinDict)
+
     newDeltaCandle = {
         'trade_time_ms' : newClose,
         'timestamp' : str(units[0]['timestamp']),
@@ -644,7 +653,8 @@ def addDeltaBlock(units, blocks, mode, coin):
         'sells' : sellCount,
         'delta' : delta,
         'total' : buyCount + sellCount,
-        'switch' : switch
+        'switch' : switch,
+        'tradecount' : tradecount
     }
 
     # if sellCount < 0 and 'block' in mode:
@@ -965,7 +975,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
         if sellUnit['size'] > 1:
             deltaflow.append(sellUnit)
 
-        currentCandle = addDeltaBlock(deltaflow, deltablocks, 'deltamode', coin)
+        currentCandle = addDeltaBlock(deltaflow, deltablocks, deltaCount, coin)
         deltablocks.append(currentCandle)
 
         r.set('deltablocks_' + coin, json.dumps(deltablocks))
@@ -988,26 +998,21 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             # replace current candle with completed candle
             dcount = 0
             for flow in deltaStatus['deltaflowList']:
-                print('DeltaFlowList ' + str(dcount) + ' ' + json.dumps(flow))
+                for f in flow:
+                    print('DeltaFlowList ' + str(dcount) + ' ' + f['side'] + ' ' + str(f['size']))
+
+
                 if deltaStatus['deltaflowList'].index(flow) == 0:
-                    ### replace first completed block
+
                     print('ADD BLOCK ZERO')
-                    newCandle = addDeltaBlock(flow, deltablocks, 'deltablock', coin)
+
+                    newCandle = addDeltaBlock(flow, deltablocks, deltaCount, coin)
+                    ### replace last block (unfillled becomes filled)
                     deltablocks[-1] = newCandle
 
                 else:
 
-                    mode = 'deltamode'
-
-
-                    percentBlock = deltablocks[-1]['delta'] == deltaCount or deltablocks[-1]['delta'] == -deltaCount #100_000
-
-                    if percentBlock:
-                        mode = 'deltablock'
-
-                    print('ADD BLOCK FROM LIST: ' + mode)
-
-                    currentCandle = addDeltaBlock(flow, deltablocks, mode, coin)
+                    currentCandle = addDeltaBlock(flow, deltablocks, deltaCount, coin)
                     deltablocks.append(currentCandle)
                     if deltaStatus['deltaflowList'].index(flow) == len(deltaStatus['deltaflowList']) - 1:
                         # reset deltaflow - the last delta block
@@ -1021,12 +1026,11 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
         else: # add the unit to the delta flow
 
-            # print('ADD DELTA UNIT', len(deltablocks), len(deltaflow))
+            print('ADD DELTA UNIT') # len(deltablocks), len(deltaflow)
 
             # update current candle with new unit data
-            currentCandle = addDeltaBlock(deltaflow, deltablocks, 'deltamode', coin)
-            LastIndex = len(deltablocks) - 1
-            deltablocks[LastIndex] = currentCandle
+            currentCandle = addDeltaBlock(deltaflow, deltablocks, deltaCount, coin)
+            deltablocks[-1] = currentCandle
             r.set('deltablocks_' + coin, json.dumps(deltablocks))
             r.set('deltaflow_' + coin, json.dumps(deltaflow))
 
@@ -1439,7 +1443,7 @@ def handle_trade_message(msg):
     if deltaControl['fcCheck'] > 0:
         deltaCount = deltaControl['block']
         if LOCAL:
-            deltaCount = 100000
+            deltaCount = 10000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
 
     print('LOG DELTA')

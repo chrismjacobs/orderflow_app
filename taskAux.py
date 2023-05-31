@@ -403,7 +403,7 @@ def getSwitchMessage(SIDE, ACTIVE, THD, PD1, PD2, B1, B2, CTD, FC):
     return switchMessage
 
 
-def actionDELTA(blocks, coin, coinDict, mode):
+def actionDELTA(blocks, coin, coinDict):
 
     deltaControl = coinDict[coin]['deltaswitch']
 
@@ -431,9 +431,9 @@ def actionDELTA(blocks, coin, coinDict, mode):
     elif deltaControl['Buy']['swing'] == True:
         side = 'Buy'
     else:
-        return False
+        return 'NO SIDE'
 
-    print('ACTION DELTA CHECK: ' + mode + ' ' + str(deltaControl[side]['swing']) + ' ' + str(deltaControl[side]['active']) )
+    print('ACTION DELTA CHECK: ' + ' ' + str(deltaControl[side]['swing']) + ' ' + str(deltaControl[side]['active']) )
 
     fastCandles = 0
 
@@ -472,7 +472,7 @@ def actionDELTA(blocks, coin, coinDict, mode):
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-1]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
         print('DELTA STALL: ' + msg)
         return 'AT'
 
@@ -580,7 +580,7 @@ def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
         MO = marketOrder(side, volumeControl[side]['fraction'], volumeControl[side]['stop'], volumeControl[side]['profit'], 'volswitch')
 
         if MO:
-            resetCoinDict(coinDict, side, 'volswtich')
+            resetCoinDict(coinDict, side, 'volswitch')
             msg = 'Volume Action: ' + volumeControl['side'] + ' ' +  str(percentDelta)
             print('MARKET MESSAGE ' + msg)
         else:
