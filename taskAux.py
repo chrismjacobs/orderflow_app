@@ -391,19 +391,19 @@ def marketOrder(side, fraction, stop, profit, mode):
     return True
 
 
-def getSwitchMessage(SIDE, ACTIVE, THD, PD1, PD2, B1, B2, CTD, FC):
+def getSwitchMessage(SIDE, ACTIVE, THD, PD, B1, B2, CTD, FC):
 
     switchMessage = 'nothing'
 
     try:
-        switchMessage = SIDE + ' Active: ' + str(ACTIVE) + ' Threshold: ' + str(THD) + ' ' + str(round(PD1, 3)) + ' ' + str(round(PD2, 3)) + ' total-1: ' +  str(B1) + ' total-2 ' + str(B2) + ' time: ' + str(CTD) + ' fc: ' + str(FC)
+        switchMessage = SIDE + ' Active: ' + str(ACTIVE) + ' Threshold: ' + str(THD) + ' PDs: ' + json.dumps(PD) + ' total-1: ' +  str(B1) + ' total-2 ' + str(B2) + ' time: ' + str(CTD) + ' fc: ' + str(FC)
     except Exception as e:
         print('SWITCH MESSAGE ' + e)
 
     return switchMessage
 
 
-def actionDELTA(blocks, coin, coinDict):
+def actionDELTA(blocks, newCandle, coin, coinDict):
 
     deltaControl = coinDict[coin]['deltaswitch']
 
@@ -435,48 +435,64 @@ def actionDELTA(blocks, coin, coinDict):
 
     print('ACTION DELTA CHECK: ' + ' ' + str(deltaControl[side]['swing']) + ' ' + str(deltaControl[side]['active']) )
 
-    fastCandles = 0
+
 
     fcCheck = deltaControl['fcCheck']
 
-    currentTimeDelta = 0
+    currentTimeDelta = newCandle['time_delta']
 
     count = 1
 
-    tds = []
-    for b in blocks[-(fcCheck+1):]:  ## examine candles leading up to current
-        t = b['time_delta']/1000
+    activeRecent = False
 
-        # first candle recorded next 7 candles appended
-        if count == 8:
-            currentTimeDelta = t
-        else:
-            tds.append(t)
-            if t < 5:
-                fastCandles += 1
+    fastCandles = 0
+    tds = []
+    for b in blocks[-(fcCheck):]:  ## examine candles leading up to current
+        t = b['time_delta']/1000
+        tds.append(t)
+        if t < 5:
+            fastCandles += 1
+        if b['switch'] == 'ATC' or b['switch'] == 'ATT':
+            activeRecent = True
         count += 1
 
-    percentDelta1 = blocks[-1]['delta']/blocks[-1]['total']
-    percentDelta2 = blocks[-2]['delta']/blocks[-2]['total']
 
-    threshold = percentDelta1 >= 0.99 and percentDelta2 >= 0.99
+    percentDelta0 = newCandle['delta']/newCandle['total']  #current block
+    percentDelta1 = blocks[-1]['delta']/blocks[-1]['total']  #last block
+    percentDelta2 = blocks[-2]['delta']/blocks[-2]['total']  #last blocks
+    percentDelta3 = blocks[-3]['delta']/blocks[-3]['total']  #last blocks
+
+    pds = [round(percentDelta0, 3), round(percentDelta1, 3), round(percentDelta2, 3), round(percentDelta3, 3) ]
+
+
+    thresholdMarket = percentDelta1 >= 0.99 and percentDelta0 >= 0.99
+    thresholdActivate = percentDelta2 < 0 and percentDelta3 < 0
+
+
     if side == 'Sell':
-        threshold = percentDelta1 <= -0.99 and percentDelta2 <= -0.99
-
-    # print('delta pass:  FC=' + str(fastCandles) + ' Prev 7' + json.dumps(tds) + ' Active: ' + str(deltaControl[side]['active'])  + ' Current Time: ' + str(currentTimeDelta) + ' %D ' + str(percentDelta1) + ' Threshold: ' + str(threshold))
-
+        thresholdMarket = percentDelta1 <= -0.99 and percentDelta0 <= -0.99
+        thresholdActivate = percentDelta2 > 0 and percentDelta3 > 0
 
 
-    stallCondition = blocks[-1]['total'] + blocks[-2]['total'] > 500_000 or currentTimeDelta > 5
-    if stallCondition and fastCandles == fcCheck and deltaControl[side]['active'] == False:
+    stallCondition = blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
+
+    if currentTimeDelta > 5 and fastCandles == fcCheck and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
-        print('DELTA STALL: ' + msg)
-        return 'AT'
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
+        print('DELTA STALL TIME: ' + msg)
+        return 'ATT'
 
-    elif deltaControl[side]['active'] and threshold:
+    elif stallCondition and fastCandles == fcCheck and deltaControl[side]['active'] == False:
+        ## delta action has stalled: lookout is active
+        deltaControl[side]['active'] = True
+        r.set('coinDict', json.dumps(coinDict))
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
+        print('DELTA STALL CONDITION: ' + msg)
+        return 'ATC'
+
+    elif deltaControl[side]['active'] and thresholdMarket:
         print('PLACE DELTA')
         if LOCAL:
             return 'MO'
@@ -485,23 +501,23 @@ def actionDELTA(blocks, coin, coinDict):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
+            msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:
             return 'MF'
 
-    elif fastCandles == fcCheck:
+    elif fastCandles == fcCheck and not activeRecent:
 
         deltaControl[side]['active'] = False
-        msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
 
         print('DELTA FAST RESET: ' + msg)
         r.set('coinDict', json.dumps(coinDict))
         return 'AF'
 
 
-    msg = getSwitchMessage(side, deltaControl[side]['active'], threshold, percentDelta1, percentDelta2, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
+    msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[-1]['total'], blocks[-2]['total'], currentTimeDelta, fastCandles)
 
     return msg
 

@@ -635,11 +635,6 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
     switch = False
 
 
-    newCandleisBlock = delta == deltaCount or delta == -deltaCount
-
-    if coin == 'BTC' and newCandleisBlock:
-        switch = actionDELTA(blocks, coin, coinDict)
-
     newDeltaCandle = {
         'trade_time_ms' : newClose,
         'timestamp' : str(units[0]['timestamp']),
@@ -657,12 +652,10 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
         'tradecount' : tradecount
     }
 
-    # if sellCount < 0 and 'block' in mode:
-    #     print('SELL COUNT LESS THAN ZERO')
-    # if buyCount < 0  and 'block' in mode:
-    #     print('BUY COUNT LESS THAN ZERO')
+    newCandleisBlock = delta == deltaCount or delta == -deltaCount
 
-    # print('NEW DELTA CANDLE ' + str(sellCount) + ' // ' + str(buyCount))
+    if coin == 'BTC' and newCandleisBlock:
+        newDeltaCandle['switch'] = actionDELTA(blocks, newDeltaCandle, coin, coinDict)
 
     return newDeltaCandle
 
