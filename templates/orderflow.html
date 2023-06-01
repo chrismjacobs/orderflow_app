@@ -608,13 +608,16 @@
                                 <th scope="col">Sec</th>
                                 <th scope="col">Vol</th>
                                 <th scope="col"> %</th>
-
-                                <th scope="col">Sells</th>
-                                <th scope="col">Buys</th>
-
                                 <th scope="col" style="width:2%">High</th>
                                 <th scope="col" style="width:2%">Close</th>
                                 <th scope="col" style="width:2%">Low</th>
+
+                                <th scope="col" align="right">DELTA</th>
+                                <th scope="col" >TC</th>
+                                <th scope="col" >Sells</th>
+                                <th scope="col" >Buys</th>
+
+
                             </tr>
                             </thead>
                             <tbody>
@@ -624,11 +627,15 @@
                                     <td :style="timeStyleDelta(item.time_delta, key)">[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getDeltaVolumeBlockStyle(item, key, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
-                                    <td  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
-                                    <td  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
                                     <td :style="getLevel(item.high)"> [[item.high]]</td>
                                     <td :style="getLevel(item.close, item.high, item.low, getPercent(item.delta, item.total))">[[item.close]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
+                                    <td align="right"> <span v-if="item.delta == 100000 || item.delta == -100000"> -- </span> <span v-else> [[item.delta]] </span> </td>
+                                    <td  >[[item.tradecount]]</td>
+                                    <td  >[[roundData(item.sells)]]</td>
+                                    <td  >[[roundData(item.buys)]]</td>
+
+
 
                                 </tr>
                                         <template v-if="showCandle == key">
@@ -1603,8 +1610,10 @@ let vue = new Vue({
             let colorOBJ = {
                 MO : 'orange',
                 MF : 'red',
-                SW : 'springgreen',
+                SW : '#CCCCFF',
                 AT : 'aqua',
+                ATT : 'aqua',
+                ATC : 'springgreen',
                 AF : 'hotpink'
             }
 
