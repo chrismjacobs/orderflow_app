@@ -145,6 +145,7 @@ def startDiscord():
             coin = 'BTC'
             dFlow = 'deltaflow_' + coin
             dBlocks = 'deltablocks_' + coin
+            replyText = 'purge action'
             r.set(dFlow, json.dumps([]))
             r.set(dBlocks, json.dumps([]))
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
@@ -433,8 +434,6 @@ def actionDELTA(blocks, newCandle, coin, coinDict):
     else:
         return 'NO SIDE'
 
-    print('ACTION DELTA CHECK: ' + ' ' + str(deltaControl[side]['swing']) + ' ' + str(deltaControl[side]['active']) )
-
 
 
     fcCheck = deltaControl['fcCheck']
@@ -456,6 +455,10 @@ def actionDELTA(blocks, newCandle, coin, coinDict):
             activeRecent = True
         count += 1
 
+    try:
+        print('ACTION DELTA CHECK: ' + ' SWING:' + str(deltaControl[side]['swing']) + ' ACTIVE:' + str(deltaControl[side]['active']) + ' TD:' + str(currentTimeDelta) + ' FC:' + str(fastCandles) )
+    except:
+        print('ACTION MESSAGE FAIL')
 
     percentDelta0 = newCandle['delta']/newCandle['total']  #current block
     percentDelta1 = blocks[-1]['delta']/blocks[-1]['total']  #last block
@@ -475,6 +478,8 @@ def actionDELTA(blocks, newCandle, coin, coinDict):
 
 
     stallCondition = blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
+
+
 
     if currentTimeDelta > 5 and fastCandles == fcCheck and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
