@@ -438,7 +438,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict):
 
     fcCheck = deltaControl['fcCheck']
 
-    currentTimeDelta = newCandle['time_delta']
+    currentTimeDelta = newCandle['time_delta']/1000
 
     count = 1
 
@@ -456,7 +456,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict):
         count += 1
 
     try:
-        print('ACTION DELTA CHECK: ' + ' SWING:' + str(deltaControl[side]['swing']) + ' ACTIVE:' + str(deltaControl[side]['active']) + ' TD:' + str(currentTimeDelta) + ' FC:' + str(fastCandles) )
+        print('ACTION DELTA CHECK: ' + side + ' SWING:' + str(deltaControl[side]['swing']) + ' ACTIVE:' + str(deltaControl[side]['active']) + ' TD:' + str(currentTimeDelta) + ' FC:' + str(fastCandles) )
     except:
         print('ACTION MESSAGE FAIL')
 
