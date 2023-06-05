@@ -454,7 +454,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
     blockList = blocks[-(fcCheck):]
     ### if last candle is not block then don't count it
     if not lastCandleisBlock:
-        blockList = blocks[-(fcCheck +1) : -2]
+        blockList = blocks[-(fcCheck +1) : -1]
 
 
     for b in blockList:  ## examine candles leading up to current
