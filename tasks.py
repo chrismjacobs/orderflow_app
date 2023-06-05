@@ -22,7 +22,7 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    REDIS_URL = config.REDIS_URL
+    REDIS_URL = config.REDIS_URL_TEST
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
@@ -582,6 +582,8 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
     ## if just one block than that is the current candle
     ## if last candle is not filled then get previous candle
 
+    lastCandleisBlock = True
+
     if len(blocks) > 1:
         lastCandle = blocks[-1]
         lastCandleisBlock = lastCandle['delta'] == deltaCount or lastCandle['delta'] == -deltaCount
@@ -655,7 +657,7 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
     newCandleisBlock = delta == deltaCount or delta == -deltaCount
 
     if coin == 'BTC' and newCandleisBlock:
-        newDeltaCandle['switch'] = actionDELTA(blocks, newDeltaCandle, coin, coinDict)
+        newDeltaCandle['switch'] = actionDELTA(blocks, newDeltaCandle, coin, coinDict, lastCandleisBlock)
 
     return newDeltaCandle
 
@@ -994,8 +996,8 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
                 for f in flow:
                     print('DeltaFlowList ' + str(dcount) + ' ' + f['side'] + ' ' + str(f['size']))
 
-
-                if deltaStatus['deltaflowList'].index(flow) == 0:
+                zero = deltaStatus['deltaflowList'].index(flow)
+                if zero == 0:
 
                     print('ADD BLOCK ZERO')
 
