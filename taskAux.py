@@ -449,6 +449,9 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
     activeRecent = False
 
     fastCandles = 0
+    posDelta = 0
+    negDelta = 0
+
     tds = []
 
     blockList = blocks[-(fcCheck):]
@@ -464,6 +467,10 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
             fastCandles += 1
         if b['switch'] == 'ATC' or b['switch'] == 'ATT':
             activeRecent = True
+        if b['delta']/b['total'] < -0.5:
+            negDelta += 1
+        if b['delta']/b['total'] > 0.5:
+            posDelta += 1
         count += 1
 
     try:
@@ -491,20 +498,20 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
     pds = [round(percentDelta0, 3), round(percentDelta1, 3), round(percentDelta2, 3), round(percentDelta3, 3) ]
 
 
-    thresholdMarket = percentDelta1 >= 0.99 and percentDelta0 >= 0.99
-    thresholdActivate = percentDelta2 < 0 and percentDelta3 < 0
+    thresholdMarket = percentDelta0 >= 0.99 and percentDelta1 >= 0.99
+    thresholdActivate = negDelta  >= 2
 
 
     if side == 'Sell':
-        thresholdMarket = percentDelta1 <= -0.99 and percentDelta0 <= -0.99
-        thresholdActivate = percentDelta2 > 0 and percentDelta3 > 0
+        thresholdMarket = percentDelta0 <= -0.99 and percentDelta1 <= -0.99
+        thresholdActivate = posDelta >= 2
 
 
     stallCondition = blocks[lc2]['total'] + newCandle['total'] > 500_000 and thresholdActivate
 
 
 
-    if currentTimeDelta > 5 and fastCandles == fcCheck and deltaControl[side]['active'] == False:
+    if currentTimeDelta > 5 and thresholdActivate and fastCandles == fcCheck and deltaControl[side]['active'] == False:
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
