@@ -270,7 +270,8 @@ def taskend():
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
-    print('TRADING VIEW ACTION: ' + request.data)
+    print(json.loads(request.data))
+    print('TRADING VIEW ACTION: ')
     data = json.loads(request.data)
     r.set('tv', json.dumps(data))
 
