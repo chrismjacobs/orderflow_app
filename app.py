@@ -15,7 +15,7 @@ import datetime as dt
 
 try:
     import config
-    REDIS_URL = config.REDIS_URL
+    REDIS_URL = config.REDIS_URL_TEST
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     RENDER_API = config.RENDER_API
     RENDER_SERVICE = config.RENDER_SERVICE
@@ -185,13 +185,19 @@ def serviceAction():
     url = "https://api.render.com/v1/services/" + RENDER_SERVICE
 
     headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
+    # payload = {"clearCache": "do_not_clear"}
 
     if action != 'check':
         surl = url + "/" + action
 
         response = requests.post(surl, headers=headers)
 
+        # if action == 'deploy':
+        #     response = requests.post(url, json=payload, headers=headers)
+
+
         print(response.text)
+
 
     sResponse = requests.get(url, headers=headers)
     suspended = json.loads(sResponse.text)['suspended']
@@ -264,9 +270,9 @@ def taskend():
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
+    print('TRADING VIEW ACTION: ' + request.data)
     data = json.loads(request.data)
     r.set('tv', json.dumps(data))
-    print('TRADING VIEW ACTION')
 
     return redirect('/')
 
