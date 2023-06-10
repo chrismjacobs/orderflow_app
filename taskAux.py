@@ -314,9 +314,18 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     #stop_loss = getHL(side, price, stop, mode)
 
+    stop_adjust = stop
+
+    try:
+        if stop_adjust < 1:
+            stop_adjust = price*(stop/100)/positionLev
+        if stop_adjust > 100 or stop_adjust < 30:
+            stop_adjust = 70
+    except:
+        print('STOP LOSS Adjust failed')
 
 
-    print('MARKET ORDER ' + str(price))
+    print('MARKET ORDER ' + str(price) + ' sl:' + str(stop_adjust))
 
     limits = {
         'Buy' : -1,
@@ -327,11 +336,11 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     if side == 'Buy':
         take_profit = price + profit
-        stop_loss = price - stop
+        stop_loss = price - stop_adjust
         sideRev = 'Sell'
     if side == 'Sell':
         take_profit = price - profit
-        stop_loss = price + stop
+        stop_loss = price + stop_adjust
         sideRev = 'Buy'
 
     oType = 'Market'
@@ -507,7 +516,10 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
         thresholdActivate = posDelta >= 2
 
 
-    stallCondition = blocks[lc2]['total'] + newCandle['total'] > 500_000 and thresholdActivate
+
+    stallCondition_1candle =  newCandle['total'] > 350_000 and thresholdActivate
+    stallCondition_2candle =  blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
+    stallCondition = stallCondition_1candle or stallCondition_2candle
 
 
 
@@ -516,7 +528,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
         msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc1]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
-        print('DELTA STALL TIME: ' + msg)
+        print('DELTA STALL CONDITION ATT: ' + msg)
         return 'ATT'
 
     elif stallCondition and fastCandles == fcCheck and deltaControl[side]['active'] == False:
@@ -524,7 +536,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
         msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc1]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
-        print('DELTA STALL CONDITION: ' + msg)
+        print('DELTA STALL CONDITION ATC: ' + msg)
         return 'ATC'
 
     elif deltaControl[side]['active'] and thresholdMarket:
