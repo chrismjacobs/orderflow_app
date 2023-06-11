@@ -22,7 +22,7 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    REDIS_URL = config.REDIS_URL_TEST
+    REDIS_URL = config.REDIS_URL
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
@@ -583,10 +583,12 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
     ## if last candle is not filled then get previous candle
 
     lastCandleisBlock = True
+    lastOI = 0
 
     if len(blocks) > 1:
         lastCandle = blocks[-1]
         lastCandleisBlock = lastCandle['delta'] == deltaCount or lastCandle['delta'] == -deltaCount
+        lastOI = lastCandle['oi_close']
 
         if not lastCandleisBlock:
             lastCandle = blocks[-2] # ignore last unit which is the current one
@@ -636,6 +638,10 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
 
     switch = False
 
+    sess = session.latest_information_for_symbol(symbol='BTCUSD')
+    streamOI = sess['result'][0]['open_interest']
+    deltaOI = streamOI - lastOI
+
 
     newDeltaCandle = {
         'trade_time_ms' : newClose,
@@ -651,7 +657,9 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
         'delta' : delta,
         'total' : buyCount + sellCount,
         'switch' : switch,
-        'tradecount' : tradecount
+        'tradecount' : tradecount,
+        'oi_delta': deltaOI,
+        'oi_close': streamOI,
     }
 
     newCandleisBlock = delta == deltaCount or delta == -deltaCount
@@ -1302,10 +1310,10 @@ def compiler(message, pair, coin):
     #     streamAlert(message, 'LAG', coin)
 
     sess = session.latest_information_for_symbol(symbol=pair)
-
+    streamOI = sess['result'][0]['open_interest']
     streamTime = round(float(sess['time_now']), 1)
     streamPrice = float(sess['result'][0]['last_price'])
-    streamOI = sess['result'][0]['open_interest']
+
 
     manageStream(streamTime, streamPrice, streamOI, coin)
 
@@ -1332,7 +1340,6 @@ def compiler(message, pair, coin):
                     'tradecount' : 0,
                     'spread' : {}
     }
-
 
     for x in message:
 

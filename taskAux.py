@@ -12,7 +12,7 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    REDIS_URL = config.REDIS_URL_TEST
+    REDIS_URL = config.REDIS_URL
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
@@ -403,12 +403,12 @@ def marketOrder(side, fraction, stop, profit, mode):
     return True
 
 
-def getSwitchMessage(SIDE, ACTIVE, THD, PD, B1, B2, CTD, FC):
+def getSwitchMessage(SIDE, ACTIVE, THD, PD, BT, CTD, FC):
 
     switchMessage = 'nothing'
 
     try:
-        switchMessage = SIDE + ' Active: ' + str(ACTIVE) + ' Threshold: ' + str(THD) + ' PDs: ' + json.dumps(PD) + ' total-1: ' +  str(B1) + ' total-2 ' + str(B2) + ' time: ' + str(CTD) + ' fc: ' + str(FC)
+        switchMessage = SIDE + ' Active: ' + str(ACTIVE) + ' Threshold: ' + str(THD) + ' PDs: ' + json.dumps(PD) + ' totals: ' +  json.dumps(BT) + ' time: ' + str(CTD) + ' fc: ' + str(FC)
     except Exception as e:
         print('SWITCH MESSAGE ' + e)
 
@@ -520,6 +520,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
     stallCondition_1candle =  newCandle['total'] > 350_000 and thresholdActivate
     stallCondition_2candle =  blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
     stallCondition = stallCondition_1candle or stallCondition_2candle
+    blockTotals = [newCandle['total'], blocks[lc1]['total'], blocks[lc2]['total']]
 
 
 
@@ -527,7 +528,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc1]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blockTotals, currentTimeDelta, fastCandles)
         print('DELTA STALL CONDITION ATT: ' + msg)
         return 'ATT'
 
@@ -535,7 +536,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
         ## delta action has stalled: lookout is active
         deltaControl[side]['active'] = True
         r.set('coinDict', json.dumps(coinDict))
-        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc1]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blockTotals, currentTimeDelta, fastCandles)
         print('DELTA STALL CONDITION ATC: ' + msg)
         return 'ATC'
 
@@ -548,7 +549,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
 
         if MO:
             resetCoinDict(coinDict, side, 'deltaswitch')
-            msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc2]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
+            msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blockTotals, currentTimeDelta, fastCandles)
             print('DELTA ORDER MESSAGE ' + msg)
             return 'MO'
         else:
@@ -557,14 +558,14 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
     elif fastCandles == fcCheck and not activeRecent:
 
         deltaControl[side]['active'] = False
-        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc2]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
+        msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blockTotals, currentTimeDelta, fastCandles)
 
         print('DELTA FAST RESET: ' + msg)
         r.set('coinDict', json.dumps(coinDict))
         return 'AF'
 
 
-    msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blocks[lc2]['total'], blocks[lc2]['total'], currentTimeDelta, fastCandles)
+    msg = getSwitchMessage(side, deltaControl[side]['active'], thresholdMarket, pds, blockTotals, currentTimeDelta, fastCandles)
 
     return msg
 
