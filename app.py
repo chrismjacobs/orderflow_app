@@ -15,7 +15,7 @@ import datetime as dt
 
 try:
     import config
-    REDIS_URL = config.REDIS_URL_TEST
+    REDIS_URL = config.REDIS_URL
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     RENDER_API = config.RENDER_API
     RENDER_SERVICE = config.RENDER_SERVICE
@@ -270,10 +270,40 @@ def taskend():
 
 @app.route("/tradingview", methods=['POST'])
 def tradingview_webhook():
-    print(json.loads(request.data))
     print('TRADING VIEW ACTION: ')
     data = json.loads(request.data)
-    r.set('tv', json.dumps(data))
+
+    if data['code'] != SECRET_KEY:
+        return False
+
+    url = "https://api.render.com/v1/services/" + RENDER_SERVICE
+
+    headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
+    # payload = {"clearCache": "do_not_clear"}
+
+    durl = url + "/deploys?limit=20"
+    dResponse = requests.get(durl, headers=headers)
+    print(json.loads(dResponse.text)[0]['deploy'])
+    status = json.loads(dResponse.text)[0]['deploy']['status']
+
+    sResponse = requests.get(url, headers=headers)
+    suspended = json.loads(sResponse.text)['suspended']
+
+    if suspended == 'suspended':
+        surl = url + "/" + 'resume'
+        response = requests.post(surl, headers=headers)
+        print('TV RESUME ' + response.text)
+
+    elif status == 'live':
+        task = runStream.delay()
+        print('TV STREAM STARTED')
+
+
+
+
+
+
+
 
     return redirect('/')
 
