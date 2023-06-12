@@ -612,6 +612,8 @@
                                 <th scope="col" style="width:2%">Close</th>
                                 <th scope="col" style="width:2%">Low</th>
 
+                                <th scope="col" align="right">OI</th>
+                                <th scope="col" align="right">OI</th>
                                 <th scope="col" align="right">DELTA</th>
                                 <th scope="col" >TC</th>
                                 <th scope="col" >Sells</th>
@@ -630,6 +632,8 @@
                                     <td :style="getLevel(item.high)"> [[item.high]]</td>
                                     <td :style="getLevel(item.close, item.high, item.low, getPercent(item.delta, item.total))">[[item.close]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
+                                    <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
+                                    <td> [[roundData(item.oi_close)]]</td>
                                     <td align="right"> <span v-if="item.delta == 100000 || item.delta == -100000"> -- </span> <span v-else> [[item.delta]] </span> </td>
                                     <td  >[[item.tradecount]]</td>
                                     <td  >[[roundData(item.sells)]]</td>
