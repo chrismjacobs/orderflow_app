@@ -592,6 +592,7 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
 
         if not lastCandleisBlock:
             lastCandle = blocks[-2] # ignore last unit which is the current one
+            lastOI = lastCandle['oi_close']
 
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
