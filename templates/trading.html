@@ -34,7 +34,7 @@
 
                 </div>
 
-            <div class="col" v-if="mobile || showChart">
+            <div class="col" v-if="mobile || showChart" style="display:none">
 
                 <!-- TradingView Widget BEGIN -->
                 <div class="tradingview-widget-container">
@@ -45,146 +45,172 @@
                 <!-- TradingView Widget END -->
             </div>
 
-                <div :class="getTradeDiv()">
+            <div :class="getTradeDiv()"  id="trading lesson notes">
 
-                    <div class="col  list-group p-3 m-2" style="background:orange">
+                <div class="col  list-group p-3 m-2" style="background:orange">
 
-                        <h3 class="mt-3 mb-2"> Checklist </h3>
+                    <h3 class="mt-3 mb-2"> Checklist </h3>
 
 
-                        <ul class="m-1">
-                            <li class="list-group-item list-group-item-dark p-1" v-for="(check, c) in checklist" class="list-group-item">
-                                <div class="row" >
-                                    <div class="col-6">
-                                        [[check]]
-                                    </div>
-                                    <div class="col">
-                                        <button @click="checkChange(c)" :class="getCheckBTN(c)" type="button"> [[ checkBTN[c] ]]</button>
-                                    </div>
+                    <ul class="m-1">
+                        <li class="list-group-item list-group-item-dark p-1" v-for="(check, c) in checklist" class="list-group-item">
+                            <div class="row" >
+                                <div class="col-6">
+                                    [[check]]
                                 </div>
-                            </li>
-                        </ul>
+                                <div class="col">
+                                    <button @click="checkChange(c)" :class="getCheckBTN(c)" type="button"> [[ checkBTN[c] ]]</button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
 
-                    </div>
+                </div>
 
-                    <div class="col list-group p-3 m-2" style="background:grey">
+                <div class="col list-group p-3 m-2" style="background:grey">
 
-                        <h3 class="mt-3 mb-2"> Lessons </h3>
+                    <h3 class="mt-3 mb-2"> Lessons </h3>
 
-                        <ul >
-                            <li class="list-group-item list-group-item-info" v-for="(less, k) in lessons" class="list-group-item">[[less]]</li>
-                        </ul>
-
-
-                    </div>
+                    <ul >
+                        <li class="list-group-item list-group-item-info" v-for="(less, k) in lessons" class="list-group-item">[[less]]</li>
+                    </ul>
 
 
                 </div>
 
 
+            </div>
 
-                <div :class="getTradeDiv()">
 
 
-                    <div class="col m-2" :style="getSideColor()">
+            <div :class="getTradeDiv()">
 
-                        <h3 class="mt-3 mb-2"> Trade </h3>
 
-                        <div class="input-group mb-3">
-                            <button @click="getData('first', 'Buy')" class="btn btn-secondary" type="button" id="button-addon1">Buy</button>
-                            <button @click="getData('first', 'Sell')" class="btn btn-secondary" type="button" id="button-addon1">Sell</button>
-                            <button @click="clearPrice()" class="btn btn-secondary" type="button" id="button-addon1">&#9746</button>
-                            <input type="number" class="form-control" v-model="orderData.first">
-                        </div>
+                <div class="col m-2" :style="getSideColor()">
 
-                        <div class="input-group mb-3">
-                            <button @click="getData('stop')" class="btn btn-secondary" type="button" id="button-addon1">Stop</button>
-                            <input type="number" class="form-control" v-model="orderData.stop">
-                        </div>
+                    <h3 class="mt-3 mb-2"> Trade </h3>
 
-                        <div class="input-group mb-3">
-                            <button @click="getTP()" class="btn btn-secondary" type="button" id="button-addon1">TP</button>
-                            <input type="number" class="form-control" v-model="orderData.profit">
-                        </div>
-
-                        <div class=" mb-3" style="background:white;color:black" >
-                            <button @click="getRR()" class="btn btn-secondary" type="button" id="button-addon1">RR: </button>  <span v-if="mobile"> <br> </span>
-                            <span v-for="(item, key) in orderData.rr"> [[key]] [[item]] &nbsp </span>
-                        </div>
-
-                        <div class="mb-3 mt-3">
-                            <button @click="getOrder('limit')" class="btn btn-info" type="button" id="button-addon1">Order Limit</button>
-                            <button @click="getOrder('market')" class="btn btn-danger" type="button" id="button-addon1">Order Market</button>
-
-                            <button @click="getOrder('instant')" class="btn btn-success" type="button" id="button-addon1">Order Instant</button>
-                            <br>
-                            <br>
-                            <span class = 'text-dark'>
-                                [[ orderData.order.side ]] <br>
-                                Stop: [[ orderData.order.stop_loss ]] <br>
-                                Profit: [[ orderData.order.take_profit ]] <br>
-                                Err: [[ orderData.order.reject_reason ]] <br>
-                            <span>
-                        </div>
-
+                    <div class="input-group mb-3">
+                        <button @click="getData('first', 'Buy')" class="btn btn-secondary" type="button" id="button-addon1">Buy</button>
+                        <button @click="getData('first', 'Sell')" class="btn btn-secondary" type="button" id="button-addon1">Sell</button>
+                        <button @click="clearPrice()" class="btn btn-secondary" type="button" id="button-addon1">&#9746</button>
+                        <input type="number" class="form-control" v-model="orderData.first">
                     </div>
 
-                    <div class="col m-2" style="background:lightgrey">
+                    <div class="input-group mb-3">
+                        <button @click="getData('stop')" class="btn btn-secondary" type="button" id="button-addon1">Stop</button>
+                        <input type="number" class="form-control" v-model="orderData.stop">
+                    </div>
 
-                        <h3 class="mt-3 mb-2"> Settings </h3>
+                    <div class="input-group mb-3">
+                        <button @click="getTP()" class="btn btn-secondary" type="button" id="button-addon1">TP</button>
+                        <input type="number" class="form-control" v-model="orderData.profit">
+                    </div>
 
-                        <div class="input-group mb-3 mt-2">
-                            <button @click="setTime(5)" class="btn btn-secondary" type="button" id="button-addon1">&#128337 &#8593</button>
-                            <button @click="setTime(-5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
-                            <input type="number" class="form-control" v-model="orderData.minutes">
-                        </div>
+                    <div class=" mb-3" style="background:white;color:black" >
+                        <button @click="getRR()" class="btn btn-secondary" type="button" id="button-addon1">RR: </button>  <span v-if="mobile"> <br> </span>
+                        <span v-for="(item, key) in orderData.rr"> [[key]] [[item]] &nbsp </span>
+                    </div>
 
-                        <div class="input-group mb-3">
-                            <button @click="setLadder(1)" class="btn btn-secondary" type="button" id="button-addon1">Ladder &#8593</button>
-                            <button @click="setLadder(-1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
-                            <input type="number" class="form-control" v-model="orderData.ladder">
-                        </div>
+                    <div class="mb-3 mt-3">
+                        <button @click="getOrder('limit')" class="btn btn-info" type="button" id="button-addon1">Order Limit</button>
+                        <button @click="getOrder('market')" class="btn btn-danger" type="button" id="button-addon1">Order Market</button>
 
-                        <div class="input-group mb-3">
-                            <button @click="setSpread(0.5)" class="btn btn-secondary" type="button" id="button-addon1">Spread &#8593</button>
-                            <button @click="setSpread(-0.5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
-                            <input type="number" class="form-control" v-model="orderData.spread">
-                        </div>
+                        <button @click="getOrder('instant')" class="btn btn-success" type="button" id="button-addon1">Order Instant</button>
+                        <br>
+                        <br>
+                        <span class = 'text-dark'>
+                            [[ orderData.order.side ]] <br>
+                            Stop: [[ orderData.order.stop_loss ]] <br>
+                            Profit: [[ orderData.order.take_profit ]] <br>
+                            Err: [[ orderData.order.reject_reason ]] <br>
+                        <span>
+                    </div>
 
-                        <div class="input-group mb-3">
-                            <button @click="setRisk(0.1)" class="btn btn-secondary" type="button" id="button-addon1">Risk &#8593</button>
-                            <button @click="setRisk(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
-                            <input type="number" class="form-control" v-model="orderData.risk">
-                        </div>
-
-                        <div class="input-group mb-3">
-                            <button @click="getData('leverage', 1)" class="btn btn-secondary" type="button" id="button-addon1">Lev</button>
-                            <button @click="getData('leverage', 0)" :stlye="getLevStyle()" class="btn btn-secondary" type="button" id="button-addon1">Set</button>
-                            <input type="number" class="form-control" v-model="orderData.leverage">
-                        </div>
-
-                        <div class="input-group mb-3">
-                            <button @click="setFraction(0.1)" class="btn btn-secondary" type="button" id="button-addon1">% &#8593</button>
-                            <button @click="setFraction(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
-                            <input type="number" class="form-control" v-model="orderData.fraction">
-                        </div>
-
-                        <div class="input-group mb-3">
-                            <button @click="getData('funds')" class="btn btn-secondary" type="button" id="button-addon1">BTC</button>
-                            <input type="number" class="form-control" v-model="btc">
-                        </div>
-
-                        <div class="input-group mb-3">
-                            <button @click="getData('size')" class="btn btn-secondary" type="button" id="button-addon1">Position</button>
-                            <button @click="getData('cancel')" class="btn btn-secondary" type="button" id="button-addon1">Cancel</button>
-                            <br>
-                            <input type="text" class="form-control" v-model="orderData.position">
-                        </div>
-
-
+                    <div class="input-group mb-3">
+                        <button class="btn btn-secondary" type="button" id="button-addon1">Auth Code</button>
+                        <input type="number" class="form-control" v-model="passcode">
                     </div>
 
                 </div>
+
+                <div class="col m-2" style="background:lightgrey">
+
+                    <h3 class="mt-3 mb-2"> Settings </h3>
+
+                    <div class="input-group mb-3 mt-2">
+                        <button @click="setTime(5)" class="btn btn-secondary" type="button" id="button-addon1">&#128337 &#8593</button>
+                        <button @click="setTime(-5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                        <input type="number" class="form-control" v-model="orderData.minutes">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="setLadder(1)" class="btn btn-secondary" type="button" id="button-addon1">Ladder &#8593</button>
+                        <button @click="setLadder(-1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                        <input type="number" class="form-control" v-model="orderData.ladder">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="setSpread(0.5)" class="btn btn-secondary" type="button" id="button-addon1">Spread &#8593</button>
+                        <button @click="setSpread(-0.5)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                        <input type="number" class="form-control" v-model="orderData.spread">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="setRisk(0.1)" class="btn btn-secondary" type="button" id="button-addon1">Risk &#8593</button>
+                        <button @click="setRisk(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                        <input type="number" class="form-control" v-model="orderData.risk">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="getData('leverage', 1)" class="btn btn-secondary" type="button" id="button-addon1">Lev</button>
+                        <button @click="getData('leverage', 0)" :stlye="getLevStyle()" class="btn btn-secondary" type="button" id="button-addon1">Set</button>
+                        <input type="number" class="form-control" v-model="orderData.leverage">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="setFraction(0.1)" class="btn btn-secondary" type="button" id="button-addon1">% &#8593</button>
+                        <button @click="setFraction(-0.1)" class="btn btn-secondary" type="button" id="button-addon1">&#8595</button>
+                        <input type="number" class="form-control" v-model="orderData.fraction">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="getData('funds')" class="btn btn-secondary" type="button" id="button-addon1">BTC</button>
+                        <input type="number" class="form-control" v-model="btc">
+                    </div>
+
+                    <h3 class="mt-3 mb-2"> Manage [[manageData.response]]</h3>
+
+                    <div class="input-group mb-3">
+                        <button @click="manageOrder('size')" class="btn btn-secondary" type="button" id="button-addon1">Get Position</button>
+                        <button @click="manageOrder('cancel')" class="btn btn-secondary" type="button" id="button-addon1">Cancel Orders</button>
+
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="manageOrder('breakeven')" class="btn btn-secondary" type="button" id="button-addon1">Break Even</button>
+                        <br>
+                        <input type="number" class="form-control" v-model="manageData.breakeven">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="manageOrder('limitexit')" class="btn btn-secondary" type="button" id="button-addon1">Limit Exit</button>
+                        <input type="number" class="form-control" v-model="manageData.limitexit">
+                        <button @click="manageOrder('fullexit')" class="btn btn-secondary" type="button" id="button-addon1">Full Exit</button>
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button @click="manageOrder('limitset')" class="btn btn-secondary" type="button" id="button-addon1">TP Set</button>
+                        <br>
+                        <input type="number" class="form-control" v-model="manageData.limitfraction">
+                        <input type="number" class="form-control" v-model="manageData.limitprice">
+                        <br> <h3> CHECK MONITOR IS WORKING 'try' </h3>
+                    </div>
+
+
+                </div>
+
+            </div>
 
 
 
@@ -235,7 +261,7 @@ let vue = new Vue({
             this.checkBTN[c] = false
         }
         console.log(this.checkBTN)
-        this.tradingView()
+        //this.tradingView()
     },
     data: {
         checklist:{
@@ -277,43 +303,52 @@ let vue = new Vue({
             profit: 0,
             rr: {},
             funds: 0,
-            order: '...',
-            position : null
+            order: '...'
+        },
+        manageData: {
+            breakeven: 10,
+            limitexit: 0.5,
+            limitfraction: 0.5,
+            limitprice: 100,
+            response: '.....'
         },
         btc: 0,
         report: report,
         mobile: mobile,
         showChart: false,
+        passcode: 3,
+        tvParams: {
+            "autosize" : false,
+            "width": '100%',
+            "height": 610,
+            "hide_side_toolbar": true,
+            "hide_top_toolbar": true,
+            "symbol": "BYBIT:BTCUSD.P",
+            "interval": "5",
+            "timezone": "Asia/Taipei",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_legend": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_2c4c6",
+            "studies": [
+                "STD;Bollinger_Bands",
+                "STD;VWAP",
+                "STD;Pivot%1Points%1Standard",
+            ],
+        }
+
 
     },
     methods: {
-        tradingView: function () {
-            new TradingView.widget(
-                    {
-                    "autosize" : false,
-                    "width": '100%',
-                    "height": 610,
-                    "hide_side_toolbar": true,
-                    "hide_top_toolbar": true,
-                    "symbol": "BYBIT:BTCUSD.P",
-                    "interval": "5",
-                    "timezone": "Asia/Taipei",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "en",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_legend": false,
-                    "allow_symbol_change": true,
-                    "container_id": "tradingview_2c4c6",
-                    "studies": [
-                        "STD;Bollinger_Bands",
-                        "STD;VWAP",
-                        "STD;Pivot%1Points%1Standard",
-                    ],
-                }
-            );
-        },
+        //tradingView: function () {
+            //new TradingView.widget(
+                    //this.tvParams
+            //);
+        //},
         goTo: function(link){
 
             var str = window.location.href.split('trade')[0]
@@ -539,8 +574,6 @@ let vue = new Vue({
                     if (vue.orderData.price != 0 && vue.orderData.stop !=0) {
                         vue.getRR()
                     }
-                } else if (data.mode == 'size' || data.mode == 'cancel' ) {
-                    vue.orderData.position = data.result
                 } else {
                     vue.orderData[data.mode] = data.result
                     if (vue.orderData.price != 0 && vue.orderData.stop !=0) {
@@ -551,6 +584,31 @@ let vue = new Vue({
                     vue.orderData.risk = r
                 }
                 return data.result
+            })
+            .fail(function(){
+                  alert('error has occurred gData');
+            });
+        },
+        manageOrder: function (mode) {
+            console.log('manageOrder', mode)
+
+
+            $.ajax({
+                data : {
+                    mode: mode,
+                    breakeven: this.manageData.breakeven,
+                    limitexit: this.manageData.limitexit,
+                    limitfraction: this.manageData.limitfraction,
+                    limitprice: this.manageData.limitprice,
+                },
+                type : 'POST',
+                url : '/manageOrder'
+
+            })
+            .done(function(data) {
+                console.log(data.result, data.mode)
+                vue.manageData.response = data.result
+
             })
             .fail(function(){
                   alert('error has occurred gData');
@@ -590,7 +648,7 @@ let vue = new Vue({
                     profit: this.orderData.profit,
                     spread: this.orderData.spread,
                     ladder: this.orderData.ladder,
-                    pw: this.orderData.position
+                    pw: this.passcode
                 },
                 type : 'POST',
                 url : '/getOrder'
