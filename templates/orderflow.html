@@ -522,7 +522,7 @@
 
                 <div v-if="showTable != 'Notes' && coin == 'BTC'" class="mt-3">
                     <div class="border border-success text-success rounded pt-2 pb-1" style="text-align:center"  >
-                        <h3> <span @click="dbcount = parseInt(dbcount) + parseInt(100)"> Delta Blocks </span>
+                        <h3> <span @click="dbcount = parseInt(dbcount) + parseInt(100)"> Delta </span> <span @click="dbcount = 100 "> Blocks </span>
                             <br>
                             <input type="number" step="100" style="width:90px;background:black;color:green;" v-model="dbcount"> </input>
                         </h3>
@@ -613,7 +613,6 @@
                                 <th scope="col" style="width:2%">Low</th>
 
                                 <th scope="col" align="right">OI</th>
-                                <th scope="col" align="right">OI</th>
                                 <th scope="col" align="right">DELTA</th>
                                 <th scope="col" >TC</th>
                                 <th scope="col" >Sells</th>
@@ -633,7 +632,6 @@
                                     <td :style="getLevel(item.close, item.high, item.low, getPercent(item.delta, item.total))">[[item.close]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
                                     <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                    <td> [[roundData(item.oi_close)]]</td>
                                     <td align="right"> <span v-if="item.delta == 100000 || item.delta == -100000"> -- </span> <span v-else> [[item.delta]] </span> </td>
                                     <td  >[[item.tradecount]]</td>
                                     <td  >[[roundData(item.sells)]]</td>
