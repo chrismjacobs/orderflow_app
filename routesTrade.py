@@ -26,7 +26,7 @@ def getData():
     stop = float(request.form ['stop'])
     leverage = float(request.form ['leverage'])
 
-    print('MODE:', mode, side, minutes, risk, fraction, stop, first)
+    print('DATA MODE:', mode, side, minutes, risk, fraction, stop, first)
 
     latest = session.latest_information_for_symbol(symbol="BTCUSD")
 
@@ -86,6 +86,153 @@ def getData():
         print('cancel', result)
         return jsonify({'result' : result, 'mode' : mode})
 
+
+@app.route('/manageOrder', methods=['POST'])
+@login_required
+def manageOrder():
+
+    mode = request.form ['mode']
+    breakeven = request.form ['breakeven']
+    limitexit = float(request.form ['limitexit'])
+    limitprice = int(request.form ['limitprice'])
+    limitfraction = float(request.form ['limitfraction'])
+
+
+    pair = 'BTCUSD'
+
+    print('MANAGE MODE:', mode)
+
+    latest = session.latest_information_for_symbol(symbol=pair)
+
+    BTCprice = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
+
+    position = session.my_position(symbol=pair)['result']
+
+    positionSide = position['side']
+    positionSize = int(position['size'])
+    positionEntry = round(float(position['entry_price']))
+    positionStop = round(float(position['stop_loss']))
+
+
+    if mode == 'cancel':
+        result = session.cancel_all_active_orders(symbol=pair)['ret_msg']
+        print('cancel', result)
+        return jsonify({'result' : result, 'mode' : mode})
+    elif mode == 'size':
+        return jsonify({'result' : positionSize, 'mode' : mode})
+    elif mode == 'breakeven':
+        BEprices = {
+            'Buy' : positionEntry - int(breakeven),
+            'Sell' : positionEntry + int(breakeven)
+        }
+        responseDict = session.set_trading_stop(symbol=pair, stop_loss=BEprices[positionSide])
+        print(responseDict)
+        try:
+            return jsonify({'result' : responseDict['result']['stop_loss'], 'mode' : mode})
+        except:
+            return jsonify({'result' : 'error', 'mode' : mode})
+
+    elif mode == 'limitexit':
+        r.set('monitor', 'on')
+
+        response = 'success'
+        try:
+            ### place limit TP
+            session.cancel_all_active_orders(symbol=pair)['ret_msg']
+
+            LMprices = {
+                'Buy' : BTCprice + 1,
+                'Sell' : BTCprice -1
+            }
+            sideRev = {
+                'Buy' : 'Sell',
+                'Sell' : 'Buy'
+            }
+
+            placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize*limitexit, 0)
+
+
+        except Exception as e:
+            print('LIMIT ERROR', e)
+            response = 'limit error'
+        else:
+            print('LIMIT SUCCESS')
+
+        return jsonify({'result' : response, 'mode' : mode})
+
+    elif mode == 'fullexit':
+
+        ### set stop loss
+
+        BEprices = {
+            'Buy' : positionEntry - 10,
+            'Sell' : positionEntry + 10
+        }
+        try:
+            responseDict = session.set_trading_stop(symbol=pair, stop_loss=BEprices[positionSide])
+            print(responseDict)
+        except Exception as e:
+            print('STOP LOSS ERROR', e)
+
+        ## set limit out
+        r.set('monitor', 'on')
+        session.cancel_all_active_orders(symbol=pair)['ret_msg']
+        response = 'success'
+        try:
+            ### place limit TP
+            LMprices = {
+                'Buy' : BTCprice + 1,
+                'Sell' : BTCprice -1
+            }
+            sideRev = {
+                'Buy' : 'Sell',
+                'Sell' : 'Buy'
+            }
+
+            placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize, 0)
+
+
+        except Exception as e:
+            print('LIMIT ERROR', e)
+            response = 'full exit error'
+        else:
+            print('LIMIT SUCCESS')
+
+        return jsonify({'result' : response, 'mode' : mode})
+
+    elif mode == 'limitset':
+        r.set('monitor', 'on')
+        response = 'limitset'
+
+        LMprices = {
+                'Buy' : positionEntry + limitprice,
+                'Sell' : BTCprice - limitprice
+            }
+        sideRev = {
+            'Buy' : 'Sell',
+            'Sell' : 'Buy'
+        }
+
+        if limitprice > 1000:
+            LMprices = {
+                'Buy' : limitprice,
+                'Sell' : limitprice
+            }
+
+        try:
+            placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize*limitfraction, 0)
+        except Exception as e:
+            print('LIMIT ERROR', e)
+            response = 'limitset error'
+        else:
+            print('LIMIT SUCCESS')
+
+        return jsonify({'result' : response, 'mode' : mode})
+
+
+
+
+
 @app.route('/getOrder', methods=['POST'])
 @login_required
 def getOrder():
@@ -101,7 +248,8 @@ def getOrder():
     leverage = float(request.form ['leverage'])
     pw = request.form ['pw']
 
-    if pw != START_CODE:
+    if int(pw) != int(START_CODE):
+        print('FAIL')
         return jsonify({'result' : 'fail'})
 
     spreadArray = []
