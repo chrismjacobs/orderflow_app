@@ -127,6 +127,9 @@ def startDiscord():
             'vs' : ['volswitch', 'Sell']
         }
 
+        if len(msg.content) > 20:
+            ## ignore long messages
+            return False
         if msg.content == 'B':
             lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
             print(lastCandle)
@@ -150,24 +153,33 @@ def startDiscord():
             replyText = 'purge action'
             r.set(dFlow, json.dumps([]))
             r.set(dBlocks, json.dumps([]))
+
+
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
             r.set('ansi', 'off')
             replyText = 'Ansi ' + r.get('ansi')
         elif 'nsi' in msg.content and r.get('ansi') == 'off':
             r.set('ansi', 'on')
             replyText = 'Ansi ' + r.get('ansi')
+
+
         elif 'tack' in msg.content and r.get('stack') == 'on':
             r.set('stack', 'off')
             replyText = 'Stacks ' + r.get('stack')
         elif 'tack' in msg.content and r.get('stack') == 'off':
             r.set('stack', 'on')
             replyText = 'Stacks ' + r.get('stack')
+
         elif 'onitor off' in msg.content:
             r.set('monitor', 'off')
             replyText = 'Set Monitor ' + r.get('monitor')
         elif 'onitor on' in msg.content:
             r.set('monitor', 'on')
             replyText = 'Set Monitor ' + r.get('monitor')
+        elif 'onitor check' in msg.content:
+            replyText = 'Monitor is set to' + r.get('monitor')
+
+
         elif msg.content == 'Dict' or msg.content == 'dict':
             setCoinDict()
             replyText = 'Coin Dict Set'
@@ -373,13 +385,14 @@ def marketOrder(side, fraction, stop, profit, mode):
     print('ORDER MESSAGE ' + message)
 
     if message == 'OK' and mode == 'deltaswitch':
-        r.set('monitor', 'on')
         try:
             webhook = SyncWebhook.from_url(DISCORD_WEBHOOK)
             webhook.send("check")
         except Exception as e:
             print('DISCORD WEBHOOK EXCEPION ' + e)
+            return True
 
+        r.set('monitor', 'on')
         position = session.my_position(symbol="BTCUSD")['result']
         positionPrice = float(position['entry_price'])
 
@@ -517,8 +530,8 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
 
 
 
-    stallCondition_1candle =  newCandle['total'] > 350_000 and thresholdActivate
-    stallCondition_2candle =  blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
+    stallCondition_1candle =  newCandle['total'] > 500_000 and thresholdActivate
+    stallCondition_2candle =  False #blocks[-1]['total'] + newCandle['total'] > 500_000 and thresholdActivate
     stallCondition = stallCondition_1candle or stallCondition_2candle
     blockTotals = [newCandle['total'], blocks[lc1]['total'], blocks[lc2]['total']]
 
