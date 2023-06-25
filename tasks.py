@@ -298,6 +298,26 @@ def getImbalances(tickList, mode):
 
     return [tickList, stackBuys, stackSells]
 
+def getVWAP(timeblocks, coin):
+
+    volumeCum = 0
+    vwapVolumeCum = 0
+
+    for t in timeblocks:
+
+        volumeCum += t['total']
+        t['pivot'] = (t['high'] + t['low'] + t['close'])/3
+        vwapVolume = t['pivot']*t['total']
+        vwapVolumeCum += vwapVolume
+        vwapPrice = vwapVolumeCum/volumeCum
+        t['vwap'] = vwapPrice
+        if coin == 'BTC':
+            t['vwapTick'] = str(trunc(vwapPrice/10)*10)
+        elif coin == 'ETH':
+            t['vwapTick']  = math.floor(vwapPrice)
+
+    return timeblocks[-1]['vwapTick']
+
 ## addBlockk
 def addBlock(units, blocks, mode, coin):
 
@@ -336,6 +356,7 @@ def addBlock(units, blocks, mode, coin):
     # print('BLOCK DATA: ' + mode + ' -- ' + coin)
     previousOICum = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
+    vwapTick = 0
     newOpen = units[0]['streamPrice']
     price = units[-1]['streamPrice']
     previousDeltaCum = 0
@@ -350,6 +371,7 @@ def addBlock(units, blocks, mode, coin):
         else:
             lastCandle = blocks[-2] # ignore last unit which is the current one
         previousDeltaCum = lastCandle['delta_cumulative']
+        vwapTick = lastCandle['vwapTick']
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
@@ -359,6 +381,8 @@ def addBlock(units, blocks, mode, coin):
             lastCandle = h['timeblocks_' + coin][-1]
             previousDeltaCum = lastCandle['delta_cumulative']
             previousOICum = lastCandle['oi_cumulative']
+            if lastCandle['vwapTick']:
+                vwapTick = lastCandle['vwapTick']
 
 
     newStart  = units[0]['trade_time_ms']
@@ -482,6 +506,14 @@ def addBlock(units, blocks, mode, coin):
 
 
 
+
+    if BLOCK:
+        try:
+            vwapTick = getVWAP(blocks, coin)
+        except:
+            print('vwap exception')
+
+
     newCandle = {
         'trade_time_ms' : newClose,
         'timestamp' : str(units[0]['timestamp']),
@@ -496,6 +528,7 @@ def addBlock(units, blocks, mode, coin):
         'delta' : delta,
         'delta_cumulative' : int(previousDeltaCum + delta),
         'total' : total,
+        'vwapTick' : vwapTick,
         'oi_delta': OIdelta,
         'oi_high': OIhigh,
         'oi_low': OIlow,
@@ -642,6 +675,7 @@ def addDeltaBlock(units, blocks, deltaCount, coin):
     sess = session.latest_information_for_symbol(symbol='BTCUSD')
     streamOI = sess['result'][0]['open_interest']
     deltaOI = streamOI - lastOI
+
 
 
     newDeltaCandle = {
