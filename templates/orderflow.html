@@ -627,7 +627,7 @@
                                     <th class="text-success" :style="trueStyleDelta(item.switch, key)" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                     <td :style="timeStyleDelta(item.time_delta, key)">[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getDeltaVolumeBlockStyle(item, key, item.price_delta)">[[roundData(item.total)]]</td>
-                                    <td  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
+                                    <td :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
                                     <td :style="getLevel(item.high)"> [[item.high]]</td>
                                     <td :style="getLevel(item.close, item.high, item.low, getPercent(item.delta, item.total))">[[item.close]]</td>
                                     <td :style="getLevel(item.low)">[[item.low]]</td>
@@ -1812,12 +1812,10 @@ let vue = new Vue({
 
             let style = {}
 
-            if (item.total && item.total > 200000 && timeFast) {
+            if (item.total && item.total > 400000 && timeFast) {
                 style = {background: '#641E16'}
-            } else if (item.total && item.total > 300000) {
+            } else if (item.total && item.total > 400000) {
                 style = {background: '#273746'}
-            } else if (item.total && item.total > 200000) {
-                style = {background: '#1C2833'}
             }
 
             return style
