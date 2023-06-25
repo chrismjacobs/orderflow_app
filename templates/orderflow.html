@@ -624,7 +624,7 @@
                             <tbody>
                                 <template v-for="(item, key) in getReverseDeltaBlocks" :key="key" >
                                 <tr>
-                                    <th class="text-success" :style="trueStyleDelta(item.switch, key)" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
+                                    <th class="text-success" :style="trueStyleDelta(item.switch, key)" scope="row"><span @click="showDeltaCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                     <td :style="timeStyleDelta(item.time_delta, key)">[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getDeltaVolumeBlockStyle(item, key, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
@@ -640,16 +640,17 @@
 
 
                                 </tr>
-                                        <template v-if="showCandle == key">
-                                            <tr>
-                                                <td colspan="7">
-                                                    <span>
-                                                        [[item]]
-                                                    </span>
-                                                </td>
-                                            </tr>
 
-                                        </template>
+                                <template v-if="showDeltaCandle == key">
+                                    <tr>
+                                        <td colspan="7">
+                                            <span>
+                                                [[item]]
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                </template>
 
                                 </template>
                             </tbody>
@@ -694,7 +695,7 @@
                         <tbody v-if="showTable == 'Time'" id='timeTable'>
                             <template v-for="(item, key) in getReverseTimeBlocks" :key="key" >
                                 <tr v-if="key < timeBlockList">
-                                    <th class="text-info" scope="row"><span>[[getTime(item.timestamp)]]</span> </th>
+                                    <th class="text-info" scope="row"><span @click="showTimeCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
                                     <td>[[calculateTime(item.time_delta)]]</td>
                                     <td :style="getVolumeStyle(item.pva_status, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
                                     <td :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
@@ -708,6 +709,15 @@
                                     <td :style="getLocal('low', key)">[[item.low]]</td>
                                     <td :style="getCloseStyle(item.close, key, 'time')">[[item.close]]</td>
                                 </tr>
+                                <template v-if="showTimeCandle == key">
+                                    <tr >
+                                        <td colspan="7">
+                                            <span>
+                                                [[item]]
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </template>
                             </template>
                         </tbody>
                         <tbody v-if="showTable == 'Volume'">
@@ -728,46 +738,6 @@
                                 <td>[[item.low]]</td>
                                 <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
                             </tr>
-                                    <template v-if="showCandle == key">
-                                        <tr >
-                                            <td colspan="7">
-                                                <span>
-                                                    [[item]]
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    </template>
-                            </template>
-                        </tbody>
-                        <tbody v-if="showTable == 'Delta'">
-                            <template v-for="(item, key) in getReverseDeltaBlocks" :key="key" >
-                            <tr>
-                                <th class="text-success" scope="row"><span @click="showCandleToggle(key)">[[getTime(item.timestamp)]]</span> </th>
-                                <td :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
-                                <td :style="getVolumeBlockStyle(item, key, item.price_delta, item.price_delta)">[[roundData(item.total)]]</td>
-                                <td :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.sells, -1)">[[roundData(item.sells)]]</td>
-                                <td v-if="showDelta"  :style="getDeltaStyle(item.buys, 1)">[[roundData(item.buys)]]</td>
-                                <td :style="getCVDStyle(item.divergence, key, item.delta_cumulative, 'delta')">[[item.delta_cumulative]]</td>
-                                <td style="display:none">[[item.oi_cumulative]]</td>
-                                <td :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                <td :style="getCandleStyle(item.open, item.close)" align="right">[[item.price_delta]] <span v-if="!mobile"> / ([[Math.abs(item.high - item.low)]]) </span></td>
-                                <td >[[item.high]]</td>
-                                <td >[[item.low]]</td>
-                                <td :style="getCloseStyle(item.close, key, 'delta')">[[item.close]]</td>
-                            </tr>
-                                    <template v-if="showCandle == key">
-                                        <tr>
-                                            <td colspan="7">
-                                                <span>
-                                                    [[item]]
-                                                </span>
-                                            </td>
-                                        </tr>
-
-                                    </template>
-
                             </template>
                         </tbody>
 
@@ -881,6 +851,8 @@ let vue = new Vue({
         showTable : 'Time',
         showDelta : true,
         showCandle : null,
+        showTimeCandle : null,
+        showDeltaCandle : null,
         showVolCandle : null,
         user : '',
         login : false,
@@ -1258,6 +1230,22 @@ let vue = new Vue({
                 return 'No Alert'
             }
 
+        },
+        showDeltaCandleToggle: function (key) {
+            //console.log(key)
+            if (this.showDeltaCandle == key) {
+                this.showDeltaCandle = null
+            } else {
+                this.showDeltaCandle = key
+            }
+        },
+        showTimeCandleToggle: function (key) {
+            //console.log(key)
+            if (this.showTimeCandle == key) {
+                this.showTimeCandle = null
+            } else {
+                this.showTimeCandle = key
+            }
         },
         showCandleToggle: function (key) {
             //console.log(key)
