@@ -96,6 +96,8 @@ def manageOrder():
     limitexit = float(request.form ['limitexit'])
     limitprice = int(request.form ['limitprice'])
     limitfraction = float(request.form ['limitfraction'])
+    vwapfraction = float(request.form ['vwapfraction'])
+    vwapbuffer = float(request.form ['vwapbuffer'])
 
 
     pair = 'BTCUSD'
@@ -150,7 +152,6 @@ def manageOrder():
             }
 
             placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize*limitexit, 0)
-
 
         except Exception as e:
             print('LIMIT ERROR', e)
@@ -208,6 +209,7 @@ def manageOrder():
                 'Buy' : positionEntry + limitprice,
                 'Sell' : BTCprice - limitprice
             }
+
         sideRev = {
             'Buy' : 'Sell',
             'Sell' : 'Buy'
@@ -226,6 +228,37 @@ def manageOrder():
             response = 'limitset error'
         else:
             print('LIMIT SUCCESS')
+
+        return jsonify({'result' : response, 'mode' : mode})
+
+
+    elif mode == 'vwapget' or mode == 'vwapset':
+        ##r.set('monitor', 'on')
+        response = 'vwapprice'
+
+        timeblocks = json.loads(r.get('timeblocks_BTC'))
+        vwap = timeblocks[-2]['vwapTick']
+
+        VSprices = {
+                'Buy' : round(float(vwap)) - vwapbuffer,
+                'Sell' : round(float(vwap)) + vwapbuffer
+            }
+        sideRev = {
+            'Buy' : 'Sell',
+            'Sell' : 'Buy'
+        }
+
+        if mode == 'vwapset':
+            r.set('monitor', 'on')
+            try:
+                response = placeOrder(sideRev[positionSide], VSprices[positionSide], 0, positionSize*vwapfraction, 0)
+            except Exception as e:
+                print('VWAP ERROR', e)
+                response = 'vwapset error'
+            else:
+                print('VWAP SUCCESS')
+        else:
+            response = vwap
 
         return jsonify({'result' : response, 'mode' : mode})
 

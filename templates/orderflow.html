@@ -287,7 +287,7 @@
                                     <tr>
                                         <td @click="showDelta = !showDelta">Delta</td>
                                         <template v-for="(item, key) in getOFTableTime" :key="key" >
-                                            <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta, item.total)]]</td>
+                                            <td colspan="2"  :style="getDeltaStyle(item.delta, 0, item.total)">[[roundData(item.delta)]]</td>
                                         </template>
                                         <td></td>
                                     </tr>
@@ -327,7 +327,7 @@
                                     <tr>
                                         <td>OI</td>
                                         <template v-for="(item, key) in getOFTableTime" :key="key" >
-                                            <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]] </td>
+                                            <td colspan="2" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta, item.total)]] </td>
                                         </template>
                                         <td></td>
                                     </tr>
@@ -830,6 +830,7 @@ let vue = new Vue({
 
     },
     data: {
+        oiPercent: true,
         volumeEdit: false,
         deltaEdit: false,
         dbcount: 100,
@@ -1551,7 +1552,11 @@ let vue = new Vue({
             }
 
         },
-        roundData: function (data) {
+        roundData: function (data, total) {
+
+            if (total && this.oiPercent) {
+                return this.getPercent(data, total) + '%'
+            }
             //deal with K
             if (data >= 1000000 || data <= -1000000) {
                 let x = data/100000

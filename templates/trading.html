@@ -204,6 +204,11 @@
                         <br>
                         <input type="number" class="form-control" v-model="manageData.limitfraction">
                         <input type="number" class="form-control" v-model="manageData.limitprice">
+                        <button @click="manageOrder('vwapget')" class="btn btn-secondary" type="button" id="button-addon1">VWAP</button>
+                        <button @click="manageOrder('vwapset')" class="btn btn-secondary" type="button" id="button-addon1">SET</button>
+                        <br>
+                        <input type="number" class="form-control" v-model="manageData.vwapfraction">
+                        <input type="number" class="form-control" v-model="manageData.vwapbuffer">
                         <br> <h3> CHECK MONITOR IS WORKING 'try' </h3>
                     </div>
 
@@ -310,6 +315,8 @@ let vue = new Vue({
             limitexit: 0.5,
             limitfraction: 0.5,
             limitprice: 100,
+            vwapfraction: 0.5,
+            vwapbuffer: 10,
             response: '.....'
         },
         btc: 0,
@@ -600,6 +607,8 @@ let vue = new Vue({
                     limitexit: this.manageData.limitexit,
                     limitfraction: this.manageData.limitfraction,
                     limitprice: this.manageData.limitprice,
+                    vwapfraction: this.manageData.vwapfraction,
+                    vwapbuffer: this.manageData.vwapbuffer
                 },
                 type : 'POST',
                 url : '/manageOrder'
@@ -608,6 +617,7 @@ let vue = new Vue({
             .done(function(data) {
                 console.log(data.result, data.mode)
                 vue.manageData.response = data.result
+
 
             })
             .fail(function(){
