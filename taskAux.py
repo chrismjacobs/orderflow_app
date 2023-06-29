@@ -12,7 +12,10 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    REDIS_URL = config.REDIS_URL
+    if LOCAL:
+        REDIS_URL = config.REDIS_URL_TEST
+    else:
+        REDIS_URL = config.REDIS_URL
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
@@ -188,9 +191,10 @@ def startDiscord():
             coinDict = json.loads(r.get('coinDict'))
             code = msg.content.split(' ')[0]
             price = int(msg.content.split(' ')[1])
-            if price == 0:
-                replyText = 'Price reset to Zero'
-            elif price > 100_000 or price < 10_000:
+
+            if price > 100_000:
+                replyText = 'Price out of range'
+            elif price < 10_000 and price is not 0:
                 replyText = 'Price out of range'
             elif 's' in code and price < latestprice:
                 replyText = 'Price too low'
@@ -396,6 +400,24 @@ def marketOrder(side, fraction, stop, profit, mode):
         position = session.my_position(symbol="BTCUSD")['result']
         positionPrice = float(position['entry_price'])
 
+        ## Get VWAP
+        timeblocks = json.loads(r.get('timeblocks_BTC'))
+        vwap = round(positionPrice + (limitPrice*limits[sideRev]))
+
+        try:
+            if timeblocks[-2]['vwapTick']:
+                vwap = round(timeblocks[-2]['vwapTick'] + (15*limits[sideRev]))
+            elif timeblocks[-2]['vwap_task']:
+                vwap = round(timeblocks[-2]['vwap_task'] + (15*limits[sideRev]))
+
+            if abs(positionPrice - vwap) > 100:
+                vwap = round(positionPrice + (100*limits[sideRev]))
+            if abs(positionPrice - vwap) < 60:
+                vwap = round(positionPrice + (60*limits[sideRev]))
+
+        except:
+            print('VWAP TP EXCEPTION')
+
         try:
         ### place limit TP
             limitPrice = profit / 6
@@ -403,7 +425,7 @@ def marketOrder(side, fraction, stop, profit, mode):
             symbol = pair,
             side = sideRev,
             order_type = 'Limit',
-            price =  round(positionPrice + (limitPrice*limits[sideRev])),
+            price =  vwap,
             qty = round(qty*0.5),
             time_in_force = "GoodTillCancel"
             )
