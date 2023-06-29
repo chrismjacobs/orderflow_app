@@ -22,7 +22,11 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    REDIS_URL = config.REDIS_URL
+    if LOCAL:
+        REDIS_URL = config.REDIS_URL_TEST
+    else:
+        REDIS_URL = config.REDIS_URL
+
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
@@ -311,12 +315,12 @@ def getVWAP(timeblocks, coin):
         vwapVolumeCum += vwapVolume
         vwapPrice = vwapVolumeCum/volumeCum
         t['vwap'] = vwapPrice
-        if coin == 'BTC':
-            t['vwapTick'] = str(trunc(vwapPrice/10)*10)
-        elif coin == 'ETH':
-            t['vwapTick']  = math.floor(vwapPrice)
+        # if coin == 'BTC':
+        #     t['vwap_task'] = str(trunc(vwapPrice/10)*10)
+        # elif coin == 'ETH':
+        #     t['vwap_task']  = math.floor(vwapPrice)
 
-    return timeblocks[-1]['vwapTick']
+    return round(timeblocks[-1]['vwap'])
 
 ## addBlockk
 def addBlock(units, blocks, mode, coin):
@@ -356,7 +360,7 @@ def addBlock(units, blocks, mode, coin):
     # print('BLOCK DATA: ' + mode + ' -- ' + coin)
     previousOICum = units[0]['streamOI']
     previousTime = units[0]['trade_time_ms']
-    vwapTick = 0
+    vwap_task = 0
     newOpen = units[0]['streamPrice']
     price = units[-1]['streamPrice']
     previousDeltaCum = 0
@@ -371,7 +375,7 @@ def addBlock(units, blocks, mode, coin):
         else:
             lastCandle = blocks[-2] # ignore last unit which is the current one
         previousDeltaCum = lastCandle['delta_cumulative']
-        vwapTick = lastCandle['vwapTick']
+        vwap_task = lastCandle['vwap_task']
         previousOICum = lastCandle['oi_cumulative']
         previousTime = lastCandle['trade_time_ms']
         newOpen = lastCandle['close']
@@ -381,8 +385,8 @@ def addBlock(units, blocks, mode, coin):
             lastCandle = h['timeblocks_' + coin][-1]
             previousDeltaCum = lastCandle['delta_cumulative']
             previousOICum = lastCandle['oi_cumulative']
-            if lastCandle['vwapTick']:
-                vwapTick = lastCandle['vwapTick']
+            if lastCandle['vwap_task']:
+                vwap_task = lastCandle['vwap_task']
 
 
     newStart  = units[0]['trade_time_ms']
@@ -509,7 +513,7 @@ def addBlock(units, blocks, mode, coin):
 
     if BLOCK:
         try:
-            vwapTick = getVWAP(blocks, coin)
+            vwap_task = getVWAP(blocks, coin)
         except:
             print('vwap exception')
 
@@ -528,7 +532,7 @@ def addBlock(units, blocks, mode, coin):
         'delta' : delta,
         'delta_cumulative' : int(previousDeltaCum + delta),
         'total' : total,
-        'vwapTick' : vwapTick,
+        'vwap_task' : vwap_task,
         'oi_delta': OIdelta,
         'oi_high': OIhigh,
         'oi_low': OIlow,
@@ -1332,21 +1336,13 @@ def compiler(message, pair, coin):
 
     timestamp = message[0]['timestamp']
     ts = str(datetime.strptime(timestamp.split('.')[0], "%Y-%m-%dT%H:%M:%S"))
+    trade_time_ms = int(message[0]['trade_time_ms'])
 
-    # ts_minute = str(datetime.strptime(timestamp.split('.')[0], "%M"))  ERROR: UNconverted Data
-    # current_time = dt.datetime.utcnow()
-
-    # print('LAG')
-    # lag = abs(current_time.minute - int(ts_minute))
-
-    # if lag > 5 and coin == 'BTC':
-    #     message = "Lag on data stream: " + str(lag) + 'min'
-    #     sendMessage(coin, message, '', 'red')
-    #     streamAlert(message, 'LAG', coin)
 
     sess = session.latest_information_for_symbol(symbol=pair)
     streamOI = sess['result'][0]['open_interest']
     streamTime = round(float(sess['time_now']), 1)
+    print(streamTime)
     streamPrice = float(sess['result'][0]['last_price'])
 
 
@@ -1355,7 +1351,7 @@ def compiler(message, pair, coin):
     buyUnit = {
                     'side' : 'Buy',
                     'size' : 0,
-                    'trade_time_ms' : int(message[0]['trade_time_ms']),
+                    'trade_time_ms' : trade_time_ms,
                     'timestamp' : ts,
                     'streamTime' : streamTime,
                     'streamPrice' : streamPrice,
@@ -1367,7 +1363,7 @@ def compiler(message, pair, coin):
     sellUnit = {
                     'side' : 'Sell',
                     'size' : 0,
-                    'trade_time_ms' : int(message[0]['trade_time_ms']),
+                    'trade_time_ms' : trade_time_ms,
                     'timestamp' : ts,
                     'streamTime' : streamTime,
                     'streamPrice' : streamPrice,
@@ -1551,6 +1547,7 @@ def runStream(self):
     # ws_inverseP.instrument_info_stream(
     #     handle_info_message, "BTCUSD"
     # )
+
 
     startDiscord()
 
