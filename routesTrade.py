@@ -143,8 +143,8 @@ def manageOrder():
             session.cancel_all_active_orders(symbol=pair)['ret_msg']
 
             LMprices = {
-                'Buy' : BTCprice + 1,
-                'Sell' : BTCprice -1
+                'Buy' : BTCprice + 0.5,
+                'Sell' : BTCprice -0.5
             }
             sideRev = {
                 'Buy' : 'Sell',
@@ -182,8 +182,8 @@ def manageOrder():
         try:
             ### place limit TP
             LMprices = {
-                'Buy' : BTCprice + 1,
-                'Sell' : BTCprice -1
+                'Buy' : BTCprice + 0.5,
+                'Sell' : BTCprice - 0.5
             }
             sideRev = {
                 'Buy' : 'Sell',
@@ -237,7 +237,7 @@ def manageOrder():
         response = 'vwapprice'
 
         timeblocks = json.loads(r.get('timeblocks_BTC'))
-        vwap = timeblocks[-2]['vwapTick']
+        vwap = timeblocks[-2]['vwap_task']
 
         VSprices = {
                 'Buy' : round(float(vwap)) - vwapbuffer,
