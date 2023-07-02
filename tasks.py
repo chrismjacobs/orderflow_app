@@ -158,11 +158,11 @@ def getHistory(coin):
 
 
 def streamAlert(message, mode, coin):
-    print('Alert Stream ' + mode + ' ' + coin)
+    # print('Alert Stream ' + mode + ' ' + coin)
     stream = json.loads(r.get('stream_' + coin))
 
     current_time = dt.datetime.utcnow()
-    print('Current Time UTC Alert : ' + str(current_time).split('.')[0])
+    # print('Current Time UTC Alert : ' + str(current_time).split('.')[0])
 
     alertList = stream['alerts']
     alertMessage = [str(current_time), mode, message]
@@ -1040,8 +1040,8 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
             # replace current candle with completed candle
             dcount = 0
             for flow in deltaStatus['deltaflowList']:
-                for f in flow:
-                    print('DeltaFlowList ' + str(dcount) + ' ' + f['side'] + ' ' + str(f['size']))
+                # for f in flow:
+                #     print('DeltaFlowList ' + str(dcount) + ' ' + f['side'] + ' ' + str(f['size']))
 
                 zero = deltaStatus['deltaflowList'].index(flow)
                 if zero == 0:
@@ -1068,7 +1068,7 @@ def logDeltaUnit(buyUnit, sellUnit, coin, deltaCount):
 
         else: # add the unit to the delta flow
 
-            print('ADD DELTA UNIT') # len(deltablocks), len(deltaflow)
+            # print('ADD DELTA UNIT') # len(deltablocks), len(deltaflow)
 
             # update current candle with new unit data
             currentCandle = addDeltaBlock(deltaflow, deltablocks, deltaCount, coin)
@@ -1342,7 +1342,7 @@ def compiler(message, pair, coin):
     sess = session.latest_information_for_symbol(symbol=pair)
     streamOI = sess['result'][0]['open_interest']
     streamTime = round(float(sess['time_now']), 1)
-    print(streamTime)
+    # print(streamTime)
     streamPrice = float(sess['result'][0]['last_price'])
 
 
@@ -1445,7 +1445,7 @@ def handle_trade_message(msg):
     # print(coin + ' handle_trade_message: ' + str(len(msg['data'])))
     # print(msg['data'])
 
-    print( 'Start: ' + str(len(msg['data'])))
+    # print( 'Start: ' + str(len(msg['data'])))
     compiledMessage = compiler(msg['data'], pair, coin)
 
 
@@ -1453,7 +1453,8 @@ def handle_trade_message(msg):
 
     buyUnit = compiledMessage[0]
     sellUnit = compiledMessage[1]
-    print('Compiled B:' + str(buyUnit['size']) + ' S:' + str(sellUnit['size']))
+    if LOCAL:
+        print('Compiled B:' + str(buyUnit['size']) + ' S:' + str(sellUnit['size']))
 
     if buyUnit['size'] + sellUnit['size'] <= 2:
         return False
@@ -1464,13 +1465,13 @@ def handle_trade_message(msg):
 
     logTimeUnit(buyUnit, sellUnit, coin)
 
-    print('LOG TIME')
+    # print('LOG TIME')
 
 
     if volControl[0]: # ignore small size trades
         logVolumeUnit(buyUnit, sellUnit, coin, int(volControl[1]))
 
-    print('LOG VOLUME')
+    # print('LOG VOLUME')
 
 
     if deltaControl['fcCheck'] > 0:
@@ -1479,7 +1480,7 @@ def handle_trade_message(msg):
             deltaCount = 10000
         logDeltaUnit(buyUnit, sellUnit, coin, deltaCount)
 
-    print('LOG DELTA')
+    # print('LOG DELTA')
 
 
 

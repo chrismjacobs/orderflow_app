@@ -59,6 +59,216 @@ def monitorLimits():
                 print('CANCEL', result)
                 break
 
+def placeOrder(side, price, stop_loss, qty, take_profit):
+
+    order = session.place_active_order(
+    symbol="BTCUSD",
+    side=side,
+    order_type='Limit',
+    price=price,
+    stop_loss = stop_loss,
+    take_profit = take_profit,
+    qty=qty,
+    time_in_force="GoodTillCancel"
+    )
+
+
+    message = order['ret_msg']
+    data = json.dumps(order['result'])
+
+    print('ORDER', order)
+    print('MESSAGE', message)
+    print('DATA', data)
+
+    return data
+
+def tradeManagement(msg):
+
+    info = msg.split(' ')
+
+    mode = info[0]
+    # breakeven = request.form ['breakeven']
+    # limitexit = float(request.form ['limitexit'])
+    # limitprice = int(request.form ['limitprice'])
+    # limitfraction = float(request.form ['limitfraction'])
+    # vwapfraction = float(request.form ['vwapfraction'])
+    # vwapbuffer = float(request.form ['vwapbuffer'])
+
+
+    pair = 'BTCUSD'
+
+    print('MANAGE MODE:', mode)
+
+
+    BTCprice = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
+
+    position = session.my_position(symbol=pair)['result']
+
+    positionSide = position['side']
+    positionSize = int(position['size'])
+    positionEntry = round(float(position['entry_price']))
+    positionStop = round(float(position['stop_loss']))
+
+    if mode == 'codes':
+        return 'cancel  / size  / breakeven  / limitexit (fraction)  / fullexit / vwapget / vwapset (fraction)  '
+    if mode == 'cancel':
+        result = session.cancel_all_active_orders(symbol=pair)['ret_msg']
+        print('cancel', result)
+        return result
+    elif mode == 'size':
+        return str(positionSize)
+    elif mode == 'breakeven':
+        BEprices = {
+            'Buy' : positionEntry - 10,
+            'Sell' : positionEntry + 10
+        }
+        responseDict = session.set_trading_stop(symbol=pair, stop_loss=BEprices[positionSide])
+        print(responseDict)
+        try:
+            return str(responseDict['result']['stop_loss'])
+        except:
+            return 'error'
+
+    elif mode == 'limitexit':
+        r.set('monitor', 'on')
+
+        limitexit = float(info[1])
+
+        if limitexit < 0.1 or limitexit > 1:
+            response = 'error ' + str(limitexit)
+
+        try:
+            ### place limit TP
+            session.cancel_all_active_orders(symbol=pair)['ret_msg']
+
+            LMprices = {
+                'Buy' : BTCprice + 0.5,
+                'Sell' : BTCprice -0.5
+            }
+            sideRev = {
+                'Buy' : 'Sell',
+                'Sell' : 'Buy'
+            }
+
+            placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize*limitexit, 0)
+
+        except Exception as e:
+            print('LIMIT ERROR', e)
+            response = 'limit error'
+        else:
+            print('LIMIT SUCCESS')
+
+        return response
+
+    elif mode == 'fullexit':
+
+        ### set stop loss
+
+        BEprices = {
+            'Buy' : BTCprice - 10,
+            'Sell' : BTCprice + 10
+        }
+        try:
+            responseDict = session.set_trading_stop(symbol=pair, stop_loss=BEprices[positionSide])
+            print(responseDict)
+        except Exception as e:
+            print('STOP LOSS ERROR', e)
+
+        ## set limit out
+        r.set('monitor', 'on')
+        session.cancel_all_active_orders(symbol=pair)['ret_msg']
+        response = 'success'
+        try:
+            ### place limit TP
+            LMprices = {
+                'Buy' : BTCprice + 0.5,
+                'Sell' : BTCprice - 0.5
+            }
+            sideRev = {
+                'Buy' : 'Sell',
+                'Sell' : 'Buy'
+            }
+
+            placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize, 0)
+
+
+        except Exception as e:
+            print('LIMIT ERROR', e)
+            response = 'full exit error'
+        else:
+            print('LIMIT SUCCESS')
+
+        return response
+
+    # elif mode == 'limitset':
+    #     r.set('monitor', 'on')
+    #     response = 'limitset'
+
+    #     LMprices = {
+    #             'Buy' : positionEntry + limitprice,
+    #             'Sell' : BTCprice - limitprice
+    #         }
+
+    #     sideRev = {
+    #         'Buy' : 'Sell',
+    #         'Sell' : 'Buy'
+    #     }
+
+    #     if limitprice > 1000:
+    #         LMprices = {
+    #             'Buy' : limitprice,
+    #             'Sell' : limitprice
+    #         }
+
+    #     try:
+    #         placeOrder(sideRev[positionSide], LMprices[positionSide], 0, positionSize*limitfraction, 0)
+    #     except Exception as e:
+    #         print('LIMIT ERROR', e)
+    #         response = 'limitset error'
+    #     else:
+    #         print('LIMIT SUCCESS')
+
+    #     return jsonify({'result' : response, 'mode' : mode})
+
+
+    elif mode == 'vwapget' or mode == 'vwapset':
+        ##r.set('monitor', 'on')
+        response = 'vwapprice'
+
+        if mode == 'vwapset':
+            vwapfraction = float(info[1])
+            if vwapfraction < 0.1 or vwapfraction > 1:
+                response = 'error ' + str(vwapfraction)
+
+        timeblocks = json.loads(r.get('timeblocks_BTC'))
+        vwap = timeblocks[-2]['vwap_task']
+
+        VSprices = {
+                'Buy' : round(float(vwap)) - 20,
+                'Sell' : round(float(vwap)) + 20
+            }
+        sideRev = {
+            'Buy' : 'Sell',
+            'Sell' : 'Buy'
+        }
+
+        if mode == 'vwapset':
+            r.set('monitor', 'on')
+            try:
+                session.cancel_all_active_orders(symbol=pair)['ret_msg']
+                response = placeOrder(sideRev[positionSide], VSprices[positionSide], 0, positionSize*vwapfraction, 0)
+            except Exception as e:
+                print('VWAP ERROR', e)
+                response = 'vwapset error'
+            else:
+                print('VWAP SUCCESS')
+        else:
+            response = str(vwap)
+
+        return response
+
+
+
 
 def startDiscord():
     ## intents controls what the bot can do; in this case read message content
@@ -133,6 +343,9 @@ def startDiscord():
         if len(msg.content) > 20:
             ## ignore long messages
             return False
+
+        print(msg.content)
+
         if msg.content == 'B':
             lastCandle = json.loads(r.get('timeblocks_BTC'))[-2]
             print(lastCandle)
@@ -186,19 +399,27 @@ def startDiscord():
         elif msg.content == 'Dict' or msg.content == 'dict':
             setCoinDict()
             replyText = 'Coin Dict Set'
+
         elif msg.content.split(' ')[0] in deltaSet:
             latestprice = float(session.latest_information_for_symbol(symbol='BTCUSD')['result'][0]['last_price'])
             coinDict = json.loads(r.get('coinDict'))
             code = msg.content.split(' ')[0]
-            price = int(msg.content.split(' ')[1])
+
+            if len(msg.content.split(' ')) > 1:
+                price = int(msg.content.split(' ')[1])
+            else:
+                switch = deltaSet[code][0]
+                side = deltaSet[code][1]
+                price = coinDict['BTC'][switch][side]['price']
+                replyText = 'Check: ' + side + ' ' + str(price) + ' ' + str(coinDict['BTC'][switch][side]['fraction']) + ' ' + str(coinDict['BTC'][switch][side]['stop'])
 
             if price > 100_000:
                 replyText = 'Price out of range'
-            elif price < 10_000 and price is not 0:
+            elif price < 10_000 and price != 0:
                 replyText = 'Price out of range'
-            elif 's' in code and price < latestprice:
+            elif 's' in code and price < latestprice and price != 0:
                 replyText = 'Price too low'
-            elif 'b' in code and price > latestprice:
+            elif 'b' in code and price > latestprice and price != 0:
                 replyText = 'Price too high'
             else:
                 try:
@@ -217,6 +438,9 @@ def startDiscord():
                 except Exception as e:
                     print('DELTA SET ERROR', e)
                     replyText = 'DELTA SET ERROR'
+        elif 'rade' in msg.content:
+            replyText = tradeManagement(msg.content.split('rade ')[1])
+
         else:
             return False
 
@@ -319,8 +543,8 @@ def marketOrder(side, fraction, stop, profit, mode):
         print(message)
         sendMessage('BTC', message, '', 'red')
         return False
-    else:
-        print('Order continue')
+    # else:
+    #     print('Order continue')
 
     price = float(session.latest_information_for_symbol(symbol=pair)['result'][0]['last_price'])
     funds = session.get_wallet_balance()['result']['BTC']['equity']
@@ -402,6 +626,8 @@ def marketOrder(side, fraction, stop, profit, mode):
 
         ## Get VWAP
         timeblocks = json.loads(r.get('timeblocks_BTC'))
+
+        limitPrice = profit / 6
         vwap = round(positionPrice + (limitPrice*limits[sideRev]))
 
         try:
@@ -409,9 +635,8 @@ def marketOrder(side, fraction, stop, profit, mode):
                 vwap = round(timeblocks[-2]['vwapTick'] + (15*limits[sideRev]))
             elif timeblocks[-2]['vwap_task']:
                 vwap = round(timeblocks[-2]['vwap_task'] + (15*limits[sideRev]))
-
-            if abs(positionPrice - vwap) > 100:
-                vwap = round(positionPrice + (100*limits[sideRev]))
+            if abs(positionPrice - vwap) > 200:
+                vwap = round(positionPrice + (200*limits[sideRev]))
             if abs(positionPrice - vwap) < 60:
                 vwap = round(positionPrice + (60*limits[sideRev]))
 
@@ -420,7 +645,6 @@ def marketOrder(side, fraction, stop, profit, mode):
 
         try:
         ### place limit TP
-            limitPrice = profit / 6
             newLimit = session.place_active_order(
             symbol = pair,
             side = sideRev,
@@ -608,7 +832,7 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
 def actionVOLUME(blocks, coin, coinDict, bullDiv, bearDiv):
 
     volumeControl = coinDict[coin]['volswitch']
-    print('volume control', volumeControl)
+    # print('volume control', volumeControl)
 
     if volumeControl['Buy']['price'] == 0 and volumeControl['Sell']['price'] == 0:
         print('volume zero')
