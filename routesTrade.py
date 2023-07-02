@@ -104,8 +104,6 @@ def manageOrder():
 
     print('MANAGE MODE:', mode)
 
-    latest = session.latest_information_for_symbol(symbol=pair)
-
     BTCprice = float(session.latest_information_for_symbol(symbol="BTCUSD")['result'][0]['last_price'])
 
     position = session.my_position(symbol=pair)['result']
@@ -166,8 +164,8 @@ def manageOrder():
         ### set stop loss
 
         BEprices = {
-            'Buy' : positionEntry - 10,
-            'Sell' : positionEntry + 10
+            'Buy' : BTCprice - 10,
+            'Sell' : BTCprice + 10
         }
         try:
             responseDict = session.set_trading_stop(symbol=pair, stop_loss=BEprices[positionSide])
@@ -251,6 +249,7 @@ def manageOrder():
         if mode == 'vwapset':
             r.set('monitor', 'on')
             try:
+                session.cancel_all_active_orders(symbol=pair)['ret_msg']
                 response = placeOrder(sideRev[positionSide], VSprices[positionSide], 0, positionSize*vwapfraction, 0)
             except Exception as e:
                 print('VWAP ERROR', e)
