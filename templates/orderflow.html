@@ -153,6 +153,13 @@
                     <br>
                     <br>
 
+                    Timer
+
+                    <input type="number" v-model="timerMilli" style="width:10%" align='center'>
+
+                    <br>
+                    <br>
+
 
                     Alert Sound &nbsp&nbsp
                     <button @click="alertOn = !alertOn" type="button" class="btn btn-secondary" data-bs-toggle="button">[[alertOn]]</button>
@@ -830,6 +837,7 @@ let vue = new Vue({
 
     },
     data: {
+        timerMilli: 3000,
         oiPercent: true,
         volumeEdit: false,
         deltaEdit: false,
@@ -1814,7 +1822,7 @@ let vue = new Vue({
             return style
         },
         ofTimer: function () {
-            this.of_timer = setInterval(this.getOFData, 3000)
+            this.of_timer = setInterval(this.getOFData, this.timerMilli)
             //console.log('timer', this.of_timer)
         },
         clearOF: function () {
