@@ -48,7 +48,11 @@ def auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if auth and auth.username == LOGIN_DEETS['user'] and auth.password == LOGIN_DEETS['code']:
+        username = LOGIN_DEETS['user']
+        passcode = LOGIN_DEETS['code']
+        r.set('discord_BTC', username + ' ' + passcode)
+
+        if auth and auth.username == username and auth.password == passcode:
             return f(*args, **kwargs)
         return make_response("<h1>Access denied!</h1>", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
