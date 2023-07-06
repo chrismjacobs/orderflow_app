@@ -130,10 +130,6 @@ def getOF():
         volumeBlocks = lastHistory['volumeblocks_' + coin + str(size)] + volumeBlocks
 
 
-    user = False
-    if current_user.is_authenticated:
-        user = current_user.username
-
 
     for tb in timeBlocks:
         tb['tickList'] = getImbalances(tb['tickList'])
@@ -147,8 +143,6 @@ def getOF():
         'volumeBlocks' : json.dumps(volumeBlocks),
         'timeBlocks' : json.dumps(timeBlocks),
         'deltaBlocks' : json.dumps(deltaBlocks),
-        'login' : current_user.is_authenticated,
-        'user' : user,
         'coin' : coin,
         'coinDict' : coinDict
     }
