@@ -213,13 +213,6 @@
                     <br>
                     <br>
 
-                    <h3> Logged In </h3>
-
-                    [[login]]
-
-                    <br>
-                    <br>
-
                     This webapp is not accepting registrations
 
                     <br>
@@ -863,8 +856,8 @@ let vue = new Vue({
         showTimeCandle : null,
         showDeltaCandle : null,
         showVolCandle : null,
-        user : '',
-        login : false,
+        user : true,
+        login : trues,
         mobile : false,
         volumeBlocks : [],
         volumeBlocks2 : [],
@@ -1910,7 +1903,7 @@ let vue = new Vue({
                     vue.updateOFCharts()
                 }
 
-                vue.user = data.user
+                //vue.user = data.user
 
                 if (vue.user) {
                     vue.coins = ['BTC', 'ETH']
@@ -1919,7 +1912,7 @@ let vue = new Vue({
                 }
                 //console.log('USER', data.user)
 
-                vue.login = data.login
+                // vue.login = data.login
                 //console.log('LOGIN', data.login)
 
             })
