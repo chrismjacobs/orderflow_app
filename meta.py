@@ -50,7 +50,6 @@ def auth_required(f):
         auth = request.authorization
         username = LOGIN_DEETS['user']
         passcode = LOGIN_DEETS['code']
-        r.set('discord_BTC', username + ' ' + passcode)
 
         if auth and auth.username == username and auth.password == passcode:
             return f(*args, **kwargs)
