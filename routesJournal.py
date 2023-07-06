@@ -1,15 +1,14 @@
 
 from app import app
-from meta import s3_resource
+from meta import s3_resource, auth_required
 import base64
 import datetime
 import json
 from flask import Flask, request, render_template, jsonify, abort
-from flask_login import login_required
 
 
 @app.route('/journal')
-@login_required
+@auth_required
 def journal():
 
     mList = [
@@ -34,7 +33,7 @@ def journal():
     return render_template('journal.html', tradeJournal=json.dumps(jDict))
 
 @app.route('/recordTrade', methods=['POST'])
-@login_required
+@auth_required
 def recordTrade():
 
     record = request.form ['record']
@@ -75,7 +74,7 @@ def recordTrade():
 
 
 @app.route('/addImage', methods=['POST'])
-@login_required
+@auth_required
 def addImage():
 
     currentDate = datetime.date.today()

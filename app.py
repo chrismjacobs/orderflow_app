@@ -1,5 +1,5 @@
-from flask import Flask, flash, render_template, redirect, request, jsonify, url_for
-from flask_login import current_user, login_required, LoginManager
+from flask import Flask, flash, render_template, redirect, request, jsonify, url_for, make_response
+#from flask_login import current_user, login_required, LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
@@ -10,39 +10,26 @@ import os
 import time
 import requests
 from analysis import getBlocks, getVWAP, getImbalances
-from meta import SECRET_KEY, SQLALCHEMY_DATABASE_URI, DEBUG, r, LOCAL, START_CODE, s3_resource
+from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API, RENDER_SERVICE, auth_required
 import datetime as dt
-
-try:
-    import config
-    REDIS_URL = config.REDIS_URL
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
-    RENDER_API = config.RENDER_API
-    RENDER_SERVICE = config.RENDER_SERVICE
-except:
-    REDIS_URL = os.getenv('CELERY_BROKER_URL')
-    RENDER_API = os.getenv('RENDER_API')
-    RENDER_SERVICE = os.getenv('RENDER_SERVICE')
-    r = redis.from_url(REDIS_URL, decode_responses=True)
 
 if not LOCAL:
     from tasks import runStream
 
-
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+# app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['DEBUG'] = DEBUG
 app.config['SECRET_KEY'] = SECRET_KEY
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-bcrypt = Bcrypt()
-login_manager = LoginManager(app)
-login_manager.login_view = 'login' # if user isn't logged in it will redirect to login page
-login_manager.login_message_category = 'info'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# db = SQLAlchemy(app)
+# bcrypt = Bcrypt()
+# login_manager = LoginManager(app)
+# login_manager.login_view = 'login' # if user isn't logged in it will redirect to login page
+# login_manager.login_message_category = 'info'
 
 
 @app.route('/')
-@login_required
+@auth_required
 def home():
 
     if START_CODE == 'block':
@@ -219,12 +206,12 @@ def serviceAction():
     return jx
 
 @app.route('/start')
-@login_required
+@auth_required
 def start():
     return render_template('start.html')
 
 @app.route('/workerAction', methods=['POST'])
-@login_required
+@auth_required
 def worker():
     x = int(request.form['passcode'])
     print('workerAction', x, START_CODE)
@@ -252,7 +239,7 @@ def worker():
     return render_template('start.html')
 
 @app.route('/workerStop', methods=['POST'])
-@login_required
+@auth_required
 def taskend():
     x = int(request.form['passcode'])
     print('workerStop', x, START_CODE)
@@ -308,7 +295,7 @@ def tradingview_webhook():
     return redirect('/')
 
 
-from routesAdmin import *
+#from routesAdmin import *
 from routesJournal import *
 from routesTrade import *
 

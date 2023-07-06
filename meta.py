@@ -1,7 +1,11 @@
 import boto3
 import os
 import redis
+import json
 from pybit import inverse_perpetual, usdt_perpetual
+from functools import wraps
+from flask import make_response, request
+
 
 try:
     import config
@@ -16,6 +20,9 @@ try:
     LOCAL = True
     DEBUG = True
     r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+    RENDER_API = config.RENDER_API
+    RENDER_SERVICE = config.RENDER_SERVICE
+    LOGIN = config.LOGIN
     print('SUCCESS')
 except:
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
@@ -26,11 +33,26 @@ except:
     API_SECRET = os.getenv('API_SECRET')
     START_CODE = os.getenv('START_CODE')
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    RENDER_API = os.getenv('RENDER_API')
+    RENDER_SERVICE = os.getenv('RENDER_SERVICE')
     LOCAL = False
     DEBUG = False
+    LOGIN = os.getenv('LOGIN')
     r = redis.from_url(REDIS_URL, decode_responses=True)
+
     print('EXCEPTION')
 
+LOGIN_DEETS = json.loads(LOGIN)
+
+def auth_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if auth and auth.username == LOGIN_DEETS['user'] and auth.password == LOGIN_DEETS['code']:
+            return f(*args, **kwargs)
+        return make_response("<h1>Access denied!</h1>", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    return decorated
 
 
 s3_resource = boto3.resource('s3',

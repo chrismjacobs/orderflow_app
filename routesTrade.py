@@ -1,19 +1,17 @@
 from app import app, r
 import json
 from flask import Flask, request, render_template, jsonify, abort
-from flask_login import login_required
-from meta import session, START_CODE
+from meta import session, START_CODE, auth_required
 
 
 @app.route('/trade')
-@login_required
+@auth_required
 def trade():
-
     return render_template('trading.html')
 
 
 @app.route('/getData', methods=['POST'])
-@login_required
+@auth_required
 def getData():
 
 
@@ -88,7 +86,7 @@ def getData():
 
 
 @app.route('/manageOrder', methods=['POST'])
-@login_required
+@auth_required
 def manageOrder():
 
     mode = request.form ['mode']
@@ -266,7 +264,7 @@ def manageOrder():
 
 
 @app.route('/getOrder', methods=['POST'])
-@login_required
+@auth_required
 def getOrder():
 
     mode = request.form ['mode']
