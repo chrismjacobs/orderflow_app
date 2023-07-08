@@ -87,12 +87,6 @@ def tradeManagement(msg):
     info = msg.split(' ')
 
     mode = info[0]
-    # breakeven = request.form ['breakeven']
-    # limitexit = float(request.form ['limitexit'])
-    # limitprice = int(request.form ['limitprice'])
-    # limitfraction = float(request.form ['limitfraction'])
-    # vwapfraction = float(request.form ['vwapfraction'])
-    # vwapbuffer = float(request.form ['vwapbuffer'])
 
 
     pair = 'BTCUSD'
@@ -366,9 +360,16 @@ def startDiscord():
             coin = 'BTC'
             dFlow = 'deltaflow_' + coin
             dBlocks = 'deltablocks_' + coin
-            replyText = 'purge action'
+            replyText = 'delta purge action'
             r.set(dFlow, json.dumps([]))
             r.set(dBlocks, json.dumps([]))
+        elif 'olume purge' in msg.content:
+            coin = 'BTC'
+            vFlow = 'volumeflow_' + coin
+            vBlocks = 'volumeblocks_' + coin
+            replyText = 'volume purge action'
+            r.set(vFlow, json.dumps([]))
+            r.set(vBlocks, json.dumps([]))
 
 
         elif 'nsi' in msg.content and r.get('ansi') == 'on':
@@ -631,14 +632,19 @@ def marketOrder(side, fraction, stop, profit, mode):
         vwap = round(positionPrice + (limitPrice*limits[sideRev]))
 
         try:
-            if timeblocks[-2]['vwapTick']:
-                vwap = round(timeblocks[-2]['vwapTick'] + (15*limits[sideRev]))
-            elif timeblocks[-2]['vwap_task']:
+
+            if timeblocks[-2]['vwap_task']:
                 vwap = round(timeblocks[-2]['vwap_task'] + (15*limits[sideRev]))
+                print('vwap2 ' + str(vwap))
+
             if abs(positionPrice - vwap) > 200:
                 vwap = round(positionPrice + (200*limits[sideRev]))
-            if abs(positionPrice - vwap) < 60:
+                print('vwap3 ' + str(vwap))
+            elif abs(positionPrice - vwap) < 60:
                 vwap = round(positionPrice + (60*limits[sideRev]))
+                print('vwap4 ' + str(vwap))
+
+            print('VWAP CALCULATION ' + str(vwap))
 
         except:
             print('VWAP TP EXCEPTION')
