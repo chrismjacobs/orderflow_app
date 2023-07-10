@@ -1,11 +1,11 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify, url_for, make_response
-#from flask_login import current_user, login_required, LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 from time import sleep
 import json
 import redis
+import logging
 import os
 import time
 import requests
@@ -17,16 +17,15 @@ if not LOCAL:
     from tasks import runStream
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['DEBUG'] = DEBUG
 app.config['SECRET_KEY'] = SECRET_KEY
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# db = SQLAlchemy(app)
-# bcrypt = Bcrypt()
-# login_manager = LoginManager(app)
-# login_manager.login_view = 'login' # if user isn't logged in it will redirect to login page
-# login_manager.login_message_category = 'info'
 
+logging.debug("A debug message")
+logging.info("An info message")
+logging.warning("A warning message")
+logging.error("An error message")
+logging.critical("A critical message")
+## logging level set to warning and above logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 @auth_required
