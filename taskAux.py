@@ -502,10 +502,6 @@ def sendMessage(coin, string, bg, text):
     else:
         r.set('discord_' + coin + '_holder', msg)
 
-def actionBIT(side):
-    r.set('discord_BIT', side)
-    print('ACTION BIT')
-
 
 def getHL(side, current, stop, mode):
 

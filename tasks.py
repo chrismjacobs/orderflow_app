@@ -10,7 +10,7 @@ import redis
 import time
 
 from math import trunc
-from taskAux import actionBIT, actionDELTA, actionVOLUME, startDiscord, sendMessage, setCoinDict
+from taskAux import actionDELTA, actionVOLUME, startDiscord, sendMessage, setCoinDict
 
 
 session = inverse_perpetual.HTTP(
