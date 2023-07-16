@@ -35,12 +35,13 @@ try:
     REDIS_PASS = config.REDIS_PASS
 
 except:
-    # REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    REDIS_URL = os.getenv('CELERY_BROKER_URL')
     # rRender = redis.from_url(REDIS_URL, decode_responses=True)
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     DISCORD_USER = os.getenv('DISCORD_USER')
     REDIS_IP = os.getenv('REDIS_IP')
+    REDIS_PASS = os.getenv('REDIS_PASS')
     REDIS_PASS = os.getenv('REDIS_PASS')
 
 r = redis.Redis(
@@ -55,7 +56,7 @@ r = redis.Redis(
 print('REDIS', r)
 
 
-app = Celery('tasks', broker=REDIS_IP, backend=REDIS_IP, password='HBeUHgPoBlbI')
+app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 logger = get_task_logger(__name__)
 
 def getHiLow(timeblocks, coin):
