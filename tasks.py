@@ -35,6 +35,7 @@ try:
     REDIS_PASS = config.REDIS_PASS
 
 except Exception as e:
+
     print('EXCEPTION TASKS', e)
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     # rRender = redis.from_url(REDIS_URL, decode_responses=True)
@@ -245,25 +246,9 @@ def manageStream(streamTime, streamPrice, streamOI, coin):
 
     return True
 
-def addDeltaBIT(blocks, coin, coinDict):
-
-    switch = False
-
-    switchUp = False
-    switchDown = False
 
 
-    if len(blocks) > 3:
-        if blocks[-2]['delta'] > 0 and blocks[-3]['delta'] > 0 and blocks[-4]['delta'] > 0:
-            if blocks[-1]['delta'] < 0:
-                switchDown = True
-                actionBIT('Sell')
-        if blocks[-2]['delta'] < 0 and blocks[-3]['delta'] < 0 and blocks[-4]['delta'] < 0:
-            if blocks[-1]['delta'] > 0:
-                switchUp = True
-                actionBIT('Buy')
 
-    return switch
 
 
 def getImbalances(tickList, mode):
@@ -1576,8 +1561,8 @@ def runStream(self):
     return print('Task Closed')
 
 
-if LOCAL:
-    runStream()
+# if LOCAL:
+runStream()
 
 
 
