@@ -53,7 +53,9 @@ r = redis.Redis(
     )
 
 try:
+    print('LOGIN', LOGIN, type(LOGIN))
     LOGIN_DEETS = json.loads(LOGIN)
+    print('LOGIN_DEETS', LOGIN_DEETS, type(LOGIN_DEETS))
 except Exception as e:
     print('DEETS EXCEPTION', e)
     LOGIN_DEETS = '{"user": "Fail", "code": "0"}'
