@@ -15,12 +15,13 @@ try:
     AWS_SECRET_ACCESS_KEY = config.AWS_SECRET_ACCESS_KEY
     SECRET_KEY = config.SECRET_KEY
     REDIS_URL = config.REDIS_URL
+    REDIS_EXTERNAL = config.REDIS_EXTERNAL
     START_CODE = config.START_CODE
     LOCAL = True
     DEBUG = True
     # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     RENDER_API = config.RENDER_API
-    RENDER_SERVICE = config.RENDER_SERVICE
+    RENDER_WORKER = config.RENDER_WORKER
     LOGIN = config.LOGIN
     REDIS_IP = config.REDIS_IP
     REDIS_PASS = config.REDIS_PASS
@@ -34,7 +35,7 @@ except:
     START_CODE = os.getenv('START_CODE')
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     RENDER_API = os.getenv('RENDER_API')
-    RENDER_SERVICE = os.getenv('RENDER_SERVICE')
+    RENDER_WORKER = os.getenv('RENDER_SERVICE')
     LOCAL = False
     DEBUG = False
     LOGIN = os.getenv('LOGIN')
@@ -43,10 +44,6 @@ except:
 
     print('EXCEPTION')
 
-try:
-    LOGIN_DEETS = json.loads(LOGIN)
-except:
-    LOGIN_DEETS = '{"user": "Fail", "code": "0"}'
 
 r = redis.Redis(
     host=REDIS_IP,
@@ -54,6 +51,12 @@ r = redis.Redis(
     password=REDIS_PASS,
     decode_responses=True
     )
+
+try:
+    LOGIN_DEETS = json.loads(LOGIN)
+except Exception as e:
+    print('DEETS EXCEPTION', e)
+    LOGIN_DEETS = '{"user": "Fail", "code": "0"}'
 
 def auth_required(f):
     @wraps(f)

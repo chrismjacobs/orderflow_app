@@ -7,7 +7,7 @@ import os
 import time
 import requests
 from analysis import getBlocks, getVWAP, getImbalances
-from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API, RENDER_SERVICE, auth_required
+from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API,  RENDER_WORKER, auth_required
 import datetime as dt
 
 if not LOCAL:
@@ -17,11 +17,11 @@ app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
 app.config['SECRET_KEY'] = SECRET_KEY
 
-logging.debug("A debug message")
-logging.info("An info message")
-logging.warning("A warning message")
-logging.error("An error message")
-logging.critical("A critical message")
+# logging.debug("A debug message")
+# logging.info("An info message")
+# logging.warning("A warning message")
+# logging.error("An error message")
+# logging.critical("A critical message")
 ## logging level set to warning and above logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
@@ -159,7 +159,7 @@ def serviceAction():
 
     ## action = suspend or resume
 
-    url = "https://api.render.com/v1/services/" + RENDER_SERVICE
+    url = "https://api.render.com/v1/services/" +  RENDER_WORKER
 
     headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
     # payload = {"clearCache": "do_not_clear"}
@@ -253,7 +253,7 @@ def tradingview_webhook():
     if data['code'] != SECRET_KEY:
         return False
 
-    url = "https://api.render.com/v1/services/" + RENDER_SERVICE
+    url = "https://api.render.com/v1/services/" +  RENDER_WORKER
 
     headers = {"accept": "application/json", "authorization": 'Bearer ' +  RENDER_API}
     # payload = {"clearCache": "do_not_clear"}
