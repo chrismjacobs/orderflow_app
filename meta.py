@@ -14,7 +14,6 @@ try:
     AWS_ACCESS_KEY_ID = config.AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY = config.AWS_SECRET_ACCESS_KEY
     SECRET_KEY = config.SECRET_KEY
-    SQLALCHEMY_DATABASE_URI = config.SQLALCHEMY_DATABASE_URI
     REDIS_URL = config.REDIS_URL
     START_CODE = config.START_CODE
     LOCAL = True
@@ -27,7 +26,6 @@ try:
     REDIS_PASS = config.REDIS_PASS
     print('SUCCESS')
 except:
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     SECRET_KEY = os.getenv('SECRET_KEY')
@@ -40,13 +38,15 @@ except:
     LOCAL = False
     DEBUG = False
     LOGIN = os.getenv('LOGIN')
-    # r = redis.from_url(REDIS_URL, decode_responses=True)
     REDIS_IP = os.getenv('REDIS_IP')
     REDIS_PASS = os.getenv('REDIS_PASS')
 
     print('EXCEPTION')
 
-LOGIN_DEETS = json.loads(LOGIN)
+try:
+    LOGIN_DEETS = json.loads(LOGIN)
+except:
+    LOGIN_DEETS = '{"user": "Fail", "code": "0"}'
 
 r = redis.Redis(
     host=REDIS_IP,

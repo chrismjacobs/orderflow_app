@@ -285,7 +285,6 @@ def tradingview_webhook():
     return redirect('/')
 
 
-#from routesAdmin import *
 from routesJournal import *
 from routesTrade import *
 
