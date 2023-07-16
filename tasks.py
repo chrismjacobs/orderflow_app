@@ -1564,7 +1564,7 @@ def runStream(self):
 
 
 if __name__ == '__main__':
-    runStream()
+    runStream().delay()
 
 
 
