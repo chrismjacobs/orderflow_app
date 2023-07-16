@@ -23,7 +23,7 @@ try:
     import config
     LOCAL = True
     if LOCAL:
-        REDIS_URL = config.REDIS_URL_TEST
+        REDIS_URL = config.REDIS_EXTERNAL
     else:
         REDIS_URL = config.REDIS_URL
     # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
@@ -34,7 +34,8 @@ try:
     REDIS_IP = config.REDIS_IP
     REDIS_PASS = config.REDIS_PASS
 
-except:
+except Exception as e:
+    print('EXCEPTION TASKS', e)
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     # rRender = redis.from_url(REDIS_URL, decode_responses=True)
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
@@ -42,6 +43,7 @@ except:
     DISCORD_USER = os.getenv('DISCORD_USER')
     REDIS_IP = os.getenv('REDIS_IP')
     REDIS_PASS = os.getenv('REDIS_PASS')
+
 
 r = redis.Redis(
     host=REDIS_IP,
@@ -53,9 +55,11 @@ r = redis.Redis(
 
 
 print('REDIS', r)
+print('KEYS', r.keys())
 
 
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
+print('CELERY', app)
 logger = get_task_logger(__name__)
 
 def getHiLow(timeblocks, coin):

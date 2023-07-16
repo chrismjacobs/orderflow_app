@@ -12,10 +12,6 @@ LOCAL = False
 try:
     import config
     LOCAL = True
-    if LOCAL:
-        REDIS_URL = config.REDIS_URL_TEST
-    else:
-        REDIS_URL = config.REDIS_URL
 
     # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
@@ -27,7 +23,8 @@ try:
     REDIS_IP = config.REDIS_IP
     REDIS_PASS = config.REDIS_PASS
 
-except:
+except Exception as e:
+    print('EXCEPTION TASK AUX', e)
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     # r = redis.from_url(REDIS_URL, decode_responses=True)
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
