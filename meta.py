@@ -35,7 +35,7 @@ except:
     START_CODE = os.getenv('START_CODE')
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
     RENDER_API = os.getenv('RENDER_API')
-    RENDER_WORKER = os.getenv('RENDER_SERVICE')
+    RENDER_WORKER = os.getenv('RENDER_WORKER')
     LOCAL = False
     DEBUG = False
     LOGIN = os.getenv('LOGIN')
