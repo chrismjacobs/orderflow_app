@@ -10,8 +10,8 @@ from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API,  RENDER_WORKER, auth_required
 import datetime as dt
 
-# if not LOCAL:
-#     from tasks import runStream
+
+
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -198,6 +198,7 @@ def serviceAction():
 @app.route('/start')
 @auth_required
 def start():
+    from tasks import runStream
     return render_template('start.html')
 
 @app.route('/workerAction', methods=['POST'])
