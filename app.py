@@ -9,7 +9,7 @@ import requests
 from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API,  RENDER_WORKER, auth_required
 import datetime as dt
-
+from tasks import runStream
 
 
 
@@ -198,7 +198,7 @@ def serviceAction():
 @app.route('/start')
 @auth_required
 def start():
-    from tasks import runStream
+
     return render_template('start.html')
 
 @app.route('/workerAction', methods=['POST'])
