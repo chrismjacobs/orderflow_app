@@ -12,6 +12,17 @@ services:
           name: rekt-test
           type: redis
           property: connectionString
+    fields:
+      REDIS_IP: ''
+      REDIS_PASS: ''
+      START_CODE: 825
+      DISCORD_CHANNEL: '{"BTC": 1064447410350329876, "ETH": 1064447463936765952, "SOL": 1064447463936765952}'
+      DISCORD_TOKEN: ''
+      DISCORD_USER: 0
+      DISCORD_WEBHOOK: ''
+      API_KEY: ''
+      API_SECRET: ''
+
   - type: web
     name: flow
     region: singapore
@@ -20,12 +31,25 @@ services:
     startCommand: "gunicorn app:app"
     autoDeploy: true
     plan: free
-    envVars:
-      - key: CELERY_BROKER_URL
-        fromService:
-          name: rekt-redis
-          type: redis
-          property: connectionString
+    # envVars:
+    #   - key: CELERY_BROKER_URL
+    #     fromService:
+    #       name: rekt-redis
+    #       type: redis
+    #       property: connectionString
+    fields:
+      REDIS_IP: ''
+      REDIS_PASS: ''
+      START_CODE: 0
+      SECRET_KEY: ''
+      API_KEY: ''
+      API_SECRET: ''
+      RENDER_API: ''
+      RENDER_SERVICE: ''
+      AWS_ACCESS_KEY_ID: ''
+      AWS_SECRET_ACCESS_KEY: ''
+      LOGIN: '{"user": "", "code": ""}'
+
   - type: redis
     name: rekt-redis
     region: singapore
