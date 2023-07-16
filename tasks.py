@@ -42,7 +42,6 @@ except:
     DISCORD_USER = os.getenv('DISCORD_USER')
     REDIS_IP = os.getenv('REDIS_IP')
     REDIS_PASS = os.getenv('REDIS_PASS')
-    REDIS_PASS = os.getenv('REDIS_PASS')
 
 r = redis.Redis(
     host=REDIS_IP,

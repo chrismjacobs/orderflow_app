@@ -15,12 +15,12 @@ click-repl==0.2.0
 Deprecated==1.2.13
 discord==1.7.3
 Flask==2.1.1
-Flask-Admin==1.6.0
-Flask-Bcrypt==1.0.1
+# Flask-Admin==1.6.0
+# Flask-Bcrypt==1.0.1
 Flask-Login==0.6.2
-Flask-Mail==0.9.1
-Flask-SQLAlchemy==2.5.1
-flower==1.0.0
+# Flask-Mail==0.9.1
+# Flask-SQLAlchemy==2.5.1
+# flower==1.0.0
 gunicorn==20.1.0
 humanize==4.0.0
 importlib-metadata==4.11.3
