@@ -4,14 +4,6 @@ import json
 import math
 from math import trunc
 
-try:
-    import config
-    REDIS_URL = config.REDIS_URL
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
-except:
-    REDIS_URL = os.getenv('CELERY_BROKER_URL')
-    r = redis.from_url(REDIS_URL, decode_responses=True)
-
 
 def createCandle():
 
