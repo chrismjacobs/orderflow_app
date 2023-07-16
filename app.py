@@ -10,8 +10,8 @@ from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, DEBUG, r, LOCAL, START_CODE, RENDER_API,  RENDER_WORKER, auth_required
 import datetime as dt
 
-if not LOCAL:
-    from tasks import runStream
+# if not LOCAL:
+#     from tasks import runStream
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -206,25 +206,25 @@ def worker():
     x = int(request.form['passcode'])
     print('workerAction', x, START_CODE)
 
-    if x == int(START_CODE):
-        block = True
+    # if x == int(START_CODE):
+    #     block = True
 
-        while block:
-            t = dt.datetime.today()
-            print(t.minute, t.minute%5)
-            if t.minute%5 == 0:
-                ## multiple of 5 mins
-                block = False
-            else:
-                time.sleep(5)
+    #     while block:
+    #         t = dt.datetime.today()
+    #         print(t.minute, t.minute%5)
+    #         if t.minute%5 == 0:
+    #             ## multiple of 5 mins
+    #             block = False
+    #         else:
+    #             time.sleep(5)
 
 
-        task = runStream.delay()
-        r.set('task_id', str(task))
-        print('task_id', str(task))
-        flash("Your command has been submitted: " + str(task))
-    else:
-        flash("Your command has failed: " + str(x))
+    #     task = runStream.delay()
+    #     r.set('task_id', str(task))
+    #     print('task_id', str(task))
+    #     flash("Your command has been submitted: " + str(task))
+    # else:
+    #     flash("Your command has failed: " + str(x))
 
     return render_template('start.html')
 
