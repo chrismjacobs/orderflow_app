@@ -1563,8 +1563,8 @@ def runStream(self):
     return print('Task Closed')
 
 
-# if LOCAL:
-runStream()
+if __name__ == '__main__':
+    runStream()
 
 
 
