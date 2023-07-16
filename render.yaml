@@ -13,15 +13,15 @@ services:
           type: redis
           property: connectionString
     fields:
-      REDIS_IP: ''
-      REDIS_PASS: ''
-      START_CODE: 825
+      REDIS_IP: 'a'
+      REDIS_PASS: 'a'
+      START_CODE: 'a'
       DISCORD_CHANNEL: '{"BTC": 1064447410350329876, "ETH": 1064447463936765952, "SOL": 1064447463936765952}'
-      DISCORD_TOKEN: ''
+      DISCORD_TOKEN: 'a'
       DISCORD_USER: 0
-      DISCORD_WEBHOOK: ''
-      API_KEY: ''
-      API_SECRET: ''
+      DISCORD_WEBHOOK: 'a'
+      API_KEY: 'a'
+      API_SECRET: 'a'
 
   - type: web
     name: flow
@@ -38,16 +38,16 @@ services:
     #       type: redis
     #       property: connectionString
     fields:
-      REDIS_IP: ''
-      REDIS_PASS: ''
-      START_CODE: 0
-      SECRET_KEY: ''
-      API_KEY: ''
-      API_SECRET: ''
-      RENDER_API: ''
-      RENDER_SERVICE: ''
-      AWS_ACCESS_KEY_ID: ''
-      AWS_SECRET_ACCESS_KEY: ''
+      REDIS_IP: 'a'
+      REDIS_PASS: 'a'
+      START_CODE: 'a'
+      SECRET_KEY: 'a'
+      API_KEY: 'a'
+      API_SECRET: 'a'
+      RENDER_API: 'a'
+      RENDER_SERVICE: 'a'
+      AWS_ACCESS_KEY_ID: 'a'
+      AWS_SECRET_ACCESS_KEY: 'a'
       LOGIN: '{"user": "", "code": ""}'
 
   - type: redis
