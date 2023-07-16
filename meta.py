@@ -19,10 +19,12 @@ try:
     START_CODE = config.START_CODE
     LOCAL = True
     DEBUG = True
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+    # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     RENDER_API = config.RENDER_API
     RENDER_SERVICE = config.RENDER_SERVICE
     LOGIN = config.LOGIN
+    REDIS_IP = config.REDIS_IP
+    REDIS_PASS = config.REDIS_PASS
     print('SUCCESS')
 except:
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
@@ -38,11 +40,20 @@ except:
     LOCAL = False
     DEBUG = False
     LOGIN = os.getenv('LOGIN')
-    r = redis.from_url(REDIS_URL, decode_responses=True)
+    # r = redis.from_url(REDIS_URL, decode_responses=True)
+    REDIS_IP = os.getenv('REDIS_IP')
+    REDIS_PASS = os.getenv('REDIS_PASS')
 
     print('EXCEPTION')
 
 LOGIN_DEETS = json.loads(LOGIN)
+
+r = redis.Redis(
+    host=REDIS_IP,
+    port=6379,
+    password=REDIS_PASS,
+    decode_responses=True
+    )
 
 def auth_required(f):
     @wraps(f)

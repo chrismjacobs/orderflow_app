@@ -16,23 +16,35 @@ try:
         REDIS_URL = config.REDIS_URL_TEST
     else:
         REDIS_URL = config.REDIS_URL
+
+    # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
     API_KEY = config.API_KEY
     API_SECRET = config.API_SECRET
     DISCORD_WEBHOOK = config.DISCORD_WEBHOOK
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+    REDIS_IP = config.REDIS_IP
+    REDIS_PASS = config.REDIS_PASS
+
 except:
     REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    # r = redis.from_url(REDIS_URL, decode_responses=True)
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     DISCORD_USER = os.getenv('DISCORD_USER')
     API_KEY = os.getenv('API_KEY')
     API_SECRET = os.getenv('API_SECRET')
     DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK')
-    r = redis.from_url(REDIS_URL, decode_responses=True)
+    REDIS_IP = os.getenv('REDIS_IP')
+    REDIS_PASS = os.getenv('REDIS_PASS')
 
+r = redis.Redis(
+    host=REDIS_IP,
+    port=6379,
+    password=REDIS_PASS,
+    decode_responses=True
+    )
 
 session = inverse_perpetual.HTTP(
     endpoint='https://api.bybit.com',
@@ -566,7 +578,7 @@ def marketOrder(side, fraction, stop, profit, mode):
         print('STOP LOSS Adjust failed')
 
 
-    print('MARKET ORDER ' + str(price) + ' sl:' + str(stop_adjust))
+
 
     limits = {
         'Buy' : -1,
@@ -592,6 +604,11 @@ def marketOrder(side, fraction, stop, profit, mode):
         oPrice = price + limits[side]
         r.set('monitor', 'off')
 
+    try:
+        print('MARKET ORDER ' + str(price) + ' sl:' + str(stop_adjust) + '/' + str(stop_loss))
+    except Exception as e:
+        print('MARKET ORDER EXCEPTION STRING ' + e)
+
 
     order = session.place_active_order(
     symbol = pair,
@@ -606,12 +623,17 @@ def marketOrder(side, fraction, stop, profit, mode):
 
     message = order['ret_msg']
     return_code = order['ret_code']  # 0  = 'good'
-    # data = json.dumps(order['result'])
+
+    try:
+        data = json.dumps(order['result'])
+        print('ORDER DATA', data)
+    except Exception as e:
+        print()
 
 
     return_price = order["result"]["price"]  # float
 
-    print('ORDER MESSAGE ' + message)
+    print('ORDER MESSAGE ' + message + ' ' + str(return_price))
 
     if message == 'OK' and mode == 'deltaswitch':
         try:
@@ -629,19 +651,19 @@ def marketOrder(side, fraction, stop, profit, mode):
         timeblocks = json.loads(r.get('timeblocks_BTC'))
 
         limitPrice = profit / 6
-        vwap = round(positionPrice + (limitPrice*limits[sideRev]))
+        vwap = round(positionPrice + (limitPrice*limits[side]))
 
         try:
 
             if timeblocks[-2]['vwap_task']:
-                vwap = round(timeblocks[-2]['vwap_task'] + (15*limits[sideRev]))
+                vwap = round(timeblocks[-2]['vwap_task'] + (15*limits[side]))
                 print('vwap2 ' + str(vwap))
 
             if abs(positionPrice - vwap) > 200:
-                vwap = round(positionPrice + (200*limits[sideRev]))
+                vwap = round(positionPrice + (200*limits[side]))
                 print('vwap3 ' + str(vwap))
             elif abs(positionPrice - vwap) < 60:
-                vwap = round(positionPrice + (60*limits[sideRev]))
+                vwap = round(positionPrice + (60*limits[side]))
                 print('vwap4 ' + str(vwap))
 
             print('VWAP CALCULATION ' + str(vwap))
@@ -656,7 +678,7 @@ def marketOrder(side, fraction, stop, profit, mode):
             side = sideRev,
             order_type = 'Limit',
             price =  vwap,
-            qty = round(qty*0.5),
+            qty = round(qty*0.3),
             time_in_force = "GoodTillCancel"
             )
         except Exception as e:
@@ -773,12 +795,12 @@ def actionDELTA(blocks, newCandle, coin, coinDict, lastCandleisBlock):
 
 
     thresholdMarket = percentDelta0 >= 0.99 and percentDelta1 >= 0.99
-    thresholdActivate = negDelta  >= 2
+    thresholdActivate = negDelta  >= 4
 
 
     if side == 'Sell':
         thresholdMarket = percentDelta0 <= -0.99 and percentDelta1 <= -0.99
-        thresholdActivate = posDelta >= 2
+        thresholdActivate = posDelta >= 4
 
 
 
@@ -985,22 +1007,22 @@ def setCoinDict():
     coinDict = {
             'BTC' : {
                 'oicheck' : [1_500_000, 2_000_000],
-                'volume' : [True, 5],
+                'volume' : [True, 3],
                 'active' : True,
                 'imbalances' : False,
                 'pause' : False,
                 'purge' : False,
                 'deltaswitch' : deltaDict,
                 'volswitch' : volDict
-            },
-            'ETH' : {
-                'oicheck' : [800_000, 800_000],
-                'volume' : [True, 1],
-                'active' : False,
-                'imbalances' : False,
-                'pause' : False,
-                'purge' : False,
-            },
+            }
+            # 'ETH' : {
+            #     'oicheck' : [800_000, 800_000],
+            #     'volume' : [True, 1],
+            #     'active' : False,
+            #     'imbalances' : False,
+            #     'pause' : False,
+            #     'purge' : False,
+            # },
     }
 
     r.set('coinDict', json.dumps(coinDict))

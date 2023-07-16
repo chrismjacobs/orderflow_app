@@ -26,22 +26,36 @@ try:
         REDIS_URL = config.REDIS_URL_TEST
     else:
         REDIS_URL = config.REDIS_URL
+    # r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
 
     DISCORD_CHANNEL = config.DISCORD_CHANNEL
     DISCORD_TOKEN = config.DISCORD_TOKEN
     DISCORD_USER = config.DISCORD_USER
-    r = redis.from_url(REDIS_URL, ssl_cert_reqs=None, decode_responses=True)
+    REDIS_IP = config.REDIS_IP
+    REDIS_PASS = config.REDIS_PASS
+
 except:
-    REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    # REDIS_URL = os.getenv('CELERY_BROKER_URL')
+    # rRender = redis.from_url(REDIS_URL, decode_responses=True)
     DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     DISCORD_USER = os.getenv('DISCORD_USER')
-    r = redis.from_url(REDIS_URL, decode_responses=True)
+    REDIS_IP = os.getenv('REDIS_IP')
+    REDIS_PASS = os.getenv('REDIS_PASS')
 
-print('URL', REDIS_URL)
+r = redis.Redis(
+    host=REDIS_IP,
+    port=6379,
+    password=REDIS_PASS,
+    decode_responses=True
+    )
+
+
+
 print('REDIS', r)
 
-app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
+
+app = Celery('tasks', broker=REDIS_IP, backend=REDIS_IP, password='HBeUHgPoBlbI')
 logger = get_task_logger(__name__)
 
 def getHiLow(timeblocks, coin):
@@ -1488,7 +1502,7 @@ def handle_trade_message(msg):
 @app.task(bind=True, base=AbortableTask)
 def runStream(self):
 
-    print('RUN_STREAM')
+    print('RUN_STREAM')    # rK = json.loads(r.keys())
 
 
     for k in r.keys():
