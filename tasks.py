@@ -8,6 +8,7 @@ import datetime as dt
 from datetime import datetime
 import redis
 import time
+import pickle
 
 from math import trunc
 from taskAux import actionDELTA, actionVOLUME, startDiscord, sendMessage, setCoinDict
@@ -59,6 +60,7 @@ print('REDIS', r)
 print('KEYS', r.keys())
 
 
+REDIS_URL = 'redis://:' + REDIS_PASS + '@' + REDIS_IP + ':6379'
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 print('CELERY', app)
 logger = get_task_logger(__name__)
