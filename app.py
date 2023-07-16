@@ -1,7 +1,4 @@
 from flask import Flask, flash, render_template, redirect, request, jsonify, url_for, make_response
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
-from flask_mail import Mail
 from time import sleep
 import json
 import redis
