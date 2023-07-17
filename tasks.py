@@ -60,7 +60,7 @@ print('REDIS', r)
 print('KEYS', r.keys())
 
 
-#REDIS_URL = 'redis://:' + REDIS_PASS + '@' + REDIS_IP + ':6379'
+REDIS_URL = 'redis://:' + REDIS_PASS + '@' + REDIS_IP + ':6379'
 app = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 print('CELERY', app)
 logger = get_task_logger(__name__)
@@ -1563,8 +1563,8 @@ def runStream(self):
     return print('Task Closed')
 
 
-if __name__ == '__main__':
-    runStream().delay()
+
+runStream()
 
 
 
