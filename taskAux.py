@@ -415,15 +415,25 @@ def startDiscord():
             coinDict = json.loads(r.get('coinDict'))
             code = msg.content.split(' ')[0]
 
-            if len(msg.content.split(' ')) > 1:
-                price = int(msg.content.split(' ')[1])
-            else:
+            if len(msg.content.split(' ')) == 1:
+                ## just checking order
                 switch = deltaSet[code][0]
                 side = deltaSet[code][1]
                 price = coinDict['BTC'][switch][side]['price']
                 replyText = 'Check: ' + side + ' ' + str(price) + ' ' + str(coinDict['BTC'][switch][side]['fraction']) + ' ' + str(coinDict['BTC'][switch][side]['stop'])
+            else:
+                ## new order being set
+                price = int(msg.content.split(' ')[1])
 
-            if price > 100_000:
+            if price == 0:
+                ### reset order
+                coinDict['BTC'][switch][side]['price'] = 0
+                coinDict['BTC'][switch][side]['swing'] = False
+                coinDict['BTC'][switch][side]['active'] = False
+                r.set('coinDict', json.dumps(coinDict))
+                replyText = 'Resest: ' + side + ' ' + str(price) + ' ' + str(coinDict['BTC'][switch][side]['active']) + ' ' + str(coinDict['BTC'][switch][side]['switch'])
+
+            elif price > 100_000:
                 replyText = 'Price out of range'
             elif price < 10_000 and price != 0:
                 replyText = 'Price out of range'
@@ -436,12 +446,18 @@ def startDiscord():
                     switch = deltaSet[code][0]
                     side = deltaSet[code][1]
                     coinDict['BTC'][switch][side]['price'] = price
-                    if len(msg.content.split(' ')) > 2:
-                        add = msg.content.split(' ')[2]
-                        if '.' in add:
-                            coinDict['BTC'][switch][side]['fraction'] = float(msg.content.split(' ')[2])
+                    if len(msg.content.split(' ')) > 3:
+                        ## db 30000 0.5 100
+                        fraction = msg.content.split(' ')[2]
+                        stop = msg.content.split(' ')[3]
+                        coinDict['BTC'][switch][side]['fraction'] = float(fraction)
+                        coinDict['BTC'][switch][side]['stop'] = int(stop)
+                    elif len(msg.content.split(' ')) > 2:
+                        tag = msg.content.split(' ')[2]
+                        if '.' in tag:
+                            coinDict['BTC'][switch][side]['fraction'] = float(tag)
                         else:
-                            coinDict['BTC'][switch][side]['stop'] = int(msg.content.split(' ')[2])
+                            coinDict['BTC'][switch][side]['stop'] = int(tag)
 
                     r.set('coinDict', json.dumps(coinDict))
                     replyText = 'Set: ' + side + ' ' + str(price) + ' ' + str(coinDict['BTC'][switch][side]['fraction']) + ' ' + str(coinDict['BTC'][switch][side]['stop'])
