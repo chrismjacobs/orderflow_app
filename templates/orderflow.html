@@ -49,13 +49,8 @@
 
                 <br>
                 <button @click="toggleCoin()" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">[[coin]]</button>
-                <button @click="showChart += 1" type="button" class="btn btn-light" data-bs-toggle="button" autocomplete="off">Chart</button>
-                <button style="display:none" @click="showTable='Time'" type="button" class="btn btn-info" data-bs-toggle="button" autocomplete="off">Time</button>
-                <button style="display:none" @click="showTable='Volume'" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off" aria-pressed="true">Volume</button>
-                <button v-if="user" @click="goTo('journal')" type="button" class="btn btn-warning" data-bs-toggle="button" autocomplete="off">Journal</button>
-                <button v-if="user" @click="goTo('trade')" type="button" class="btn btn-success" data-bs-toggle="button" autocomplete="off">Trade</button>
-                <button @click="showTable='Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">&#x2699;</button>
-
+                <button @click="showChart += 1" type="button" class="btn btn-light" data-bs-toggle="button" autocomplete="off">Chart [[showChart]]</button>
+                <button @click="showTable = 'Notes'" type="button" class="btn btn-secondary" data-bs-toggle="button" autocomplete="off">&#x2699;</button>
 
                 <br>
                 <br>
@@ -118,8 +113,6 @@
 
                 <div v-if="showTable == 'Notes'" class="text-white p-3">
 
-                    <button @click="showTable = 'Time'" type="button" class="btn btn-danger" data-bs-toggle="button" autocomplete="off">Back</button>
-
                     <br>
                     <br>
 
@@ -127,8 +120,7 @@
 
                         <h3 style="color:Hotpink"> Important Notes for User </h3>
 
-                        <h5> This webapp may undergo maintanance on Sundays and may be unusable for a period </h5>
-                        <h5> This webapp is free to use and currently uses the cheapest server set up; <br> if excessively high volume occurs suddenly (eg 100 mil in 5 min), then CPU usage will be maxed out and the data stream will lag for sometime making the webapp unusable as a live orderflow reference</h5>
+                        <h5> This webapp is free to use and currently uses the cheapest server set up <h5>
                         <h5> This webapp is an ongoing project, the user interface may change, new features may appear, ideas are welcome (please contact the developer on Discord)</h5>
 
                     </div>
@@ -171,16 +163,17 @@
 
                     - Data avalable is from current day and previous day <br>
                     - Taken from Bybit API (BTCUSD.perp) <br>
-                    - Data is refreshed every 3 secs <br>
+                    - Data is refreshed every 3 secs (set as Timer 3000 milliseconds)<br>
 
                     - Time mode is set to minimum 5 mins and can be 5/15/30/60 mins <br>
                     - PVA candles will be highlighted<br>
                     - Possible occurance of CVD divergence will also be highlighted in the CVD column<br>
                     <br>
-                    - Volume mode has different block size depending on the coin symbol <br>
+                    - Volume mode has different block sizes depending on the coin symbol <br>
                     - Volume blocks are exact divisions eg a 5mil block is exactly 5mil <br>
                     (this is different from exocharts which doesn't split and carry over large trades whereby a 5mil block is often more than 5mil) <br>
                     Therefore, volume block data will differ slightly from exocharts (developer's personal choice) <br>
+                    The same processing logic applies to Delta Blocks <br>
                     <br>
 
                     <h3> Display Notes </h3>
@@ -188,7 +181,6 @@
                     - When viewing on mobile, setting the browser to desktop view fits more data on the page <br>
                     - Clicking orderflow charts makes them larger <br>
                     - Clicking orderflow header will change the position of FPBS table <br>
-                    - This webapp has not been tested on all device sizes and not display well on some devices <br>
 
 
                     <br>
@@ -209,20 +201,6 @@
 
                     <a href="https://www.tradingview.com/script/xKXQr74f-Level-Alerts/">Level Alerts - a customized version of the popular key level indicator </a>
 
-
-                    <br>
-                    <br>
-
-                    This webapp is not accepting registrations
-
-                    <br>
-                    <br>
-
-                    <button v-if="!user" @click="goTo('login')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Login</button>
-                    <button v-else @click="goTo('logout')" type="button" class="btn" data-bs-toggle="button" autocomplete="off">Logout</button>
-
-                    <br>
-                    <br>
 
                 </div>
 
@@ -348,7 +326,7 @@
                                     </tr>
                                 </template>
 
-                                <template v-if="showChart == 2">
+                                <template v-if="showChart == 3">
                                     <tr>
                                         <td>CVD</td>
                                         <td></td>
@@ -380,43 +358,6 @@
                                 <span @click="setTickLookBack(-10)" class="ml-2">&#8595</span>
                                 ([[tickLookback]] Bars)
                         </h3>
-                    </div>
-                    <div v-if="user" >
-                        <table class="table table-dark vert" class="table-responsive">
-                            <thead>
-                            <tr>
-                                <th scope="col" style="width:10%">Side</th>
-                                <th scope="col">Test</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Swing</th>
-                                <th scope="col">Stop</th>
-                                <th scope="col">Profit</th>
-                                <th scope="col">Fraction</th>
-                            </tr>
-                            </thead>
-                        <tbody>
-                            <tr>
-                                <th class="text-warning" scope="row"><span @click="volumeEdit = !volumeEdit">Sell (Hi)</span> </th>
-                                <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="volswitchOBJ['Sell']['price']"> </input> </td>
-                                <td >[[  coinOBJ['BTC']['volswitch']['Sell']['price']  ]] </td>
-                                <td :style="getSwing(coinOBJ[coin]['volswitch']['Sell']['swing'])">[[  coinOBJ['BTC']['volswitch']['Sell']['swing']  ]] </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="volswitchOBJ['Sell']['stop']"></input></span> </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="volswitchOBJ['Sell']['profit']"></input></span> </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="volswitchOBJ['Sell']['fraction']"></input></span> </td>
-                            </tr>
-                            <tr>
-                                <th class="text-warning" scope="row"><span @click="volumeEdit = !volumeEdit">Buy (Lo)</span> </th>
-                                <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="volswitchOBJ['Buy']['price']"> </input> </td>
-                                <td >[[  coinOBJ['BTC']['volswitch']['Buy']['price']  ]] </td>
-                                <td :style="getSwing(coinOBJ[coin]['volswitch']['Buy']['swing'])">[[  coinOBJ['BTC']['volswitch']['Buy']['swing']  ]] </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="volswitchOBJ['Buy']['stop']"></input></span> </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="volswitchOBJ['Buy']['profit']"></input></span> </td>
-                                <td> <span v-if="!volumeEdit"> [[  coinOBJ['BTC']['volswitch']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="volswitchOBJ['Buy']['fraction']"></input> <button @click="setPrices('volswitch')" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button></span> </td>
-                            </tr>
-
-                        </tbody>
-
-                        </table>
                     </div>
 
                     <div  style="color:white" class="table-responsive flow" id="vbf">
@@ -527,79 +468,7 @@
                             <input type="number" step="100" style="width:90px;background:black;color:green;" v-model="dbcount"> </input>
                         </h3>
                     </div>
-                    <table style="display:none" class="table table-dark table-sm vert">
-                        <thead class="vert">
-                            <tr class="vert" >
-                                <th class="vert p-1"  style="width:10%">Time</th>
-                                <th class="vert p-1" >Sec</th>
-                                <th class="vert p-1" >Vol</th>
-                                <th class="vert p-1"  @click="showDelta = true">Delta</th>
-                                <th class="vert p-1" >OI</th>
-                                <th class="vert p-1" >Candle</th>
-                                <th class="vert p-1"  style="width:2%">High</th>
-                                <th class="vert p-1"  style="width:2%">Close</th>
-                                <th class="vert p-1"  style="width:2%">Low</th>
-                            </tr>
-                        </thead>
-                        <tbody class="vert" id='volTableVert' :style="getVerticalTable()">
-                            <template v-for="(item, key) in getDeltaBlocksVert" :key="key" >
-                            <tr class="vert">
-                                <th class="vert text-success text-xsmall" scope="row"><span>[[getTime(item.timestamp, 'v')]] &nbsp &nbsp &nbsp</span> </th>
-                                <td class="vert" :style="timeStyle(item.time_delta)">[[calculateTime(item.time_delta)]]</td>
-                                <td class="vert" :style="getVolumeDivStyle(item.price_delta, item.delta, item)">[[roundData(item.total)]]</td>
-                                <td class="vert" :style="getDeltaStyle(item.delta, 0, item.total)">[[getPercent(item.delta, item.total)]]%</td>
-                                <td class="vert" :style="getOIStyle(item.oi_delta)">[[roundData(item.oi_delta)]]</td>
-                                <td class="vert" :style="getCandleStyle(item.open, item.close)">[[item.price_delta]] </span></td>
-                                <td class="vert">[[item.high]]</td>
-                                <td :style="getCloseStyle(item.close, key, 'volume')">[[item.close]]</td>
-                                <td class="vert">[[item.low]]</td>
-                            </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                    <div v-if="showTable != 'Notes' && user" >
-                        <table class="table table-dark vert" class="table-responsive">
-                            <thead>
-                            <tr>
-                                <th scope="col" style="width:10%">Side</th>
-                                <th scope="col">Test</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Swing</th>
-                                <th scope="col">Active</th>
-                                <th scope="col">Stop</th>
-                                <th scope="col">Profit</th>
-                                <th scope="col">Fraction</th>
-                                <th scope="col">Backup</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Sell (Hi)</span> </th>
-                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:firebrick;color:white;font-size:15px" v-model="deltaswitchOBJ['Sell']['price']"> </input> </td>
-                                    <td >[[  coinOBJ['BTC']['deltaswitch']['Sell']['price']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Sell']['swing'])">[[  coinOBJ['BTC']['deltaswitch']['Sell']['swing']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Sell']['active'])">[[  coinOBJ['BTC']['deltaswitch']['Sell']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaswitchOBJ['Sell']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaswitchOBJ['Sell']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1" class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaswitchOBJ['Sell']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Sell']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaswitchOBJ['Sell']['backup']"></input></span> </td>
-                                </tr>
-                                <tr>
-                                    <th class="text-success" scope="row"><span @click="deltaEdit = !deltaEdit">Buy (Lo)</span> </th>
-                                    <td ><input type="number" maxlength="6" size="6" class="mb-2" style="width:100px;background:green;color:white;font-size:15px" v-model="deltaswitchOBJ['Buy']['price']"> </input> </td>
-                                    <td >[[  coinOBJ['BTC']['deltaswitch']['Buy']['price']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Buy']['swing'])">[[  coinOBJ['BTC']['deltaswitch']['Buy']['swing']  ]] </td>
-                                    <td :style="getSwing(coinOBJ[coin]['deltaswitch']['Buy']['active'])">[[  coinOBJ['BTC']['deltaswitch']['Buy']['active']  ]] </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['stop']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:firebrick;color:white;font-size:15px" v-model="deltaswitchOBJ['Buy']['stop']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['profit']  ]] </span> <span v-else> <input type="number" step="10" class="mb-2" style="width:60px;background:green;color:white;font-size:15px" v-model="deltaswitchOBJ['Buy']['profit']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['fraction']  ]] </span> <span v-else> <input type="number" step="0.1"class="mb-2" style="width:60px;background:grey;color:white;font-size:15px" v-model="deltaswitchOBJ['Buy']['fraction']"></input></span> </td>
-                                    <td> <span v-if="!deltaEdit"> [[  coinOBJ['BTC']['deltaswitch']['Buy']['backup']  ]] </span> <span v-else> <input type="number" class="mb-2" style="width:100px;background:grey;color:white;font-size:15px" v-model="deltaswitchOBJ['Buy']['backup']"></input> <input type="number" class="mb-2" style="width:30px;background:black;color:yellow;font-size:15px" v-model="deltaswitchOBJ['fcCheck']"></input> <button @click="setPrices('deltaswitch')" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="button" autocomplete="off">--</button> </span></td>
-                                </tr>
 
-                            </tbody>
-
-                        </table>
-                    </div>
                     <div v-if="showTable != 'Notes'" class="table-responsive" style="height:600px">
                         <table class="table table-dark table-sm horiz">
                             <thead>
@@ -847,7 +716,7 @@ let vue = new Vue({
         UTCadjust : 0,
         imbalance : 369,
         coin : 'BTC',
-        coins : ['BTC', 'ETH'],
+        coins : ['BTC'],
         coinOBJ : false,
         history : {},
         showTable : 'Time',
@@ -1167,6 +1036,12 @@ let vue = new Vue({
             return Math.round(abs*c[this.coin])/c[this.coin]
         },
         toggleCoin: function () {
+            if (this.showTable != 'Time') {
+                this.showTable = 'Time'
+                console.log(this.showTable)
+                return false
+            }
+
             let x = this.coins.indexOf(this.coin)
 
             let n = x + 1
@@ -1876,6 +1751,14 @@ let vue = new Vue({
                     vue.coinOBJ = cOBJ
                 }
 
+                for (let c in vue.coinOBJ) {
+                    if (!vue.coins.includes(c)) {
+                        vue.coins.push(c)
+                    }
+                }
+
+
+
                 let tbf = document.getElementById('tbf')
                 if (tbf && tbf.scrollLeft == 0) {
                     tbf.scrollLeft = tbf.scrollWidth
@@ -1903,17 +1786,6 @@ let vue = new Vue({
                     vue.updateOFCharts()
                 }
 
-                //vue.user = data.user
-
-                if (vue.user) {
-                    vue.coins = ['BTC', 'ETH']
-                } else {
-                    vue.coins = ['BTC']
-                }
-                //console.log('USER', data.user)
-
-                // vue.login = data.login
-                //console.log('LOGIN', data.login)
 
             })
             .fail(function(){
@@ -2192,7 +2064,7 @@ let vue = new Vue({
             this.timeBlocks = []
         },
         showChart: function () {
-            if (this.showChart > 2) {
+            if (this.showChart > 3) {
                 this.showChart = 0
             }
             localStorage.setItem('showChart', this.showChart)
