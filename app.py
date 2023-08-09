@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request, jsonify
+from flask import Flask, render_template, request, jsonify
 import json
 from analysis import getBlocks, getVWAP, getImbalances
 from meta import SECRET_KEY, DEBUG, r
@@ -14,7 +14,6 @@ def home():
 
     return render_template('orderflow.html')
 
-@app.route('/setPrices', methods=['POST'])
 
 
 @app.route('/getOF', methods=['POST'])
@@ -25,8 +24,6 @@ def getOF():
     coinDict = r.get('coinDict')
     coinInfo = json.loads(coinDict)[coin]
     size = coinInfo['volume'][1]
-
-    print(size)
 
     stream = r.get('stream_' + coin)
 
